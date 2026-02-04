@@ -6,9 +6,8 @@ import { processFuripsData } from "@/lib/furips-processor";
 import AdmZip from "adm-zip";
 import path from "path";
 
-// Aumentar maxDuration para archivos grandes (30 minutos para archivos de 1GB+)
-// Next.js App Router maneja FormData con streaming automático, no necesita bodyParser
-export const maxDuration = 1800; // 30 minutos
+// maxDuration máximo para plan Hobby de Vercel (5 minutos)
+export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   // #region agent log

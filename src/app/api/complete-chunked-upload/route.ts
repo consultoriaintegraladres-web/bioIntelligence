@@ -11,8 +11,8 @@ import AdmZip from "adm-zip";
 
 const TEMP_DIR = path.join(os.tmpdir(), "furips-uploads");
 
-// Aumentar maxDuration para procesamiento de datos
-export const maxDuration = 600; // 10 minutos
+// maxDuration máximo para plan Hobby de Vercel (5 minutos)
+export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
