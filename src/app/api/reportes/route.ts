@@ -76,19 +76,18 @@ export async function GET(request: NextRequest) {
     incFilters.push("p.mostrar_reporte = 1");
     
     // RELACIÓN: lote_de_carga IN (SELECT numero_lote FROM control_lotes WHERE ...)
+    // Este filtro ya incluye: IPS, fecha, codigo_habilitacion, tipo_envio, nombre_envio
     incFilters.push(`i.lote_de_carga IN (${lotesSubquery})`);
     
-    // Codigo habilitacion en inconsistencias
+    // Codigo habilitacion en inconsistencias (solo para usuarios no-admin, como seguridad extra)
     if (session.user.role !== "ADMIN") {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
         incFilters.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '${userCodigo}%'`);
       }
-    } else if (codigo_habilitacion && codigo_habilitacion.trim() !== "") {
-      incFilters.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '%${codigo_habilitacion}%'`);
     }
 
-    // Lote de carga directo
+    // Lote de carga directo (filtro adicional si se especifica un lote específico)
     if (lote_de_carga && lote_de_carga.trim() !== "") {
       incFilters.push(`i.lote_de_carga = '${lote_de_carga}'`);
     }
@@ -103,15 +102,8 @@ export async function GET(request: NextRequest) {
       incFilters.push(`i.origen = '${origen}'`);
     }
 
-    // IPS en inconsistencias
-    if (nombre_ips && nombre_ips.trim() !== "") {
-      incFilters.push(`i.IPS LIKE '%${nombre_ips}%'`);
-    }
-
-    // Fecha en inconsistencias
-    if (fecha_inicio && fecha_fin) {
-      incFilters.push(`i.fecha >= '${fecha_inicio}' AND i.fecha <= '${fecha_fin}'`);
-    }
+    // NOTA: No aplicamos filtro de IPS, fecha ni codigo_habilitacion (admin) aquí 
+    // porque ya están filtrados a través de la subconsulta de control_lotes
 
     const incWhere = incFilters.join(" AND ");
 

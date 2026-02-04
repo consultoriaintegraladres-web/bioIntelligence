@@ -81,20 +81,16 @@ export async function GET(request: NextRequest) {
     // RELACIÓN: lote_de_carga IN (SELECT numero_lote FROM control_lotes WHERE ...)
     conditions.push(`i.lote_de_carga IN (${lotesSubquery})`);
 
-    // Codigo habilitacion
+    // Codigo habilitacion (solo para usuarios no admin, para seguridad)
     if (session.user.role !== "ADMIN") {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
         conditions.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '${userCodigo}%'`);
       }
-    } else if (codigo_habilitacion && codigo_habilitacion.trim() !== "") {
-      conditions.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '%${codigo_habilitacion}%'`);
     }
 
-    // IPS name filter
-    if (nombre_ips && nombre_ips.trim() !== "") {
-      conditions.push(`i.IPS LIKE '%${nombre_ips}%'`);
-    }
+    // NOTA: No aplicamos filtro de IPS ni fecha aquí porque ya están filtrados 
+    // a través de la subconsulta de control_lotes (lote_de_carga IN ...)
 
     if (tipo_validacion && tipo_validacion !== "all" && tipo_validacion !== "") {
       conditions.push(`i.tipo_validacion LIKE '%${tipo_validacion}%'`);
@@ -108,18 +104,9 @@ export async function GET(request: NextRequest) {
       conditions.push(`i.origen = '${origen}'`);
     }
 
-    // Lote de carga directo
+    // Lote de carga directo (filtro adicional si se especifica un lote específico)
     if (lote_de_carga && lote_de_carga.trim() !== "") {
       conditions.push(`i.lote_de_carga = '${lote_de_carga}'`);
-    }
-
-    // Date filters
-    if (fecha_inicio && fecha_fin) {
-      conditions.push(`i.fecha >= '${fecha_inicio}' AND i.fecha <= '${fecha_fin}'`);
-    } else if (fecha_inicio) {
-      conditions.push(`i.fecha >= '${fecha_inicio}'`);
-    } else if (fecha_fin) {
-      conditions.push(`i.fecha <= '${fecha_fin}'`);
     }
 
     // Search filter
