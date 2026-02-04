@@ -7,14 +7,14 @@ declare module "next-auth" {
       id: string;
       email: string;
       name: string;
-      codigoHabilitacion: string;
+      codigoHabilitacion: string | null;
       role: "ADMIN" | "USER" | "ANALYST";
     } & DefaultSession["user"];
   }
 
   interface User extends DefaultUser {
     id: string;
-    codigoHabilitacion: string;
+    codigoHabilitacion: string | null;
     role: "ADMIN" | "USER" | "ANALYST";
   }
 }
@@ -22,7 +22,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     id: string;
-    codigoHabilitacion: string;
+    codigoHabilitacion: string | null;
     role: "ADMIN" | "USER" | "ANALYST";
   }
 }
