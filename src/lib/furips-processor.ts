@@ -199,8 +199,8 @@ function parseInteger(value: string, fieldName: string, lineNumber: number, warn
 /**
  * Trunca un string si excede la longitud máxima
  */
-function truncateString(value: string, maxLength: number, fieldName: string, lineNumber: number, warnings: ValidationWarning[]): string {
-  if (!value) return value;
+function truncateString(value: string | null, maxLength: number, fieldName: string, lineNumber: number, warnings: ValidationWarning[]): string | null {
+  if (!value) return null;
 
   if (value.length > maxLength) {
     const truncated = value.substring(0, maxLength);
