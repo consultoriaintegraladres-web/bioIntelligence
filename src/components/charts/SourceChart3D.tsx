@@ -59,7 +59,7 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
             [0, "rgba(147, 51, 234, 0.8)"],     // Vivid Purple
             [0.5, "rgba(236, 72, 153, 0.85)"],  // Pink
             [1, "rgba(16, 185, 129, 0.9)"],     // Emerald
-          ],
+          ] as [number, string][],
           colorbar: {
             title: { text: "Valor (M)", font: { color: textColor, size: 14 } },
             tickfont: { color: textColor, size: 13 },
