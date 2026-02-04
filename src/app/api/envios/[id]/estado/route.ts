@@ -23,7 +23,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const envioId = parseInt(id);
+    const envioId = parseInt(id, 10);
     if (isNaN(envioId)) {
       return NextResponse.json(
         { error: "ID de envío inválido" },

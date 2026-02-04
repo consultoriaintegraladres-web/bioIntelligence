@@ -18,8 +18,8 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const chunk = formData.get("chunk") as Blob | null;
-    const chunkIndex = parseInt(formData.get("chunkIndex") as string);
-    const totalChunks = parseInt(formData.get("totalChunks") as string);
+    const chunkIndex = parseInt(formData.get("chunkIndex") as string, 10);
+    const totalChunks = parseInt(formData.get("totalChunks") as string, 10);
     const fileName = formData.get("fileName") as string;
     const uploadId = formData.get("uploadId") as string;
 

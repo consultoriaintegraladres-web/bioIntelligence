@@ -45,19 +45,19 @@ export function parseDate(dateStr: string, fieldName: string): ValidationResult 
       
       if (format.source.includes("\\/")) {
         // DD/MM/YYYY
-        day = parseInt(match[1]);
-        month = parseInt(match[2]);
-        year = parseInt(match[3]);
+        day = parseInt(match[1], 10);
+        month = parseInt(match[2], 10);
+        year = parseInt(match[3], 10);
       } else if (format.source.includes("-")) {
         // YYYY-MM-DD
-        year = parseInt(match[1]);
-        month = parseInt(match[2]);
-        day = parseInt(match[3]);
+        year = parseInt(match[1], 10);
+        month = parseInt(match[2], 10);
+        day = parseInt(match[3], 10);
       } else {
         // YYYYMMDD
-        year = parseInt(match[1]);
-        month = parseInt(match[2]);
-        day = parseInt(match[3]);
+        year = parseInt(match[1], 10);
+        month = parseInt(match[2], 10);
+        day = parseInt(match[3], 10);
       }
 
       const date = new Date(year, month - 1, day);
@@ -100,9 +100,9 @@ export function parseTime(timeStr: string, fieldName: string): ValidationResult 
   const match = trimmed.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
   
   if (match) {
-    const hours = parseInt(match[1]);
-    const minutes = parseInt(match[2]);
-    const seconds = match[3] ? parseInt(match[3]) : 0;
+    const hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const seconds = match[3] ? parseInt(match[3], 10) : 0;
     
     if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60 && seconds >= 0 && seconds < 60) {
       // Crear un Date con la hora del día
@@ -125,7 +125,7 @@ export function parseTime(timeStr: string, fieldName: string): ValidationResult 
 /**
  * Valida y convierte un número entero
  */
-export function parseInt Safe(value: string, fieldName: string): ValidationResult {
+export function parseIntSafe(value: string, fieldName: string): ValidationResult {
   const warnings: ValidationWarning[] = [];
   
   if (!value || value.trim() === "") {
@@ -133,7 +133,7 @@ export function parseInt Safe(value: string, fieldName: string): ValidationResul
   }
 
   const trimmed = value.trim();
-  const num = parseInt(trimmed);
+  const num = parseInt(trimmed, 10);
   
   if (isNaN(num)) {
     warnings.push({

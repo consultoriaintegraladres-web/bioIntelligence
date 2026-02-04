@@ -43,23 +43,23 @@ function parseDate(value: string, fieldName: string, lineNumber: number, warning
   // Formato DD/MM/YYYY o D/M/YYYY (con o sin ceros a la izquierda)
   const dmyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (dmyMatch) {
-    day = parseInt(dmyMatch[1]);
-    month = parseInt(dmyMatch[2]);
-    year = parseInt(dmyMatch[3]);
+    day = parseInt(dmyMatch[1], 10);
+    month = parseInt(dmyMatch[2], 10);
+    year = parseInt(dmyMatch[3], 10);
   } else {
     // Formato YYYY/MM/DD o YYYY/M/D
     const ymdMatch = trimmed.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
     if (ymdMatch) {
-      year = parseInt(ymdMatch[1]);
-      month = parseInt(ymdMatch[2]);
-      day = parseInt(ymdMatch[3]);
+      year = parseInt(ymdMatch[1], 10);
+      month = parseInt(ymdMatch[2], 10);
+      day = parseInt(ymdMatch[3], 10);
     } else {
       // Formato YYYY-MM-DD (ISO)
       const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (isoMatch) {
-        year = parseInt(isoMatch[1]);
-        month = parseInt(isoMatch[2]);
-        day = parseInt(isoMatch[3]);
+        year = parseInt(isoMatch[1], 10);
+        month = parseInt(isoMatch[2], 10);
+        day = parseInt(isoMatch[3], 10);
       } else {
         warnings.push({
           line: lineNumber,
@@ -126,9 +126,9 @@ function parseTime(value: string, fieldName: string, lineNumber: number, warning
   }
 
   const match = trimmed.match(timePattern)!;
-  const hours = parseInt(match[1]);
-  const minutes = parseInt(match[2]);
-  const seconds = match[3] ? parseInt(match[3]) : 0;
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const seconds = match[3] ? parseInt(match[3], 10) : 0;
 
   if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59 || seconds < 0 || seconds > 59) {
     warnings.push({
@@ -180,7 +180,7 @@ function parseInteger(value: string, fieldName: string, lineNumber: number, warn
   }
 
   const trimmed = value.trim();
-  const num = parseInt(trimmed);
+  const num = parseInt(trimmed, 10);
 
   if (isNaN(num)) {
     warnings.push({
@@ -242,9 +242,9 @@ function processFurips1Line(
     // Formato DD/MM/YYYY o D/M/YYYY (con o sin ceros)
     const dmyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (dmyMatch) {
-      day = parseInt(dmyMatch[1]);
-      month = parseInt(dmyMatch[2]);
-      year = parseInt(dmyMatch[3]);
+      day = parseInt(dmyMatch[1], 10);
+      month = parseInt(dmyMatch[2], 10);
+      year = parseInt(dmyMatch[3], 10);
       try {
         return new Date(year, month - 1, day);
       } catch {
@@ -255,9 +255,9 @@ function processFurips1Line(
     // Formato YYYY/MM/DD o YYYY/M/D
     const ymdMatch = trimmed.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
     if (ymdMatch) {
-      year = parseInt(ymdMatch[1]);
-      month = parseInt(ymdMatch[2]);
-      day = parseInt(ymdMatch[3]);
+      year = parseInt(ymdMatch[1], 10);
+      month = parseInt(ymdMatch[2], 10);
+      day = parseInt(ymdMatch[3], 10);
       try {
         return new Date(year, month - 1, day);
       } catch {
@@ -268,9 +268,9 @@ function processFurips1Line(
     // Formato YYYY-MM-DD (ISO)
     const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (isoMatch) {
-      year = parseInt(isoMatch[1]);
-      month = parseInt(isoMatch[2]);
-      day = parseInt(isoMatch[3]);
+      year = parseInt(isoMatch[1], 10);
+      month = parseInt(isoMatch[2], 10);
+      day = parseInt(isoMatch[3], 10);
       try {
         return new Date(year, month - 1, day);
       } catch {
@@ -290,9 +290,9 @@ function processFurips1Line(
     // Formato H:MM o HH:MM (con o sin ceros a la izquierda)
     const timeMatch = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
     if (timeMatch) {
-      const h = parseInt(timeMatch[1]);
-      const m = parseInt(timeMatch[2]);
-      const s = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
+      const h = parseInt(timeMatch[1], 10);
+      const m = parseInt(timeMatch[2], 10);
+      const s = timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
       
       if (h >= 0 && h < 24 && m >= 0 && m < 60 && s >= 0 && s < 60) {
         return new Date(2000, 0, 1, h, m, s);
@@ -345,7 +345,7 @@ function processFurips1Line(
     Codigo_CUPS_procedimiento_quirurgico_principal: (fields[39] || "").substring(0, 50) || null,
     Codigo_CUPS_procedimiento_quirurgico_secundario: (fields[40] || "").substring(0, 50) || null,
     Se_presto_servicio_UCI: (fields[41] || "").substring(0, 50) || null,
-    Dias_UCI_reclamados: parseInt(fields[42] || "0") || null,
+    Dias_UCI_reclamados: parseInt(fields[42] || "0", 10) || null,
     Tipo_documento_de_identidad_propietario: (fields[43] || "").substring(0, 10) || null,
     Numero_documento_identidad_propietario: (fields[44] || "").substring(0, 20) || null,
     Primer_apellido_propietario: (fields[45] || "").substring(0, 50) || null,
@@ -429,7 +429,7 @@ function processFurips2Line(
     Tipo_de_servicio: (fields[2] || "").substring(0, 50) || null,
     Codigo_del_servicio: (fields[3] || "").substring(0, 50) || null,
     Descripcion_del_servicio_o_elemento_reclamado: (fields[4] || "").substring(0, 300) || null,
-    Cantidad_de_servicios: parseInt(fields[5] || "0") || null,
+    Cantidad_de_servicios: parseInt(fields[5] || "0", 10) || null,
     Valor_unitario: parseFloat(fields[6] || "0") || null,
     Valor_total_facturado: parseFloat(fields[7] || "0") || null,
     Valor_total_reclamado: parseFloat(fields[8] || "0") || null,

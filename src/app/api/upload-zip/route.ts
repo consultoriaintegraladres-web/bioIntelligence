@@ -74,10 +74,10 @@ export async function POST(request: NextRequest) {
     const idEnvio = formData.get("idEnvio") as string;
     const codigoHabilitacion = formData.get("codigoHabilitacion") as string;
     const nombreIps = formData.get("nombreIps") as string;
-    const cantidadFacturas = parseInt(formData.get("cantidadFacturas") as string) || 0;
-    const cantidadItems = parseInt(formData.get("cantidadItems") as string) || 0;
+    const cantidadFacturas = parseInt(formData.get("cantidadFacturas") as string, 10) || 0;
+    const cantidadItems = parseInt(formData.get("cantidadItems") as string, 10) || 0;
     const valorTotal = parseFloat(formData.get("valorTotal") as string) || 0;
-    const furtranCantidad = parseInt(formData.get("furtranCantidad") as string) || 0;
+    const furtranCantidad = parseInt(formData.get("furtranCantidad") as string, 10) || 0;
     const furtranValor = parseFloat(formData.get("furtranValor") as string) || 0;
 
     if (!zipFile) {

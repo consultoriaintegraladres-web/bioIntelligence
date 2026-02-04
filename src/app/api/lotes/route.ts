@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "20", 10);
     const numero_lote = searchParams.get("numero_lote");
     const fecha_inicio = searchParams.get("fecha_inicio");
     const fecha_fin = searchParams.get("fecha_fin");
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (numero_lote) {
-      where.numero_lote = parseInt(numero_lote);
+      where.numero_lote = parseInt(numero_lote, 10);
     }
 
     if (fecha_inicio && fecha_fin) {
