@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Filter by codigo_habilitacion for non-admin users
-    if (session.user.role !== "ADMIN") {
+    if (session.user.role !== "ADMIN" && session.user.codigoHabilitacion) {
       where.codigo_habilitacion = {
         startsWith: session.user.codigoHabilitacion.substring(0, 10),
       };
