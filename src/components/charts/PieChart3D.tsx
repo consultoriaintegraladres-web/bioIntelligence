@@ -85,8 +85,8 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
             width: 3,
           },
         },
-        textinfo: "percent",
-        textposition: "outside",
+        textinfo: "percent" as const,
+        textposition: "outside" as const,
         textfont: { 
           color: textColor, 
           size: 14, 
