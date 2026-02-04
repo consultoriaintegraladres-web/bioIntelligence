@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import { ThemeMode } from "@/contexts/app-context";
+import type { Data } from "plotly.js";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
@@ -47,7 +48,7 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
       {
         x: origenes,
         y: valoresMillones,
-        mode: "markers+text" as const,
+        mode: "text+markers" as const,
         type: "scatter" as const,
         text: sortedData.map((d, i) => `${formatValue(valores[i])}<br>(${cantidades[i].toLocaleString()})`),
         textposition: "top center" as const,
@@ -55,18 +56,13 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
         marker: {
           size: sizes,
           color: valoresMillones,
-          colorscale: [
-            [0, "rgba(147, 51, 234, 0.8)"],     // Vivid Purple
-            [0.5, "rgba(236, 72, 153, 0.85)"],  // Pink
-            [1, "rgba(16, 185, 129, 0.9)"],     // Emerald
-          ] as [number, string][],
+          colorscale: "Viridis" as const,
+          showscale: true,
           colorbar: {
             title: { text: "Valor (M)", font: { color: textColor, size: 14 } },
             tickfont: { color: textColor, size: 13 },
             bordercolor: "transparent",
             bgcolor: "transparent",
-            tickformat: ",.1f",
-            ticksuffix: "M",
           },
           line: {
             color: isLight ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.3)",
@@ -78,9 +74,8 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
           `Valor: ${formatValue(valores[i])}<br>` +
           `Cantidad: ${cantidades[i].toLocaleString()}<extra></extra>`
         ),
-        customdata: cantidades,
       },
-    ];
+    ] as Data[];
   }, [data, isLight, textColor]);
 
   if (!chartData) {
