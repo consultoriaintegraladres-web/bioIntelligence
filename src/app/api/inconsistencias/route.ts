@@ -109,9 +109,9 @@ export async function GET(request: NextRequest) {
       conditions.push(`i.lote_de_carga = '${lote_de_carga}'`);
     }
 
-    // Search filter
+    // Search filter - busca por factura, origen, tipo_validacion, descripcion_servicio
     if (search) {
-      conditions.push(`(i.Numero_factura LIKE '%${search}%' OR i.IPS LIKE '%${search}%' OR i.descripcion_servicio LIKE '%${search}%' OR i.observacion LIKE '%${search}%')`);
+      conditions.push(`(i.Numero_factura LIKE '%${search}%' OR i.IPS LIKE '%${search}%' OR i.origen LIKE '%${search}%' OR i.tipo_validacion LIKE '%${search}%' OR i.descripcion_servicio LIKE '%${search}%' OR i.observacion LIKE '%${search}%')`);
     }
 
     const whereClause = conditions.join(" AND ");

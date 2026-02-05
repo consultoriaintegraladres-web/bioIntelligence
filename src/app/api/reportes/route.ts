@@ -119,19 +119,33 @@ export async function GET(request: NextRequest) {
           WHERE ${lotesWhere}
         `;
         
-        // KPIs de inconsistencias
-        const inconsistenciasQuery = `
+        // KPIs de inconsistencias - cantidad total
+        const inconsistenciasCountQuery = `
           SELECT 
-            COUNT(*) as totalInconsistencias,
-            COALESCE(SUM(i.valor_total), 0) as valorTotalInconsistencias
+            COUNT(*) as totalInconsistencias
           FROM inconsistencias i
           INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
           WHERE ${incWhere}
         `;
 
-        const [lotesResult, inconsistenciasResult] = await Promise.all([
+        // KPIs de inconsistencias - valor deduplicado por (Numero_factura, codigo_del_servicio)
+        // Para evitar duplicar el valor cuando la misma factura+item tiene múltiples orígenes
+        const inconsistenciasValorQuery = `
+          SELECT 
+            COALESCE(SUM(sub.valor_total), 0) as valorTotalInconsistencias
+          FROM (
+            SELECT i.Numero_factura, i.codigo_del_servicio, MAX(i.valor_total) as valor_total
+            FROM inconsistencias i
+            INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
+            WHERE ${incWhere}
+            GROUP BY i.Numero_factura, i.codigo_del_servicio
+          ) sub
+        `;
+
+        const [lotesResult, inconsistenciasCountResult, inconsistenciasValorResult] = await Promise.all([
           prisma.$queryRawUnsafe<any[]>(lotesQuery),
-          prisma.$queryRawUnsafe<any[]>(inconsistenciasQuery),
+          prisma.$queryRawUnsafe<any[]>(inconsistenciasCountQuery),
+          prisma.$queryRawUnsafe<any[]>(inconsistenciasValorQuery),
         ]);
 
         return NextResponse.json({
@@ -140,24 +154,35 @@ export async function GET(request: NextRequest) {
             totalLotes: Number(lotesResult[0]?.totalLotes || 0),
             totalFacturas: Number(lotesResult[0]?.totalFacturas || 0),
             valorTotalReclamado: Number(lotesResult[0]?.valorTotalReclamado || 0),
-            totalInconsistencias: Number(inconsistenciasResult[0]?.totalInconsistencias || 0),
-            valorTotalInconsistencias: Number(inconsistenciasResult[0]?.valorTotalInconsistencias || 0),
+            totalInconsistencias: Number(inconsistenciasCountResult[0]?.totalInconsistencias || 0),
+            valorTotalInconsistencias: Number(inconsistenciasValorResult[0]?.valorTotalInconsistencias || 0),
           },
         });
       }
 
       case "resumen_validacion": {
+        // Valor deduplicado: para cada tipo_validacion, sumamos solo un valor por (Numero_factura, codigo_del_servicio)
         const query = `
           SELECT 
-            i.tipo_validacion,
-            COUNT(*) as cantidad_registros,
-            COALESCE(SUM(i.valor_total), 0) as valor_total,
+            sub.tipo_validacion,
+            SUM(sub.cnt) as cantidad_registros,
+            COALESCE(SUM(sub.valor_dedup), 0) as valor_total,
             p.Recomendación as Recomendacion,
             p.Tipo_robot
-          FROM inconsistencias i
-          INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
-          WHERE ${incWhere}
-          GROUP BY i.tipo_validacion, p.Recomendación, p.Tipo_robot
+          FROM (
+            SELECT 
+              i.tipo_validacion,
+              i.Numero_factura,
+              i.codigo_del_servicio,
+              COUNT(*) as cnt,
+              MAX(i.valor_total) as valor_dedup
+            FROM inconsistencias i
+            INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
+            WHERE ${incWhere}
+            GROUP BY i.tipo_validacion, i.Numero_factura, i.codigo_del_servicio
+          ) sub
+          INNER JOIN par_validaciones p ON sub.tipo_validacion = p.tipo_validacion
+          GROUP BY sub.tipo_validacion, p.Recomendación, p.Tipo_robot
           ORDER BY cantidad_registros DESC
           LIMIT 20
         `;
@@ -177,15 +202,25 @@ export async function GET(request: NextRequest) {
       }
 
       case "resumen_origen": {
+        // Valor deduplicado por (Numero_factura, codigo_del_servicio) dentro de cada origen
         const query = `
           SELECT 
-            COALESCE(i.origen, 'Sin origen') as origen,
-            COUNT(*) as cantidad_hallazgos,
-            COALESCE(SUM(i.valor_total), 0) as valor_total
-          FROM inconsistencias i
-          INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
-          WHERE ${incWhere}
-          GROUP BY i.origen
+            sub.origen,
+            SUM(sub.cnt) as cantidad_hallazgos,
+            COALESCE(SUM(sub.valor_dedup), 0) as valor_total
+          FROM (
+            SELECT 
+              COALESCE(i.origen, 'Sin origen') as origen,
+              i.Numero_factura,
+              i.codigo_del_servicio,
+              COUNT(*) as cnt,
+              MAX(i.valor_total) as valor_dedup
+            FROM inconsistencias i
+            INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
+            WHERE ${incWhere}
+            GROUP BY i.origen, i.Numero_factura, i.codigo_del_servicio
+          ) sub
+          GROUP BY sub.origen
           ORDER BY cantidad_hallazgos DESC
         `;
 

@@ -12,6 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -34,8 +41,10 @@ import {
   Download,
   Filter,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { useAppContext } from "@/contexts/app-context";
+import { exportToExcel } from "@/lib/excel-export";
 
 interface Inconsistencia {
   inconsistencia_id: number;
@@ -68,9 +77,10 @@ export default function DetallePage() {
   const { data: session } = useSession();
   const { filters, selectedIpsName, setSelectedIpsName, themeMode } = useAppContext();
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<Inconsistencia | null>(null);
-  const limit = 20;
+  const [isExporting, setIsExporting] = useState(false);
 
   const isLight = themeMode === "light";
   const textColor = isLight ? "text-gray-900" : "text-white";
@@ -90,9 +100,9 @@ export default function DetallePage() {
 
   useEffect(() => {
     setPage(1);
-  }, [filters]);
+  }, [filters, limit]);
 
-  // Build query string using ALL shared filters from context (including nombre_envio and tipo_envio)
+  // Build query string using ALL shared filters from context
   const queryString = useMemo(() => {
     const params = new URLSearchParams({
       page: page.toString(),
@@ -109,7 +119,7 @@ export default function DetallePage() {
     if (filters.nombre_envio) params.set("nombre_envio", filters.nombre_envio);
     if (filters.tipo_envio) params.set("tipo_envio", filters.tipo_envio);
     return params.toString();
-  }, [page, search, filters]);
+  }, [page, limit, search, filters]);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["inconsistencias_detalle", queryString],
@@ -143,49 +153,73 @@ export default function DetallePage() {
     return factura.length > 12 ? factura.substring(0, 12) : factura;
   };
 
+  // Export ALL records to Excel (not just current page)
   const handleExport = async () => {
-    if (!data?.data) return;
+    setIsExporting(true);
+    try {
+      // Fetch ALL records with a high limit
+      const exportParams = new URLSearchParams();
+      exportParams.set("page", "1");
+      exportParams.set("limit", "50000");
+      if (search) exportParams.set("search", search);
+      if (filters.tipo_validacion) exportParams.set("tipo_validacion", filters.tipo_validacion);
+      if (filters.origen) exportParams.set("origen", filters.origen);
+      if (filters.codigo_habilitacion) exportParams.set("codigo_habilitacion", filters.codigo_habilitacion);
+      if (filters.lote_de_carga) exportParams.set("lote_de_carga", filters.lote_de_carga);
+      if (filters.fecha_inicio) exportParams.set("fecha_inicio", filters.fecha_inicio);
+      if (filters.fecha_fin) exportParams.set("fecha_fin", filters.fecha_fin);
+      if (filters.nombre_ips) exportParams.set("nombre_ips", filters.nombre_ips);
+      if (filters.nombre_envio) exportParams.set("nombre_envio", filters.nombre_envio);
+      if (filters.tipo_envio) exportParams.set("tipo_envio", filters.tipo_envio);
 
-    const headers = [
-      "No. Factura",
-      "IPS",
-      "Origen",
-      "Tipo Validación",
-      "Tipo Servicio",
-      "Código Servicio",
-      "Descripción",
-      "Cantidad",
-      "Valor Unitario",
-      "Valor Total",
-      "Fecha",
-      "Lote",
-    ];
+      const res = await fetch(`/api/inconsistencias?${exportParams.toString()}`);
+      const json = await res.json();
 
-    const rows = data.data.map((item: Inconsistencia) => [
-      formatFactura(item.Numero_factura),
-      item.IPS || "",
-      item.origen || "",
-      item.tipo_validacion || "",
-      item.tipo_servicio || "",
-      item.codigo_del_servicio || "",
-      item.descripcion_servicio || "",
-      item.cantidad || "",
-      item.valor_unitario || "",
-      item.valor_total || "",
-      item.fecha || "",
-      item.lote_de_carga || "",
-    ]);
+      if (!json?.data || json.data.length === 0) return;
 
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row: string[]) => row.map((cell) => `"${cell}"`).join(",")),
-    ].join("\n");
+      const headers = [
+        "No. Factura",
+        "IPS",
+        "Origen",
+        "Tipo Validación",
+        "Tipo Servicio",
+        "Código Servicio",
+        "Descripción Servicio",
+        "Cantidad",
+        "Valor Unitario",
+        "Valor Total",
+        "Fecha",
+        "Lote",
+        "Observación",
+      ];
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `hallazgos_${format(new Date(), "yyyy-MM-dd")}.csv`;
-    link.click();
+      const rows = json.data.map((item: Inconsistencia) => [
+        item.Numero_factura || "",
+        item.IPS || "",
+        item.origen || "",
+        item.tipo_validacion || "",
+        item.tipo_servicio || "",
+        item.codigo_del_servicio || "",
+        item.descripcion_servicio || "",
+        item.cantidad || "",
+        item.valor_unitario || "",
+        item.valor_total || "",
+        item.fecha || "",
+        item.lote_de_carga || "",
+        item.observacion || "",
+      ]);
+
+      exportToExcel({
+        fileName: `hallazgos_detalle_${format(new Date(), "yyyy-MM-dd")}`,
+        sheetName: "Detalle Hallazgos",
+        headers,
+        rows,
+      });
+    } catch (error) {
+      console.error("Error exporting:", error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const activeFiltersCount = [
@@ -219,10 +253,14 @@ export default function DetallePage() {
           onClick={handleExport}
           variant="outline"
           className={`text-base ${isLight ? "border-gray-300 text-gray-700 hover:bg-gray-100" : "border-[#9333EA]/50 text-[#10B981] hover:bg-[#9333EA]/10"}`}
-          disabled={!data?.data?.length}
+          disabled={!data?.data?.length || isExporting}
         >
-          <Download className="w-4 h-4 mr-2" />
-          Exportar CSV
+          {isExporting ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4 mr-2" />
+          )}
+          {isExporting ? "Exportando..." : "Exportar Excel"}
         </Button>
       </motion.div>
 
@@ -271,7 +309,7 @@ export default function DetallePage() {
         </Card>
       </motion.div>
 
-      {/* Search */}
+      {/* Search + Page size */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -279,11 +317,11 @@ export default function DetallePage() {
       >
         <Card className={`${cardBg} backdrop-blur-xl`}>
           <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                 <Input
-                  placeholder="Buscar por factura, IPS o descripción..."
+                  placeholder="Buscar por factura, origen, tipo validación, descripción servicio..."
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -291,6 +329,23 @@ export default function DetallePage() {
                   }}
                   className={`pl-11 ${inputBg} ${inputText} placeholder:text-gray-500 text-base h-12`}
                 />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm ${subTextColor} whitespace-nowrap`}>Registros:</span>
+                <Select
+                  value={limit.toString()}
+                  onValueChange={(val) => setLimit(parseInt(val, 10))}
+                >
+                  <SelectTrigger className={`w-[80px] ${inputBg} ${inputText} h-12`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={isLight ? "bg-white border-gray-200" : "bg-[#1a1a2e] border-[#2a2a3e]"}>
+                    <SelectItem value="10" className={`${textColor}`}>10</SelectItem>
+                    <SelectItem value="20" className={`${textColor}`}>20</SelectItem>
+                    <SelectItem value="50" className={`${textColor}`}>50</SelectItem>
+                    <SelectItem value="100" className={`${textColor}`}>100</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>

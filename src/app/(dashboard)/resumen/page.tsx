@@ -330,7 +330,7 @@ export default function ResumenPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResumenTable data={resumenValidacion} isLoading={loadingValidacion} themeMode={themeMode} />
+            <ResumenTable data={resumenValidacion} isLoading={loadingValidacion} themeMode={themeMode} filters={filters} />
           </CardContent>
         </Card>
       </motion.div>
