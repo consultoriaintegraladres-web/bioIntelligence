@@ -30,7 +30,7 @@ export type { FilterValues };
 
 export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: DynamicFiltersProps) {
   const { data: session } = useSession();
-  const { themeMode } = useAppContext();
+  const { themeMode, filters: contextFilters, setFilters: setContextFilters } = useAppContext();
   const isAdmin = session?.user?.role === "ADMIN";
 
   const isLight = themeMode === "light";
@@ -44,10 +44,17 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
   const today = new Date();
   const thirtyDaysAgo = subDays(today, 30);
 
-  const [filters, setFilters] = useState<FilterValues>({
+  // Initialize filters from context or use defaults
+  const getDefaultFilters = (): FilterValues => ({
     fecha_inicio: format(thirtyDaysAgo, "yyyy-MM-dd"),
     fecha_fin: format(today, "yyyy-MM-dd"),
     tipo_envio: "Primera vez",
+  });
+
+  const [filters, setFilters] = useState<FilterValues>(() => {
+    // If context has filters, use them; otherwise use defaults
+    const hasContextFilters = Object.keys(contextFilters).length > 0;
+    return hasContextFilters ? contextFilters : getDefaultFilters();
   });
 
   const [ipsSearch, setIpsSearch] = useState("");
@@ -129,23 +136,31 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
         }
       }
     }
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    const updatedFilters = { ...filters, [key]: value };
+    setFilters(updatedFilters);
+    // Update context immediately so filters persist across navigation
+    setContextFilters(updatedFilters);
   };
 
   const handleIpsSelect = (ips: string) => {
     setIpsSearch(ips);
-    setFilters((prev) => ({ ...prev, nombre_ips: ips }));
+    const updatedFilters = { ...filters, nombre_ips: ips };
+    setFilters(updatedFilters);
+    setContextFilters(updatedFilters);
     setShowIpsSuggestions(false);
   };
 
   const handleLoteChange = (value: string) => {
     const numericValue = value.replace(/[^0-9]/g, "");
     setLoteInput(numericValue);
-    setFilters((prev) => ({ ...prev, lote_de_carga: numericValue }));
+    const updatedFilters = { ...filters, lote_de_carga: numericValue };
+    setFilters(updatedFilters);
+    setContextFilters(updatedFilters);
     validateLote(numericValue);
   };
 
   const handleApplyFilters = () => {
+    setContextFilters(filters);
     onFiltersChange(filters);
   };
 
@@ -156,15 +171,27 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
       tipo_envio: "Primera vez",
     };
     setFilters(resetFilters);
+    setContextFilters(resetFilters);
     setIpsSearch("");
     setLoteInput("");
     setLoteValidation(null);
     onFiltersChange(resetFilters);
   };
 
+  // Sync local state with context when context changes (e.g., when navigating back)
   useEffect(() => {
-    onFiltersChange(filters);
-  }, []);
+    const hasContextFilters = Object.keys(contextFilters).length > 0;
+    if (hasContextFilters) {
+      setFilters(contextFilters);
+      // Update local state for inputs that depend on filters
+      if (contextFilters.nombre_ips) {
+        setIpsSearch(contextFilters.nombre_ips);
+      }
+      if (contextFilters.lote_de_carga) {
+        setLoteInput(contextFilters.lote_de_carga);
+      }
+    }
+  }, [contextFilters]);
 
   // Truncate text for display (max 60 chars, split in 2 lines if needed)
   const truncateText = (text: string, maxLen: number = 60) => {

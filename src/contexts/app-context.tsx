@@ -31,7 +31,22 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppContextProvider({ children }: { children: ReactNode }) {
-  const [filters, setFilters] = useState<FilterValues>({});
+  // Initialize filters from localStorage or default values
+  const getInitialFilters = (): FilterValues => {
+    if (typeof window === "undefined") return {};
+    try {
+      const saved = localStorage.getItem("bioretail-filters");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed;
+      }
+    } catch (e) {
+      console.error("Error loading filters from localStorage:", e);
+    }
+    return {};
+  };
+
+  const [filters, setFiltersState] = useState<FilterValues>(getInitialFilters);
   const [selectedIpsName, setSelectedIpsName] = useState("");
   const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -48,6 +63,16 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
       setSidebarCollapsed(savedSidebar === "true");
     }
   }, []);
+
+  // Save filters to localStorage whenever they change
+  const setFilters = (newFilters: FilterValues) => {
+    setFiltersState(newFilters);
+    try {
+      localStorage.setItem("bioretail-filters", JSON.stringify(newFilters));
+    } catch (e) {
+      console.error("Error saving filters to localStorage:", e);
+    }
+  };
 
   // Save theme to localStorage
   const handleSetThemeMode = (mode: ThemeMode) => {
