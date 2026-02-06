@@ -65,9 +65,9 @@ export async function GET(request: NextRequest) {
       lotesFilters.push(`codigo_habilitación LIKE '%${codigo_habilitacion}%'`);
     }
 
-    // Nombre IPS
+    // Nombre IPS - usar COLLATE para evitar problemas de collation
     if (nombre_ips && nombre_ips.trim() !== "") {
-      lotesFilters.push(`nombre_ips LIKE '%${nombre_ips}%'`);
+      lotesFilters.push(`nombre_ips COLLATE utf8mb4_general_ci LIKE '%${nombre_ips}%' COLLATE utf8mb4_general_ci`);
     }
 
     // Fecha creacion

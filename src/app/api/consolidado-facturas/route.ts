@@ -69,9 +69,9 @@ export async function GET(request: NextRequest) {
       lotesFilters.push(`codigo_habilitación LIKE '%${codigo_habilitacion}%'`);
     }
 
-    // Nombre IPS
+    // Nombre IPS - usar COLLATE para evitar problemas de collation
     if (nombre_ips && nombre_ips.trim() !== "") {
-      lotesFilters.push(`nombre_ips LIKE '%${nombre_ips}%'`);
+      lotesFilters.push(`nombre_ips COLLATE utf8mb4_general_ci LIKE '%${nombre_ips}%' COLLATE utf8mb4_general_ci`);
     }
 
     // Fecha creacion
@@ -259,9 +259,19 @@ export async function GET(request: NextRequest) {
 
     console.log("📊 Totales calculados:", totals);
 
+    // Asegurar que todos los valores numéricos sean números, no BigInt
+    const safeTotals = {
+      totalFacturas: Number(totals.totalFacturas) || 0,
+      totalReclamado: Number(totals.totalReclamado) || 0,
+      totalConHallazgos: Number(totals.totalConHallazgos) || 0,
+      totalSinHallazgos: Number(totals.totalSinHallazgos) || 0,
+      totalHallazgosCriticos: Number(totals.totalHallazgosCriticos) || 0,
+      totalValorHallazgosCriticos: Number(totals.totalValorHallazgosCriticos) || 0,
+    };
+
     return NextResponse.json({
       data: serializedData,
-      totals,
+      totals: safeTotals,
       viewName, // Para debug
     });
   } catch (error: any) {

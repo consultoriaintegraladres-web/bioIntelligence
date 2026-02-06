@@ -647,9 +647,10 @@ export default function ControlFacturasPage() {
                   setLimit(parseInt(value));
                   setPage(1);
                 }}
+                key={`limit-select-${limit}`} // Force re-render to avoid hydration issues
               >
                 <SelectTrigger className={`w-24 ${inputBg} ${inputText} border ${borderColor}`}>
-                  <SelectValue />
+                  <SelectValue placeholder="20" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="10">10</SelectItem>
