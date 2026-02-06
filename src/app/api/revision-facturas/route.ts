@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// Helper to convert BigInt values to Numbers in query results
+function serializeResults(data: any[]): any[] {
+  return data.map((row) => {
+    const serialized: any = {};
+    for (const [key, value] of Object.entries(row)) {
+      serialized[key] = typeof value === "bigint" ? Number(value) : value;
+    }
+    return serialized;
+  });
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -25,7 +36,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // ============================================================
-    // FILTROS DE control_lotes
+    // FILTROS DE control_lotes (para subquery cuando no hay lote directo)
     // ============================================================
     const lotesFilters: string[] = [];
     
@@ -62,59 +73,62 @@ export async function GET(request: NextRequest) {
       lotesFilters.push(`tipo_envio = '${tipo_envio}'`);
     }
 
-    // Numero lote
-    if (numero_lote && numero_lote.trim() !== "") {
-      lotesFilters.push(`numero_lote = '${numero_lote}'`);
-    }
-
-    // Query para obtener datos de revision_facturas
-    // La vista debe tener: numero_lote, numero_factura, primera_revision, segunda_revision
+    // ============================================================
+    // WHERE de revision_facturas
+    // ============================================================
     const whereConditions: string[] = [];
     
-    // Si hay un numero_lote específico, filtrar directamente por él
-    // De lo contrario, usar los filtros de control_lotes para obtener los lotes válidos
+    // Si hay un numero_lote específico, filtrar directamente
     if (numero_lote && numero_lote.trim() !== "") {
-      // Filtro directo por numero_lote
-      whereConditions.push(`numero_lote = '${numero_lote}'`);
+      whereConditions.push(`numero_lote = ${parseInt(numero_lote)}`);
     } else {
       // Usar filtros de control_lotes para obtener lotes válidos
-      const lotesWhere = lotesFilters.length > 0 ? lotesFilters.join(" AND ") : "1=1";
+      const lotesWhere = lotesFilters.join(" AND ");
       whereConditions.push(`numero_lote IN (SELECT numero_lote FROM control_lotes WHERE ${lotesWhere})`);
     }
 
     // Search filter
     if (search) {
-      whereConditions.push(`(numero_factura LIKE '%${search}%' OR numero_lote LIKE '%${search}%')`);
+      whereConditions.push(`(Numero_factura LIKE '%${search}%' OR CAST(numero_lote AS CHAR) LIKE '%${search}%')`);
     }
 
-    const whereClause = whereConditions.length > 0 ? whereConditions.join(" AND ") : "1=1";
+    const whereClause = whereConditions.join(" AND ");
 
-    // Count query
+    console.log("📋 revision_facturas WHERE:", whereClause);
+
+    // Count query - CAST to SIGNED to avoid BigInt serialization issues
     const countQuery = `
-      SELECT COUNT(*) as total
+      SELECT CAST(COUNT(*) AS SIGNED) as total
       FROM revision_facturas
       WHERE ${whereClause}
     `;
 
-    // Data query
+    // Data query - use exact column names as defined in the view
     const dataQuery = `
       SELECT 
         numero_lote,
-        numero_factura,
-        primera_revision,
+        Numero_factura,
+        Primera_revision,
         segunda_revision
       FROM revision_facturas
       WHERE ${whereClause}
-      ORDER BY numero_lote DESC, numero_factura ASC
+      ORDER BY numero_lote DESC, Numero_factura ASC
       LIMIT ${limit} OFFSET ${skip}
     `;
 
-    const [countResult, dataResult] = await Promise.all([
+    console.log("📋 revision_facturas COUNT query:", countQuery);
+    console.log("📋 revision_facturas DATA query:", dataQuery);
+
+    const [countResult, rawDataResult] = await Promise.all([
       prisma.$queryRawUnsafe<any[]>(countQuery),
       prisma.$queryRawUnsafe<any[]>(dataQuery),
     ]);
 
-    const total = countResult[0]?.total || 0;
+    // Serialize to handle any BigInt values
+    const dataResult = serializeResults(rawDataResult);
+    const total = Number(countResult[0]?.total || 0);
+
+    console.log(`📋 revision_facturas: ${total} registros encontrados, página ${page}`);
 
     return NextResponse.json({
       data: dataResult,
@@ -126,7 +140,8 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching revision_facturas:", error);
+    console.error("❌ Error fetching revision_facturas:", error.message);
+    console.error("❌ Stack:", error.stack);
     return NextResponse.json(
       { error: "Error al obtener datos de revisión de facturas", details: error.message },
       { status: 500 }

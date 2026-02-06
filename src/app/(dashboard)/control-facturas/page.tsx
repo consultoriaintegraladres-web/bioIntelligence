@@ -51,8 +51,8 @@ import { HallazgosModal } from "@/components/HallazgosModal";
 
 interface RevisionFactura {
   numero_lote: number | null;
-  numero_factura: string | null;
-  primera_revision: string | null;
+  Numero_factura: string | null;
+  Primera_revision: string | null;
   segunda_revision: string | null;
 }
 
@@ -151,8 +151,8 @@ export default function ControlFacturasPage() {
       const headers = ["Número Lote", "Número Factura", "Primera Revisión", "Segunda Revisión"];
       const rows = allData.map((item: RevisionFactura) => [
         item.numero_lote || "",
-        item.numero_factura || "",
-        item.primera_revision || "",
+        item.Numero_factura || "",
+        item.Primera_revision || "",
         item.segunda_revision || "",
       ]);
 
@@ -186,7 +186,8 @@ export default function ControlFacturasPage() {
   ) => {
     if (!value) return <span className={subTextColor}>-</span>;
 
-    if (value === "Ok sin hallazgos" || value === "No requiere segunda revisión") {
+    const okValues = ["Ok sin hallazgos", "Ok Sin hallazgos", "No requiere segunda revisión", "No fue reenviada"];
+    if (okValues.some(v => value.toLowerCase() === v.toLowerCase())) {
       return (
         <div className="flex items-center gap-2">
           <CheckCircle2 className="w-5 h-5 text-green-500" />
@@ -195,7 +196,7 @@ export default function ControlFacturasPage() {
       );
     }
 
-    if (value === "Ver hallazgos" || value === "Ver Hallazgos") {
+    if (value.toLowerCase().includes("ver hallazgos")) {
       return (
         <button
           onClick={() => handleVerHallazgos(factura, tipoRevision)}
@@ -328,17 +329,17 @@ export default function ControlFacturasPage() {
                   ) : (
                     data.data.map((item: RevisionFactura, index: number) => (
                       <TableRow
-                        key={`${item.numero_lote}-${item.numero_factura}-${index}`}
+                        key={`${item.numero_lote}-${item.Numero_factura}-${index}`}
                         className={hoverBg}
                       >
                         <TableCell className={textColor}>
                           {item.numero_lote || "-"}
                         </TableCell>
                         <TableCell className={textColor}>
-                          {item.numero_factura || "-"}
+                          {item.Numero_factura || "-"}
                         </TableCell>
                         <TableCell>
-                          {renderRevisionCell(item.primera_revision, item, "primera")}
+                          {renderRevisionCell(item.Primera_revision, item, "primera")}
                         </TableCell>
                         <TableCell>
                           {renderRevisionCell(item.segunda_revision, item, "segunda")}
