@@ -81,9 +81,9 @@ Proporciona un resumen estructurado, numerando cada hallazgo del 1 al ${hallazgo
     // Log para verificar que la API key está presente (sin mostrar el valor completo)
     console.log(`✅ GEMINI_API_KEY encontrada: ${GEMINI_API_KEY.substring(0, 10)}...`);
 
-    // Llamar a Gemini API - Usando gemini-1.5-flash (modelo estable disponible)
-    // Nota: gemini-pro está deprecado y ya no está disponible
-    const modelName = "gemini-1.5-flash";
+    // Llamar a Gemini API - Usando gemini-2.0-flash (modelo rápido y estable)
+    // Modelos disponibles: gemini-3-flash-preview, gemini-2.5-flash, gemini-2.0-flash
+    const modelName = "gemini-2.0-flash";
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
       {
