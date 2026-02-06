@@ -15,6 +15,13 @@ interface HallazgoDetalle {
 
 export async function POST(request: NextRequest) {
   try {
+    // Log temporal para diagnosticar variables de entorno
+    console.log("🔍 Variables de entorno disponibles:", {
+      hasGEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
+      nodeEnv: process.env.NODE_ENV,
+      allEnvKeys: Object.keys(process.env).filter(k => k.includes("GEMINI") || k.includes("NEXT")).join(", ")
+    });
+
     const session = await auth();
 
     if (!session?.user) {
@@ -74,10 +81,10 @@ Proporciona un resumen estructurado, numerando cada hallazgo del 1 al ${hallazgo
     // Log para verificar que la API key está presente (sin mostrar el valor completo)
     console.log(`✅ GEMINI_API_KEY encontrada: ${GEMINI_API_KEY.substring(0, 10)}...`);
 
-    // Llamar a Gemini API - Intentando diferentes modelos disponibles
-    // Primero intentamos con gemini-1.5-flash, si falla probamos gemini-pro
-    let modelName = "gemini-1.5-flash";
-    let response = await fetch(
+    // Llamar a Gemini API - Usando gemini-1.5-flash (modelo estable disponible)
+    // Nota: gemini-pro está deprecado y ya no está disponible
+    const modelName = "gemini-1.5-flash";
+    const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
@@ -97,40 +104,6 @@ Proporciona un resumen estructurado, numerando cada hallazgo del 1 al ${hallazgo
         }),
       }
     );
-
-    // Si el modelo no está disponible, intentar con gemini-pro
-    if (!response.ok) {
-      const errorText = await response.text();
-      try {
-        const errorJson = JSON.parse(errorText);
-        if (errorJson.error?.message?.includes("not found") || errorJson.error?.message?.includes("not supported")) {
-          console.log(`Modelo ${modelName} no disponible, intentando con gemini-pro...`);
-          modelName = "gemini-pro";
-          response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    parts: [
-                      {
-                        text: prompt,
-                      },
-                    ],
-                  },
-                ],
-              }),
-            }
-          );
-        }
-      } catch {
-        // Si no es JSON, continuar con el error original
-      }
-    }
 
     if (!response.ok) {
       const errorData = await response.text();
