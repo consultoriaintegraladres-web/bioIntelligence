@@ -151,14 +151,28 @@ export default function ControlFacturasPage() {
     return params.toString();
   }, [filters]);
 
-  const { data: consolidadoData, isLoading: isLoadingConsolidado } = useQuery({
+  const { data: consolidadoData, isLoading: isLoadingConsolidado, error: consolidadoError } = useQuery({
     queryKey: ["consolidado_facturas", consolidadoQueryString],
     queryFn: async () => {
       const res = await fetch(`/api/consolidado-facturas?${consolidadoQueryString}`);
-      if (!res.ok) throw new Error("Error al obtener datos consolidados");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Error desconocido" }));
+        console.error("❌ Error en consolidado-facturas:", errorData);
+        throw new Error(errorData.error || "Error al obtener datos consolidados");
+      }
       return res.json();
     },
   });
+
+  // Log para debug
+  useEffect(() => {
+    if (consolidadoData) {
+      console.log("📊 Consolidado data recibida:", consolidadoData);
+    }
+    if (consolidadoError) {
+      console.error("❌ Error consolidado:", consolidadoError);
+    }
+  }, [consolidadoData, consolidadoError]);
 
 
   const handleExport = async () => {

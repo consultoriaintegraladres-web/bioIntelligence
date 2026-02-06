@@ -40,6 +40,17 @@ export async function GET(request: NextRequest) {
     const nombre_envio = searchParams.get("nombre_envio");
     const tipo_envio = searchParams.get("tipo_envio");
 
+    console.log("📊 consolidado-facturas Params recibidos:", {
+      numero_lote,
+      codigo_habilitacion,
+      nombre_ips,
+      fecha_inicio,
+      fecha_fin,
+      nombre_envio,
+      tipo_envio,
+      role: session.user.role,
+    });
+
     // ============================================================
     // FILTROS DE control_lotes (igual que revision-facturas)
     // ============================================================
@@ -88,13 +99,14 @@ export async function GET(request: NextRequest) {
       whereConditions.push(`numero_lote = ${parseInt(numero_lote)}`);
     } else {
       // Usar filtros de control_lotes para obtener lotes válidos
-      const lotesWhere = lotesFilters.join(" AND ");
+      const lotesWhere = lotesFilters.length > 0 ? lotesFilters.join(" AND ") : "1=1";
       whereConditions.push(`numero_lote IN (SELECT numero_lote FROM control_lotes WHERE ${lotesWhere})`);
     }
 
     const whereClause = whereConditions.join(" AND ");
 
     console.log("📊 consolidado_facturas WHERE:", whereClause);
+    console.log("📊 consolidado_facturas lotesFilters:", lotesFilters);
 
     // Query para obtener datos de la vista consolidado
     // Intentamos diferentes nombres posibles de la vista basados en la imagen
@@ -113,6 +125,7 @@ export async function GET(request: NextRequest) {
 
     for (const view of possibleViewNames) {
       try {
+        console.log(`🔍 Intentando vista: ${view}`);
         const query = `
           SELECT 
             numero_lote,
@@ -127,16 +140,24 @@ export async function GET(request: NextRequest) {
           ORDER BY numero_lote DESC
         `;
         
+        console.log(`📝 Query ejecutada:`, query.substring(0, 200) + "...");
+        
         const result = await prisma.$queryRawUnsafe<any[]>(query);
+        console.log(`✅ Vista ${view} encontrada. Resultados:`, result.length);
+        if (result.length > 0) {
+          console.log(`📊 Primer resultado:`, JSON.stringify(result[0], null, 2));
+        }
         dataResult = result;
         viewName = view;
         break;
       } catch (error: any) {
         lastError = error;
+        console.log(`❌ Error con vista ${view}:`, error.message);
         // Si la vista no existe, continuar con la siguiente
         if (error.message?.includes("doesn't exist") || 
             error.message?.includes("Unknown table") ||
-            error.message?.includes("Table") && error.message?.includes("doesn't exist")) {
+            error.message?.includes("Table") && error.message?.includes("doesn't exist") ||
+            error.message?.includes("does not exist")) {
           continue;
         }
         // Si es otro tipo de error, lanzarlo
@@ -160,6 +181,9 @@ export async function GET(request: NextRequest) {
     // Serialize results
     const serializedData = serializeResults(dataResult);
 
+    console.log("📊 Datos serializados:", serializedData.length, "registros");
+    console.log("📊 Primer registro:", serializedData[0]);
+
     // Calcular totales agregados
     const totals = serializedData.reduce((acc, row) => {
       acc.totalFacturas += Number(row.Conteo_Factura || 0);
@@ -178,9 +202,12 @@ export async function GET(request: NextRequest) {
       totalValorHallazgosCriticos: 0,
     });
 
+    console.log("📊 Totales calculados:", totals);
+
     return NextResponse.json({
       data: serializedData,
       totals,
+      viewName, // Para debug
     });
   } catch (error: any) {
     console.error("❌ Error fetching consolidado_facturas:", error.message);
