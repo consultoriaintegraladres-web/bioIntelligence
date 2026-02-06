@@ -278,9 +278,9 @@ export default function ControlFacturasPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Total Facturas</p>
-                  <p className={`text-2xl font-bold mt-1 ${textColor}`}>
+                  <div className={`text-2xl font-bold mt-1 ${textColor}`}>
                     {isLoading ? <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} /> : (data?.summary?.total_facturas ?? 0).toLocaleString("es-CO")}
-                  </p>
+                  </div>
                 </div>
                 <div className={`p-3 rounded-xl ${isLight ? "bg-blue-100" : "bg-blue-500/15"}`}>
                   <BarChart3 className="w-6 h-6 text-blue-500" />
@@ -295,9 +295,9 @@ export default function ControlFacturasPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Con Hallazgos</p>
-                  <p className={`text-2xl font-bold mt-1 text-amber-500`}>
+                  <div className={`text-2xl font-bold mt-1 text-amber-500`}>
                     {isLoading ? <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} /> : (data?.summary?.facturas_con_hallazgos ?? 0).toLocaleString("es-CO")}
-                  </p>
+                  </div>
                 </div>
                 <div className={`p-3 rounded-xl ${isLight ? "bg-amber-100" : "bg-amber-500/15"}`}>
                   <FileWarning className="w-6 h-6 text-amber-500" />
@@ -312,7 +312,7 @@ export default function ControlFacturasPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Valor Con Hallazgos</p>
-                  <p className={`text-xl font-bold mt-1 text-red-500`}>
+                  <div className={`text-xl font-bold mt-1 text-red-500`}>
                     {isLoading ? (
                       <Skeleton className={`h-7 w-28 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
                     ) : (
@@ -323,7 +323,7 @@ export default function ControlFacturasPage() {
                         maximumFractionDigits: 0,
                       }).format(data?.summary?.valor_facturas_con_hallazgos ?? 0)
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className={`p-3 rounded-xl ${isLight ? "bg-red-100" : "bg-red-500/15"}`}>
                   <DollarSign className="w-6 h-6 text-red-500" />
@@ -338,9 +338,9 @@ export default function ControlFacturasPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Ok Sin Hallazgos</p>
-                  <p className={`text-2xl font-bold mt-1 text-emerald-500`}>
+                  <div className={`text-2xl font-bold mt-1 text-emerald-500`}>
                     {isLoading ? <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} /> : (data?.summary?.facturas_ok ?? 0).toLocaleString("es-CO")}
-                  </p>
+                  </div>
                 </div>
                 <div className={`p-3 rounded-xl ${isLight ? "bg-emerald-100" : "bg-emerald-500/15"}`}>
                   <FileCheck className="w-6 h-6 text-emerald-500" />
