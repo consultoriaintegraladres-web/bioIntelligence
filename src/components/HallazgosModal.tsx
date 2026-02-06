@@ -44,6 +44,7 @@ interface HallazgosModalProps {
   filterValue: string;
   filters?: FilterValues;
   themeMode?: ThemeMode;
+  tipoEnvioFilter?: "Primera vez" | "Revalidacion";
 }
 
 type SortField = "Numero_factura" | "origen" | "tipo_validacion" | "descripcion_servicio" | "valor_total" | "observacion" | "cantidad";
@@ -56,6 +57,7 @@ export function HallazgosModal({
   filterValue,
   filters = {},
   themeMode = "dark",
+  tipoEnvioFilter,
 }: HallazgosModalProps) {
   const isLight = themeMode === "light";
   const textColor = isLight ? "text-gray-900" : "text-white";
@@ -75,9 +77,23 @@ export function HallazgosModal({
   const [isLoadingAI, setIsLoadingAI] = useState(false);
 
   // Build query string for hallazgos modal
-  const hallazgosQueryString = useMemo(() => {
-    if (!filterValue) return "";
+  const hallazgosQueryConfig = useMemo(() => {
     const params = new URLSearchParams({ limit: "5000", page: "1" });
+    
+    // Si hay tipoEnvioFilter, usar el endpoint especial
+    if (tipoEnvioFilter) {
+      params.set("tipo_envio", tipoEnvioFilter);
+      if (filters.codigo_habilitacion) params.set("codigo_habilitacion", filters.codigo_habilitacion);
+      if (filters.lote_de_carga || filters.numero_lote) params.set("numero_lote", filters.lote_de_carga || filters.numero_lote || "");
+      if (filters.fecha_inicio) params.set("fecha_inicio", filters.fecha_inicio);
+      if (filters.fecha_fin) params.set("fecha_fin", filters.fecha_fin);
+      if (filters.nombre_ips) params.set("nombre_ips", filters.nombre_ips);
+      if (filters.nombre_envio) params.set("nombre_envio", filters.nombre_envio);
+      return { queryString: params.toString(), useTipoEnvioEndpoint: true };
+    }
+    
+    // Lógica original para filtros por tipo_validacion u origen
+    if (!filterValue) return { queryString: "", useTipoEnvioEndpoint: false };
     params.set(filterType, filterValue);
     if (filters.codigo_habilitacion) params.set("codigo_habilitacion", filters.codigo_habilitacion);
     if (filters.lote_de_carga) params.set("lote_de_carga", filters.lote_de_carga);
@@ -88,17 +104,20 @@ export function HallazgosModal({
     if (filters.tipo_envio) params.set("tipo_envio", filters.tipo_envio);
     if (filters.origen && filterType !== "origen") params.set("origen", filters.origen);
     if (filters.tipo_validacion && filterType !== "tipo_validacion") params.set("tipo_validacion", filters.tipo_validacion);
-    return params.toString();
-  }, [filterValue, filterType, filters]);
+    return { queryString: params.toString(), useTipoEnvioEndpoint: false };
+  }, [filterValue, filterType, filters, tipoEnvioFilter]);
 
   const { data: hallazgosData, isLoading: loadingHallazgos } = useQuery({
-    queryKey: ["hallazgos_modal", hallazgosQueryString],
+    queryKey: ["hallazgos_modal", hallazgosQueryConfig],
     queryFn: async () => {
-      const res = await fetch(`/api/inconsistencias?${hallazgosQueryString}`);
+      const endpoint = hallazgosQueryConfig.useTipoEnvioEndpoint 
+        ? `/api/hallazgos-by-tipo-envio?${hallazgosQueryConfig.queryString}`
+        : `/api/inconsistencias?${hallazgosQueryConfig.queryString}`;
+      const res = await fetch(endpoint);
       const json = await res.json();
       return json;
     },
-    enabled: open && !!filterValue,
+    enabled: open && (!!filterValue || !!tipoEnvioFilter),
   });
 
   // Sort modal table data

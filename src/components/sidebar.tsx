@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Upload,
   ClipboardCheck,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppContext } from "@/contexts/app-context";
@@ -33,6 +34,12 @@ const menuItems = [
     href: "/detalle",
     label: "Detalle Hallazgos",
     icon: FileSearch,
+    roles: ["ADMIN", "USER", "ANALYST"],
+  },
+  {
+    href: "/control-facturas",
+    label: "Tablero de Control Facturas",
+    icon: Receipt,
     roles: ["ADMIN", "USER", "ANALYST"],
   },
   {
