@@ -67,21 +67,27 @@ export async function GET(request: NextRequest) {
       lotesFilters.push(`numero_lote = '${numero_lote}'`);
     }
 
-    const lotesWhere = lotesFilters.length > 0 ? lotesFilters.join(" AND ") : "1=1";
-
     // Query para obtener datos de revision_facturas
     // La vista debe tener: numero_lote, numero_factura, primera_revision, segunda_revision
     const whereConditions: string[] = [];
     
-    // Filtrar por lotes que cumplan los criterios
-    whereConditions.push(`numero_lote IN (SELECT numero_lote FROM control_lotes WHERE ${lotesWhere})`);
+    // Si hay un numero_lote específico, filtrar directamente por él
+    // De lo contrario, usar los filtros de control_lotes para obtener los lotes válidos
+    if (numero_lote && numero_lote.trim() !== "") {
+      // Filtro directo por numero_lote
+      whereConditions.push(`numero_lote = '${numero_lote}'`);
+    } else {
+      // Usar filtros de control_lotes para obtener lotes válidos
+      const lotesWhere = lotesFilters.length > 0 ? lotesFilters.join(" AND ") : "1=1";
+      whereConditions.push(`numero_lote IN (SELECT numero_lote FROM control_lotes WHERE ${lotesWhere})`);
+    }
 
     // Search filter
     if (search) {
       whereConditions.push(`(numero_factura LIKE '%${search}%' OR numero_lote LIKE '%${search}%')`);
     }
 
-    const whereClause = whereConditions.join(" AND ");
+    const whereClause = whereConditions.length > 0 ? whereConditions.join(" AND ") : "1=1";
 
     // Count query
     const countQuery = `
