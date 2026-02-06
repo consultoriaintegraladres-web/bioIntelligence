@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// Custom JSON serializer for BigInt
+function serializeResults(results: any[]) {
+  return results.map(row =>
+    Object.fromEntries(
+      Object.entries(row).map(([key, value]) =>
+        typeof value === 'bigint' ? [key, Number(value)] : [key, value]
+      )
+    )
+  );
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -14,89 +25,29 @@ export async function GET(request: NextRequest) {
     const tipo_envio = searchParams.get("tipo_envio"); // 'Primera vez' o 'Revalidacion'
     const numero_lote = searchParams.get("numero_lote");
     const numero_factura = searchParams.get("numero_factura");
-    const codigo_habilitacion = searchParams.get("codigo_habilitacion");
-    const nombre_ips = searchParams.get("nombre_ips");
-    const fecha_inicio = searchParams.get("fecha_inicio");
-    const fecha_fin = searchParams.get("fecha_fin");
-    const nombre_envio = searchParams.get("nombre_envio");
     const limit = searchParams.get("limit") || "5000";
     const page = searchParams.get("page") || "1";
 
-    if (!tipo_envio || (tipo_envio !== "Primera vez" && tipo_envio !== "Revalidacion")) {
-      return NextResponse.json(
-        { error: "tipo_envio debe ser 'Primera vez' o 'Revalidacion'" },
-        { status: 400 }
-      );
-    }
-
     // ============================================================
-    // FILTROS DE control_lotes
-    // ============================================================
-    const lotesFilters: string[] = [];
-    
-    // Excluir RG
-    lotesFilters.push("nombre_envio NOT LIKE '%RG%'");
-    
-    // Tipo envio específico
-    lotesFilters.push(`tipo_envio = '${tipo_envio}'`);
-    
-    // Codigo habilitacion
-    if (session.user.role !== "ADMIN") {
-      const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
-      if (userCodigo) {
-        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%'`);
-      }
-    } else if (codigo_habilitacion && codigo_habilitacion.trim() !== "") {
-      lotesFilters.push(`codigo_habilitación LIKE '%${codigo_habilitacion}%'`);
-    }
-
-    // Nombre IPS
-    if (nombre_ips && nombre_ips.trim() !== "") {
-      lotesFilters.push(`nombre_ips LIKE '%${nombre_ips}%'`);
-    }
-
-    // Fecha creacion
-    if (fecha_inicio && fecha_fin) {
-      lotesFilters.push(`fecha_creacion >= '${fecha_inicio}' AND fecha_creacion <= '${fecha_fin}'`);
-    }
-
-    // Nombre envio
-    if (nombre_envio && nombre_envio.trim() !== "") {
-      lotesFilters.push(`nombre_envio LIKE '%${nombre_envio}%'`);
-    }
-
-    // Numero lote
-    if (numero_lote && numero_lote.trim() !== "") {
-      lotesFilters.push(`numero_lote = '${numero_lote}'`);
-    }
-
-    const lotesWhere = lotesFilters.join(" AND ");
-
-    // SUBCONSULTA: SELECT numero_lote FROM control_lotes WHERE [filtros]
-    const lotesSubquery = `SELECT numero_lote FROM control_lotes WHERE ${lotesWhere}`;
-
-    // ============================================================
-    // FILTROS DE inconsistencias
+    // LÓGICA SIMPLE: filtrar inconsistencias por Numero_factura
+    // y lote_de_carga (numero_lote de la vista revision_facturas)
     // ============================================================
     const conditions: string[] = [];
-    
-    // Filtro principal: mostrar_reporte = 1
+
+    // Filtro principal: solo hallazgos con mostrar_reporte = 1
     conditions.push("p.mostrar_reporte = 1");
-    
-    // RELACIÓN: lote_de_carga IN (SELECT numero_lote FROM control_lotes WHERE tipo_envio = ...)
-    conditions.push(`i.lote_de_carga IN (${lotesSubquery})`);
 
-    // Filtrar por numero_lote específico si se proporciona
-    if (numero_lote && numero_lote.trim() !== "") {
-      conditions.push(`i.lote_de_carga = '${numero_lote}'`);
-    }
-
-    // Filtrar por Numero_factura específico si se proporciona
+    // Filtrar por Numero_factura (obligatorio para este endpoint)
     if (numero_factura && numero_factura.trim() !== "") {
       conditions.push(`i.Numero_factura = '${numero_factura}'`);
     }
 
-    // Codigo habilitacion (solo para usuarios no admin, para seguridad)
+    // Filtrar por numero_lote (que mapea a lote_de_carga en inconsistencias)
+    if (numero_lote && numero_lote.trim() !== "") {
+      conditions.push(`i.lote_de_carga = '${numero_lote}'`);
+    }
+
+    // Seguridad: para usuarios no ADMIN, restringir por código habilitación
     if (session.user.role !== "ADMIN") {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
@@ -104,13 +55,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const whereClause = conditions.join(" AND ");
+    const whereClause = conditions.length > 0 ? conditions.join(" AND ") : "1=1";
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Count query
     const countQuery = `
-      SELECT COUNT(*) as total
+      SELECT CAST(COUNT(*) AS SIGNED) as total
       FROM inconsistencias i
       INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
       WHERE ${whereClause}
@@ -140,18 +91,24 @@ export async function GET(request: NextRequest) {
       INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
       WHERE ${whereClause}
       ORDER BY i.inconsistencia_id DESC
-      LIMIT ${limit} OFFSET ${skip}
+      LIMIT ${parseInt(limit)} OFFSET ${skip}
     `;
+
+    console.log("[hallazgos-by-tipo-envio] WHERE:", whereClause);
 
     const [countResult, dataResult] = await Promise.all([
       prisma.$queryRawUnsafe<any[]>(countQuery),
       prisma.$queryRawUnsafe<any[]>(dataQuery),
     ]);
 
-    const total = countResult[0]?.total || 0;
+    const serializedCount = serializeResults(countResult);
+    const serializedData = serializeResults(dataResult);
+    const total = serializedCount[0]?.total || 0;
+
+    console.log("[hallazgos-by-tipo-envio] Total encontrados:", total);
 
     return NextResponse.json({
-      data: dataResult,
+      data: serializedData,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),

@@ -321,7 +321,7 @@ export function HallazgosModal({
             <FileText className="w-5 h-5 text-[#10B981]" />
             <span className="truncate">
               {tipoEnvioFilter 
-                ? `Hallazgos - ${tipoEnvioFilter}` 
+                ? `Hallazgos - ${tipoEnvioFilter}${filters.numero_factura ? ` | Factura: ${filters.numero_factura}` : ""}${filters.numero_lote ? ` | Lote: ${filters.numero_lote}` : ""}`
                 : `Hallazgos: ${truncateText(filterValue, 60)}`}
             </span>
           </DialogTitle>
