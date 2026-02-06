@@ -123,46 +123,97 @@ export async function GET(request: NextRequest) {
     let viewName = "";
     let lastError: any = null;
 
+    // Primero intentar obtener la estructura de la vista para conocer los nombres de columnas
+    let viewName = "";
+    let columnNames: string[] = [];
+    
+    // Intentar obtener las columnas de la vista
     for (const view of possibleViewNames) {
       try {
-        console.log(`🔍 Intentando vista: ${view}`);
-        const query = `
-          SELECT 
-            numero_lote,
-            Conteo_Factura,
-            Total_Suma_Reclamado,
-            Facturas_con_Hallazgos,
-            Facturas_sin_Hallazgos,
-            Conteo_Hallazgos_Criticos,
-            Valor_Total_Hallazgos_Criticos
-          FROM ${view}
-          WHERE ${whereClause}
-          ORDER BY numero_lote DESC
-        `;
-        
-        console.log(`📝 Query ejecutada:`, query.substring(0, 200) + "...");
-        
-        const result = await prisma.$queryRawUnsafe<any[]>(query);
-        console.log(`✅ Vista ${view} encontrada. Resultados:`, result.length);
-        if (result.length > 0) {
-          console.log(`📊 Primer resultado:`, JSON.stringify(result[0], null, 2));
+        // Primero intentar SELECT * para ver qué columnas tiene
+        const testQuery = `SELECT * FROM ${view} LIMIT 1`;
+        const testResult = await prisma.$queryRawUnsafe<any[]>(testQuery);
+        if (testResult && testResult.length > 0) {
+          columnNames = Object.keys(testResult[0]);
+          viewName = view;
+          console.log(`✅ Vista ${view} encontrada. Columnas:`, columnNames);
+          break;
         }
-        dataResult = result;
-        viewName = view;
-        break;
       } catch (error: any) {
         lastError = error;
-        console.log(`❌ Error con vista ${view}:`, error.message);
-        // Si la vista no existe, continuar con la siguiente
         if (error.message?.includes("doesn't exist") || 
             error.message?.includes("Unknown table") ||
-            error.message?.includes("Table") && error.message?.includes("doesn't exist") ||
             error.message?.includes("does not exist")) {
           continue;
         }
-        // Si es otro tipo de error, lanzarlo
-        throw error;
+        // Si es error de columna, la vista existe pero con diferentes nombres
+        if (error.message?.includes("Unknown column")) {
+          console.log(`⚠️ Vista ${view} existe pero con columnas diferentes`);
+          continue;
+        }
       }
+    }
+
+    // Si encontramos la vista, construir la query con los nombres correctos
+    if (viewName && columnNames.length > 0) {
+      // Mapear nombres esperados a nombres reales (case-insensitive)
+      const columnMap: { [key: string]: string } = {};
+      const expectedColumns = [
+        'Conteo_Factura', 'conteo_factura', 'ConteoFactura', 'conteoFactura',
+        'Total_Suma_Reclamado', 'total_suma_reclamado', 'TotalSumaReclamado', 'totalSumaReclamado',
+        'Facturas_con_Hallazgos', 'facturas_con_hallazgos', 'FacturasConHallazgos', 'facturasConHallazgos',
+        'Facturas_sin_Hallazgos', 'facturas_sin_hallazgos', 'FacturasSinHallazgos', 'facturasSinHallazgos',
+        'Conteo_Hallazgos_Criticos', 'conteo_hallazgos_criticos', 'ConteoHallazgosCriticos', 'conteoHallazgosCriticos',
+        'Valor_Total_Hallazgos_Criticos', 'valor_total_hallazgos_criticos', 'ValorTotalHallazgosCriticos', 'valorTotalHallazgosCriticos'
+      ];
+
+      // Buscar coincidencias (case-insensitive)
+      for (const expected of expectedColumns) {
+        const found = columnNames.find(col => col.toLowerCase() === expected.toLowerCase());
+        if (found) {
+          columnMap[expected] = found;
+        }
+      }
+
+      // Si no encontramos coincidencias, usar los nombres tal cual están en la vista
+      const conteoFactura = columnMap['Conteo_Factura'] || columnNames.find(c => c.toLowerCase().includes('conteo') && c.toLowerCase().includes('factura')) || columnNames[1];
+      const totalReclamado = columnMap['Total_Suma_Reclamado'] || columnNames.find(c => c.toLowerCase().includes('total') && c.toLowerCase().includes('reclamado')) || columnNames[2];
+      const conHallazgos = columnMap['Facturas_con_Hallazgos'] || columnNames.find(c => c.toLowerCase().includes('con') && c.toLowerCase().includes('hallazgo')) || columnNames[3];
+      const sinHallazgos = columnMap['Facturas_sin_Hallazgos'] || columnNames.find(c => c.toLowerCase().includes('sin') && c.toLowerCase().includes('hallazgo')) || columnNames[4];
+      const hallazgosCriticos = columnMap['Conteo_Hallazgos_Criticos'] || columnNames.find(c => c.toLowerCase().includes('critico')) || columnNames[5];
+      const valorCriticos = columnMap['Valor_Total_Hallazgos_Criticos'] || columnNames.find(c => c.toLowerCase().includes('valor') && c.toLowerCase().includes('critico')) || columnNames[6];
+
+      console.log(`📊 Columnas mapeadas:`, {
+        conteoFactura,
+        totalReclamado,
+        conHallazgos,
+        sinHallazgos,
+        hallazgosCriticos,
+        valorCriticos
+      });
+
+      const query = `
+        SELECT 
+          numero_lote,
+          \`${conteoFactura}\` as Conteo_Factura,
+          \`${totalReclamado}\` as Total_Suma_Reclamado,
+          \`${conHallazgos}\` as Facturas_con_Hallazgos,
+          \`${sinHallazgos}\` as Facturas_sin_Hallazgos,
+          \`${hallazgosCriticos}\` as Conteo_Hallazgos_Criticos,
+          \`${valorCriticos}\` as Valor_Total_Hallazgos_Criticos
+        FROM ${viewName}
+        WHERE ${whereClause}
+        ORDER BY numero_lote DESC
+      `;
+
+      console.log(`📝 Query ejecutada:`, query.substring(0, 300) + "...");
+      
+      const result = await prisma.$queryRawUnsafe<any[]>(query);
+      console.log(`✅ Resultados obtenidos:`, result.length);
+      if (result.length > 0) {
+        console.log(`📊 Primer resultado:`, JSON.stringify(result[0], null, 2));
+      }
+      dataResult = result;
     }
 
     if (!viewName) {
@@ -210,10 +261,17 @@ export async function GET(request: NextRequest) {
       viewName, // Para debug
     });
   } catch (error: any) {
-    console.error("❌ Error fetching consolidado_facturas:", error.message);
-    console.error("❌ Stack:", error.stack);
+    console.error("❌ Error fetching consolidado_facturas:", error);
+    console.error("❌ Error message:", error.message);
+    console.error("❌ Error stack:", error.stack);
+    console.error("❌ Error completo:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    
     return NextResponse.json(
-      { error: "Error al obtener datos consolidados", details: error.message },
+      { 
+        error: "Error al obtener datos consolidados", 
+        details: error.message || String(error),
+        type: error.constructor?.name || "UnknownError"
+      },
       { status: 500 }
     );
   }

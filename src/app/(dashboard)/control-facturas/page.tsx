@@ -154,14 +154,25 @@ export default function ControlFacturasPage() {
   const { data: consolidadoData, isLoading: isLoadingConsolidado, error: consolidadoError } = useQuery({
     queryKey: ["consolidado_facturas", consolidadoQueryString],
     queryFn: async () => {
-      const res = await fetch(`/api/consolidado-facturas?${consolidadoQueryString}`);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: "Error desconocido" }));
-        console.error("❌ Error en consolidado-facturas:", errorData);
-        throw new Error(errorData.error || "Error al obtener datos consolidados");
+      try {
+        const res = await fetch(`/api/consolidado-facturas?${consolidadoQueryString}`);
+        const data = await res.json();
+        if (!res.ok) {
+          console.error("❌ Error en consolidado-facturas:", {
+            status: res.status,
+            statusText: res.statusText,
+            data,
+            url: `/api/consolidado-facturas?${consolidadoQueryString}`
+          });
+          throw new Error(data.error || data.details || `Error ${res.status}: ${res.statusText}`);
+        }
+        return data;
+      } catch (error: any) {
+        console.error("❌ Error completo en consolidado-facturas:", error);
+        throw error;
       }
-      return res.json();
     },
+    retry: false, // No reintentar para ver el error inmediatamente
   });
 
   // Log para debug
@@ -300,6 +311,31 @@ export default function ControlFacturasPage() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Error Banner si hay error en consolidado */}
+        {consolidadoError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4"
+          >
+            <Card className={`${isLight ? "bg-red-50 border-red-200" : "bg-red-900/20 border-red-800/30"} backdrop-blur-xl`}>
+              <CardContent className="py-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                  <div>
+                    <p className={`text-sm font-semibold ${textColor}`}>
+                      Error al cargar datos consolidados
+                    </p>
+                    <p className={`text-xs ${subTextColor} mt-1`}>
+                      {consolidadoError instanceof Error ? consolidadoError.message : "Error desconocido"}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* KPI Summary Cards - Vista Consolidado */}
         <motion.div
