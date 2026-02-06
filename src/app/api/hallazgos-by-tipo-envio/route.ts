@@ -2,15 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// Custom JSON serializer for BigInt
+// Helper to convert BigInt and Decimal values to Numbers
 function serializeResults(results: any[]) {
-  return results.map(row =>
-    Object.fromEntries(
-      Object.entries(row).map(([key, value]) =>
-        typeof value === 'bigint' ? [key, Number(value)] : [key, value]
-      )
-    )
-  );
+  return results.map(row => {
+    const serialized: any = {};
+    for (const [key, value] of Object.entries(row)) {
+      if (typeof value === "bigint") {
+        serialized[key] = Number(value);
+      } else if (value !== null && value !== undefined && typeof value === "object" && typeof (value as any).toNumber === "function") {
+        serialized[key] = (value as any).toNumber();
+      } else {
+        serialized[key] = value;
+      }
+    }
+    return serialized;
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -38,13 +44,14 @@ export async function GET(request: NextRequest) {
     conditions.push("p.mostrar_reporte = 1");
 
     // Filtrar por Numero_factura (obligatorio para este endpoint)
+    // Usar TRIM porque Numero_factura en inconsistencias es LongText y puede tener espacios
     if (numero_factura && numero_factura.trim() !== "") {
-      conditions.push(`i.Numero_factura = '${numero_factura}'`);
+      conditions.push(`TRIM(i.Numero_factura) = TRIM('${numero_factura.trim()}')`);
     }
 
     // Filtrar por numero_lote (que mapea a lote_de_carga en inconsistencias)
     if (numero_lote && numero_lote.trim() !== "") {
-      conditions.push(`i.lote_de_carga = '${numero_lote}'`);
+      conditions.push(`TRIM(i.lote_de_carga) = TRIM('${numero_lote.trim()}')`);
     }
 
     // Seguridad: para usuarios no ADMIN, restringir por código habilitación
@@ -94,6 +101,7 @@ export async function GET(request: NextRequest) {
       LIMIT ${parseInt(limit)} OFFSET ${skip}
     `;
 
+    console.log("[hallazgos-by-tipo-envio] Params:", { tipo_envio, numero_lote, numero_factura });
     console.log("[hallazgos-by-tipo-envio] WHERE:", whereClause);
 
     const [countResult, dataResult] = await Promise.all([

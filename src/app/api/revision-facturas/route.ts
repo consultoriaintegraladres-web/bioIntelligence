@@ -2,12 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// Helper to convert BigInt values to Numbers in query results
+// Helper to convert BigInt and Decimal values to Numbers in query results
 function serializeResults(data: any[]): any[] {
   return data.map((row) => {
     const serialized: any = {};
     for (const [key, value] of Object.entries(row)) {
-      serialized[key] = typeof value === "bigint" ? Number(value) : value;
+      if (typeof value === "bigint") {
+        serialized[key] = Number(value);
+      } else if (value !== null && value !== undefined && typeof value === "object" && typeof value.toNumber === "function") {
+        // Handle Prisma Decimal
+        serialized[key] = value.toNumber();
+      } else if (value !== null && value !== undefined && typeof value === "object" && !(value instanceof Date) && typeof value.toString === "function") {
+        // Handle other numeric-like objects
+        const str = value.toString();
+        const num = Number(str);
+        serialized[key] = isNaN(num) ? str : num;
+      } else {
+        serialized[key] = value;
+      }
     }
     return serialized;
   });
@@ -117,11 +129,11 @@ export async function GET(request: NextRequest) {
       LIMIT ${limit} OFFSET ${skip}
     `;
 
-    // Summary query - KPIs solo de Primera Revisión
+    // Summary query - KPIs solo de Primera Revisión (usar SIGNED para evitar Decimal/BigInt)
     const summaryQuery = `
       SELECT
         CAST(SUM(CASE WHEN Primera_revision LIKE '%Ver hallazgos%' OR Primera_revision LIKE '%Ver Hallazgos%' THEN 1 ELSE 0 END) AS SIGNED) as facturas_con_hallazgos,
-        CAST(COALESCE(SUM(CASE WHEN Primera_revision LIKE '%Ver hallazgos%' OR Primera_revision LIKE '%Ver Hallazgos%' THEN Total_reclamado_por_amparo_gastos_medicos_quirurgicos ELSE 0 END), 0) AS DECIMAL(18,2)) as valor_facturas_con_hallazgos,
+        CAST(COALESCE(SUM(CASE WHEN Primera_revision LIKE '%Ver hallazgos%' OR Primera_revision LIKE '%Ver Hallazgos%' THEN Total_reclamado_por_amparo_gastos_medicos_quirurgicos ELSE 0 END), 0) AS SIGNED) as valor_facturas_con_hallazgos,
         CAST(SUM(CASE WHEN Primera_revision LIKE '%Ok%hallazgos%' THEN 1 ELSE 0 END) AS SIGNED) as facturas_ok,
         CAST(COUNT(*) AS SIGNED) as total_facturas
       FROM revision_facturas

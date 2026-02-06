@@ -108,6 +108,11 @@ export default function ControlFacturasPage() {
     }
   }, [session, setSelectedIpsName]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
+
   // Build query string from filters
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
