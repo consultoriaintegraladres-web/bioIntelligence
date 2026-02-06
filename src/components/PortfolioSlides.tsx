@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 
 interface Slide {
   id: number;
@@ -17,42 +18,42 @@ const slides: Slide[] = [
     id: 1,
     title: "BIORETAIL - Consultoría en salud",
     content: "Somos una organización de consultoría en salud con 11 años de experiencia, que genera valor a sus clientes por medio de un capital humano especializado y experto, la gestión del conocimiento y el uso de las tecnologías de información y comunicaciones.",
-    image: "/images/portfolio/bioretail-consultoria.svg",
+    image: "/images/portfolio/bioretail-consultoria.jpg",
     gradient: "from-cyan-500/20 to-blue-500/20",
   },
   {
     id: 2,
     title: "Oportunidad en el Negocio del SOAT",
     content: "Gestión de los accidentes de tránsito y eventos catastróficos (ECAT). Prestación de servicios médico quirúrgicos y traslados asistenciales a las víctimas de eventos ECAT. Línea del sector salud con mayor potencial para la generación de rentabilidad y liquidez a los prestadores de servicios de salud (PSS) en el 2026.",
-    image: "/images/portfolio/oportunidad-soat.svg",
+    image: "/images/portfolio/oportunidad-soat.jpg",
     gradient: "from-purple-500/20 to-pink-500/20",
   },
   {
     id: 3,
     title: "Evolución de la Auditoría en Salud",
     content: "La Resolución 00012758 de 2023 establece el Sistema de Auditoría por Alertas (SAA). La ADRES ha firmado alianzas con gigantes de la industria tecnológica para desarrollar auditoría inteligente de cuentas médicas, buscando reducir tiempos de respuesta y evitar fraudes mediante inteligencia artificial.",
-    image: "/images/portfolio/evolucion-auditoria.svg",
+    image: "/images/portfolio/evolucion-auditoria.jpeg",
     gradient: "from-emerald-500/20 to-teal-500/20",
   },
   {
     id: 4,
     title: "ADRES – Auditor y Pagador Inteligente",
     content: "La ADRES presenta la sala de inteligencia, una herramienta digital integrada para visualizar indicadores clave del sector como recaudo, pagos y reconocimientos y auditorías, a través de tecnología, análisis de datos e inteligencia artificial. Se espera que para marzo de 2026 se paguen, en cuestión de días, cuentas que anteriormente tomaban varios meses.",
-    image: "/images/portfolio/adres-pagador.svg",
+    image: "/images/portfolio/adres-pagador.jpg",
     gradient: "from-amber-500/20 to-orange-500/20",
   },
   {
     id: 5,
     title: "Plataforma Estratégica para la Gestión del SOAT",
     content: "Incluye suministro de material de osteosíntesis y biomateriales, cumplimiento de instrucciones de la Circular 015 de 2016, estrategias de mitigación de fraudes, capacitaciones, parametrización de servicios (PATROFIAS), procesos conciliatorios con Aseguradoras SOAT y tableros de control para análisis estratégico.",
-    image: "/images/portfolio/plataforma-soat.svg",
+    image: "/images/portfolio/plataforma-soat.jpg",
     gradient: "from-red-500/20 to-rose-500/20",
   },
   {
     id: 6,
     title: "Beneficios de las TAAS",
     content: "Optimiza mayor reconocimiento (recaudo) en la primera presentación de la reclamación y en la gestión de glosa. Enfoque estratégico en evitar glosas totales (Killer) de mayor impacto económico y mejorar la gestión de procedimientos quirúrgicos + MAOS + Biomateriales. Optimización del talento humano y costo efectividad entre el valor recuperado y la inversión realizada.",
-    image: "/images/portfolio/beneficios-taas.svg",
+    image: "/images/portfolio/beneficios-taas.jpg",
     gradient: "from-violet-500/20 to-purple-500/20",
   },
 ];
@@ -90,7 +91,7 @@ export default function PortfolioSlides() {
   };
 
   return (
-    <div className="relative w-full h-[400px] overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl">
+    <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
@@ -101,16 +102,23 @@ export default function PortfolioSlides() {
           className={`absolute inset-0 p-8 md:p-12 bg-gradient-to-br ${slides[currentSlide].gradient}`}
         >
           {slides[currentSlide].image && (
-            <div 
-              className="absolute inset-0 opacity-20 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(${slides[currentSlide].image})` }}
-            />
+            <div className="absolute inset-0 opacity-15 overflow-hidden">
+              <Image
+                src={slides[currentSlide].image}
+                alt={slides[currentSlide].title}
+                fill
+                className="object-cover object-center"
+                sizes="100vw"
+                quality={75}
+                priority={currentSlide === 0}
+              />
+            </div>
           )}
           <div className="relative h-full flex flex-col justify-center z-10">
-            <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">
+            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 text-white drop-shadow-lg">
               {slides[currentSlide].title}
             </h3>
-            <p className="text-base md:text-lg text-gray-200 leading-relaxed max-w-4xl">
+            <p className="text-base md:text-lg lg:text-xl text-gray-200 leading-relaxed max-w-4xl drop-shadow-md">
               {slides[currentSlide].content}
             </p>
           </div>

@@ -10,6 +10,16 @@ const nextConfig: NextConfig = {
   },
   // Aumentar límite de body size para API routes
   // Nota: Los límites reales se configuran en cada route.ts individualmente
+  
+  // Configuración de imágenes para optimización
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
+    // Permitir todas las imágenes locales
+    remotePatterns: [],
+  },
 };
 
 export default nextConfig;
