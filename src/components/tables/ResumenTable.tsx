@@ -82,7 +82,7 @@ export function ResumenTable({ data, isLoading, themeMode = "dark", filters = {}
   const [modalSize, setModalSize] = useState({ width: 1024, height: 600 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [modalSortField, setModalSortField] = useState<"Numero_factura" | "origen" | "tipo_validacion" | "descripcion_servicio" | "valor_total" | "observacion" | null>(null);
+  const [modalSortField, setModalSortField] = useState<"Numero_factura" | "origen" | "tipo_validacion" | "descripcion_servicio" | "valor_total" | "observacion" | "cantidad" | null>(null);
   const [modalSortDirection, setModalSortDirection] = useState<SortDirection>(null);
 
   // Build query string for hallazgos modal
@@ -175,7 +175,7 @@ export function ResumenTable({ data, isLoading, themeMode = "dark", filters = {}
     }
   };
 
-  const handleModalSort = (field: "Numero_factura" | "origen" | "tipo_validacion" | "descripcion_servicio" | "valor_total" | "observacion") => {
+  const handleModalSort = (field: "Numero_factura" | "origen" | "tipo_validacion" | "descripcion_servicio" | "valor_total" | "observacion" | "cantidad") => {
     if (modalSortField === field) {
       if (modalSortDirection === "asc") {
         setModalSortDirection("desc");
@@ -290,7 +290,7 @@ export function ResumenTable({ data, isLoading, themeMode = "dark", filters = {}
     return <ArrowDown className="w-4 h-4 ml-1 text-[#10B981]" />;
   };
 
-  const ModalSortIcon = ({ field }: { field: "Numero_factura" | "origen" | "tipo_validacion" | "descripcion_servicio" | "valor_total" | "observacion" }) => {
+  const ModalSortIcon = ({ field }: { field: "Numero_factura" | "origen" | "tipo_validacion" | "descripcion_servicio" | "valor_total" | "observacion" | "cantidad" }) => {
     if (modalSortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-50" />;
     if (modalSortDirection === "asc") return <ArrowUp className="w-3 h-3 ml-1 text-[#10B981]" />;
     return <ArrowDown className="w-3 h-3 ml-1 text-[#10B981]" />;
