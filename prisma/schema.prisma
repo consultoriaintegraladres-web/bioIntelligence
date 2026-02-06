@@ -914,3 +914,13 @@ enum EstadoEnvio {
   EN_PROCESO
   FINALIZADO
 }
+
+model AIPrompt {
+  id          Int      @id @default(autoincrement())
+  prompt_text String   @db.Text
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  updated_by  String?  @db.VarChar(100)
+
+  @@map("ai_prompts")
+}

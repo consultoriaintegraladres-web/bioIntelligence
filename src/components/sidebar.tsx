@@ -47,6 +47,12 @@ const menuItems = [
     icon: ClipboardCheck,
     roles: ["ADMIN", "USER", "ANALYST"],
   },
+  {
+    href: "/admin/prompts",
+    label: "Admin Prompts",
+    icon: Bot,
+    roles: ["ADMIN"],
+  },
 ];
 
 export function Sidebar({ selectedIpsName }: SidebarProps) {

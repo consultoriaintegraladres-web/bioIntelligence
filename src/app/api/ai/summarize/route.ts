@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 interface HallazgoDetalle {
   inconsistencia_id: number;
@@ -48,7 +49,22 @@ export async function POST(request: NextRequest) {
     const totalHallazgos = hallazgos.length;
     const analizados = hallazgosToSummarize.length;
 
-    const prompt = `Eres un experto certificado en normatividad ECAT Colombia ADRES y Manual de Auditoría de Reclamaciones Personas Jurídicas, especializado en análisis de hallazgos de auditoría médica.
+    // Obtener el prompt personalizado desde la base de datos
+    let promptTemplate = "";
+    try {
+      const promptRecord = await prisma.aIPrompt.findFirst({
+        orderBy: {
+          updated_at: "desc",
+        },
+      });
+      promptTemplate = promptRecord?.prompt_text || "";
+    } catch (error) {
+      console.error("Error loading prompt from database:", error);
+    }
+
+    // Si no hay prompt personalizado, usar el por defecto
+    if (!promptTemplate) {
+      promptTemplate = `Eres un experto certificado en normatividad ECAT Colombia ADRES y Manual de Auditoría de Reclamaciones Personas Jurídicas, especializado en análisis de hallazgos de auditoría médica.
 
 INSTRUCCIONES CRÍTICAS:
 - Analiza y agrupa los hallazgos por tipologías o casuísticas similares
@@ -66,7 +82,7 @@ CONTEXTO NORMATIVO:
 - Protocolos de validación de facturación SOAT
 
 TAREA:
-Analiza los siguientes ${analizados} hallazgos (de un total de ${totalHallazgos}) y agrupa por tipologías similares de errores o inconsistencias.
+Analiza los siguientes {totalHallazgos} hallazgos (de un total de {totalHallazgos}) y agrupa por tipologías similares de errores o inconsistencias.
 
 Para cada tipología identificada, proporciona:
 1. Nombre de la tipología (título descriptivo y técnico)
@@ -85,9 +101,15 @@ Usa el siguiente formato para cada tipología:
 - Impacto: [Impacto en auditoría ECAT]
 
 Hallazgos a analizar:
-${hallazgosFormatted}
+{hallazgos}
 
 IMPORTANTE: Si todos los hallazgos pertenecen a una sola tipología, muestra solo una. Si hay múltiples tipologías, agrupa hasta máximo 5. Responde con seguridad técnica, sin expresiones de duda.`;
+    }
+
+    // Reemplazar variables en el prompt
+    const prompt = promptTemplate
+      .replace(/{totalHallazgos}/g, totalHallazgos.toString())
+      .replace(/{hallazgos}/g, hallazgosFormatted);
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
