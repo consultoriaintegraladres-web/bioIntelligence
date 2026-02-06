@@ -122,9 +122,6 @@ export async function GET(request: NextRequest) {
     let dataResult: any[] = [];
     let viewName = "";
     let lastError: any = null;
-
-    // Primero intentar obtener la estructura de la vista para conocer los nombres de columnas
-    let viewName = "";
     let columnNames: string[] = [];
     
     // Intentar obtener las columnas de la vista
@@ -175,13 +172,20 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Si no encontramos coincidencias, usar los nombres tal cual están en la vista
-      const conteoFactura = columnMap['Conteo_Factura'] || columnNames.find(c => c.toLowerCase().includes('conteo') && c.toLowerCase().includes('factura')) || columnNames[1];
-      const totalReclamado = columnMap['Total_Suma_Reclamado'] || columnNames.find(c => c.toLowerCase().includes('total') && c.toLowerCase().includes('reclamado')) || columnNames[2];
-      const conHallazgos = columnMap['Facturas_con_Hallazgos'] || columnNames.find(c => c.toLowerCase().includes('con') && c.toLowerCase().includes('hallazgo')) || columnNames[3];
-      const sinHallazgos = columnMap['Facturas_sin_Hallazgos'] || columnNames.find(c => c.toLowerCase().includes('sin') && c.toLowerCase().includes('hallazgo')) || columnNames[4];
-      const hallazgosCriticos = columnMap['Conteo_Hallazgos_Criticos'] || columnNames.find(c => c.toLowerCase().includes('critico')) || columnNames[5];
-      const valorCriticos = columnMap['Valor_Total_Hallazgos_Criticos'] || columnNames.find(c => c.toLowerCase().includes('valor') && c.toLowerCase().includes('critico')) || columnNames[6];
+      // Buscar columnas por patrones (case-insensitive)
+      const findColumn = (patterns: string[]) => {
+        return columnNames.find(col => {
+          const colLower = col.toLowerCase();
+          return patterns.some(pattern => colLower.includes(pattern.toLowerCase()));
+        }) || columnNames[0]; // Fallback a primera columna si no se encuentra
+      };
+
+      const conteoFactura = columnMap['Conteo_Factura'] || findColumn(['conteo', 'factura']);
+      const totalReclamado = columnMap['Total_Suma_Reclamado'] || findColumn(['total', 'reclamado', 'suma']);
+      const conHallazgos = columnMap['Facturas_con_Hallazgos'] || findColumn(['con', 'hallazgo']);
+      const sinHallazgos = columnMap['Facturas_sin_Hallazgos'] || findColumn(['sin', 'hallazgo']);
+      const hallazgosCriticos = columnMap['Conteo_Hallazgos_Criticos'] || findColumn(['critico', 'hallazgo']);
+      const valorCriticos = columnMap['Valor_Total_Hallazgos_Criticos'] || findColumn(['valor', 'critico']);
 
       console.log(`📊 Columnas mapeadas:`, {
         conteoFactura,
