@@ -43,6 +43,10 @@ import {
   Filter,
   AlertCircle,
   Loader2,
+  FileWarning,
+  DollarSign,
+  FileCheck,
+  BarChart3,
 } from "lucide-react";
 import { useAppContext } from "@/contexts/app-context";
 import { exportToExcel } from "@/lib/excel-export";
@@ -251,6 +255,91 @@ export default function ControlFacturasPage() {
                 <p className={`text-sm ${textColor}`}>
                   Los filtros se aplican desde la pestaña <strong className="text-blue-500">Dashboard</strong>
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* KPI Summary Cards - Primera Revisión */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+        >
+          {/* Total Facturas */}
+          <Card className={`${cardBg} backdrop-blur-xl`}>
+            <CardContent className="py-4 px-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Total Facturas</p>
+                  <p className={`text-2xl font-bold mt-1 ${textColor}`}>
+                    {isLoading ? <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} /> : (data?.summary?.total_facturas ?? 0).toLocaleString("es-CO")}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-xl ${isLight ? "bg-blue-100" : "bg-blue-500/15"}`}>
+                  <BarChart3 className="w-6 h-6 text-blue-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Facturas Con Hallazgos */}
+          <Card className={`${cardBg} backdrop-blur-xl`}>
+            <CardContent className="py-4 px-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Con Hallazgos</p>
+                  <p className={`text-2xl font-bold mt-1 text-amber-500`}>
+                    {isLoading ? <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} /> : (data?.summary?.facturas_con_hallazgos ?? 0).toLocaleString("es-CO")}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-xl ${isLight ? "bg-amber-100" : "bg-amber-500/15"}`}>
+                  <FileWarning className="w-6 h-6 text-amber-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Valor Facturas Con Hallazgos */}
+          <Card className={`${cardBg} backdrop-blur-xl`}>
+            <CardContent className="py-4 px-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Valor Con Hallazgos</p>
+                  <p className={`text-xl font-bold mt-1 text-red-500`}>
+                    {isLoading ? (
+                      <Skeleton className={`h-7 w-28 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
+                    ) : (
+                      new Intl.NumberFormat("es-CO", {
+                        style: "currency",
+                        currency: "COP",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(data?.summary?.valor_facturas_con_hallazgos ?? 0)
+                    )}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-xl ${isLight ? "bg-red-100" : "bg-red-500/15"}`}>
+                  <DollarSign className="w-6 h-6 text-red-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Facturas Ok Sin Hallazgos */}
+          <Card className={`${cardBg} backdrop-blur-xl`}>
+            <CardContent className="py-4 px-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Ok Sin Hallazgos</p>
+                  <p className={`text-2xl font-bold mt-1 text-emerald-500`}>
+                    {isLoading ? <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} /> : (data?.summary?.facturas_ok ?? 0).toLocaleString("es-CO")}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-xl ${isLight ? "bg-emerald-100" : "bg-emerald-500/15"}`}>
+                  <FileCheck className="w-6 h-6 text-emerald-500" />
+                </div>
               </div>
             </CardContent>
           </Card>

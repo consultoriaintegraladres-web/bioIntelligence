@@ -117,22 +117,36 @@ export async function GET(request: NextRequest) {
       LIMIT ${limit} OFFSET ${skip}
     `;
 
-    console.log("📋 revision_facturas COUNT query:", countQuery);
-    console.log("📋 revision_facturas DATA query:", dataQuery);
+    // Summary query - KPIs solo de Primera Revisión
+    const summaryQuery = `
+      SELECT
+        CAST(SUM(CASE WHEN Primera_revision LIKE '%Ver hallazgos%' OR Primera_revision LIKE '%Ver Hallazgos%' THEN 1 ELSE 0 END) AS SIGNED) as facturas_con_hallazgos,
+        CAST(COALESCE(SUM(CASE WHEN Primera_revision LIKE '%Ver hallazgos%' OR Primera_revision LIKE '%Ver Hallazgos%' THEN Total_reclamado_por_amparo_gastos_medicos_quirurgicos ELSE 0 END), 0) AS DECIMAL(18,2)) as valor_facturas_con_hallazgos,
+        CAST(SUM(CASE WHEN Primera_revision LIKE '%Ok%hallazgos%' THEN 1 ELSE 0 END) AS SIGNED) as facturas_ok,
+        CAST(COUNT(*) AS SIGNED) as total_facturas
+      FROM revision_facturas
+      WHERE ${whereClause}
+    `;
 
-    const [countResult, rawDataResult] = await Promise.all([
+    const [countResult, rawDataResult, summaryResult] = await Promise.all([
       prisma.$queryRawUnsafe<any[]>(countQuery),
       prisma.$queryRawUnsafe<any[]>(dataQuery),
+      prisma.$queryRawUnsafe<any[]>(summaryQuery),
     ]);
 
     // Serialize to handle any BigInt values
     const dataResult = serializeResults(rawDataResult);
+    const serializedSummary = serializeResults(summaryResult);
     const total = Number(countResult[0]?.total || 0);
-
-    console.log(`📋 revision_facturas: ${total} registros encontrados, página ${page}`);
 
     return NextResponse.json({
       data: dataResult,
+      summary: {
+        facturas_con_hallazgos: serializedSummary[0]?.facturas_con_hallazgos || 0,
+        valor_facturas_con_hallazgos: Number(serializedSummary[0]?.valor_facturas_con_hallazgos || 0),
+        facturas_ok: serializedSummary[0]?.facturas_ok || 0,
+        total_facturas: serializedSummary[0]?.total_facturas || 0,
+      },
       pagination: {
         page,
         limit,
