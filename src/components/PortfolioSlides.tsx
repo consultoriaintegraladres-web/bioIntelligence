@@ -67,7 +67,7 @@ export default function PortfolioSlides() {
     
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000); // Cambia cada 5 segundos
+    }, 8000); // Cambia cada 8 segundos
 
     return () => clearInterval(interval);
   }, [isAutoPlaying]);
