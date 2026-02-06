@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
@@ -28,6 +28,7 @@ import { BarChart3D } from "@/components/charts/BarChart3D";
 import { PieChart3D } from "@/components/charts/PieChart3D";
 import { SourceChart3D } from "@/components/charts/SourceChart3D";
 import { ResumenTable } from "@/components/tables/ResumenTable";
+import { HallazgosModal } from "@/components/HallazgosModal";
 import { useAppContext } from "@/contexts/app-context";
 
 interface KPIsData {
@@ -55,6 +56,9 @@ interface ResumenOrigen {
 export default function ResumenPage() {
   const { data: session } = useSession();
   const { filters, setFilters, setSelectedIpsName, themeMode } = useAppContext();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalFilterType, setModalFilterType] = useState<"tipo_validacion" | "origen">("tipo_validacion");
+  const [modalFilterValue, setModalFilterValue] = useState("");
 
   const isLight = themeMode === "light";
   const textColor = isLight ? "text-gray-900" : "text-white";
@@ -185,6 +189,12 @@ export default function ResumenPage() {
     cantidad: item.cantidad_registros,
   }));
 
+  const handleChartItemClick = (filterType: "tipo_validacion" | "origen", value: string) => {
+    setModalFilterType(filterType);
+    setModalFilterValue(value);
+    setModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -269,7 +279,11 @@ export default function ResumenPage() {
                   <Skeleton className={`h-64 w-64 rounded-full ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
                 </div>
               ) : (
-                <BarChart3D data={barChartData} themeMode={themeMode} />
+                <BarChart3D 
+                  data={barChartData} 
+                  themeMode={themeMode} 
+                  onItemClick={(tipoValidacion) => handleChartItemClick("tipo_validacion", tipoValidacion)}
+                />
               )}
             </CardContent>
           </Card>
@@ -293,7 +307,11 @@ export default function ResumenPage() {
                   <Skeleton className={`h-80 w-80 rounded-full ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
                 </div>
               ) : (
-                <PieChart3D data={pieChartData} themeMode={themeMode} />
+                <PieChart3D 
+                  data={pieChartData} 
+                  themeMode={themeMode} 
+                  onItemClick={(tipoValidacion) => handleChartItemClick("tipo_validacion", tipoValidacion)}
+                />
               )}
             </CardContent>
           </Card>
@@ -317,7 +335,11 @@ export default function ResumenPage() {
                   <Skeleton className={`h-64 w-64 rounded-full ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
                 </div>
               ) : (
-                <SourceChart3D data={resumenOrigen} themeMode={themeMode} />
+                <SourceChart3D 
+                  data={resumenOrigen} 
+                  themeMode={themeMode} 
+                  onItemClick={(origen) => handleChartItemClick("origen", origen)}
+                />
               )}
             </CardContent>
           </Card>
@@ -342,6 +364,16 @@ export default function ResumenPage() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Hallazgos Modal */}
+      <HallazgosModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        filterType={modalFilterType}
+        filterValue={modalFilterValue}
+        filters={filters}
+        themeMode={themeMode}
+      />
     </div>
   );
 }

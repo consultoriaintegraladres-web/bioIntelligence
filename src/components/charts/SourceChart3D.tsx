@@ -12,18 +12,25 @@ interface SourceChart3DProps {
   }>;
   title?: string;
   themeMode?: ThemeMode;
+  onItemClick?: (origen: string) => void;
 }
 
-export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", themeMode = "dark" }: SourceChart3DProps) {
+export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", themeMode = "dark", onItemClick }: SourceChart3DProps) {
   const isLight = themeMode === "light";
   const textColor = isLight ? "#1a1a1a" : "#ffffff";
   const gridColor = isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.15)";
+
+  // Store sorted data for click handler
+  const sortedDataRef = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    return [...data].sort((a, b) => b.valor_total - a.valor_total);
+  }, [data]);
 
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return null;
 
     // Sort by valor_total (descending)
-    const sortedData = [...data].sort((a, b) => b.valor_total - a.valor_total);
+    const sortedData = sortedDataRef;
 
     const origenes = sortedData.map((d) => d.origen || "Sin origen");
     const cantidades = sortedData.map((d) => d.cantidad_hallazgos);
@@ -73,7 +80,16 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
         ),
       },
     ] as any[];
-  }, [data, isLight, textColor]);
+  }, [sortedDataRef, isLight, textColor]);
+
+  const handlePlotClick = (event: any) => {
+    if (!onItemClick || !event?.points?.[0]) return;
+    const pointIndex = event.points[0].pointNumber;
+    const clickedItem = sortedDataRef[pointIndex];
+    if (clickedItem) {
+      onItemClick(clickedItem.origen || "Sin origen");
+    }
+  };
 
   if (!chartData) {
     return (
@@ -87,6 +103,7 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
     <div className="relative w-full h-full">
     <Plot
       data={chartData}
+      onPlotClick={handlePlotClick}
       layout={{
         autosize: true,
         paper_bgcolor: "transparent",

@@ -71,10 +71,11 @@ interface SafePlotProps {
   config?: any;
   style?: React.CSSProperties;
   className?: string;
+  onPlotClick?: (event: any) => void;
 }
 
 const SafePlot = forwardRef<HTMLDivElement, SafePlotProps>(function SafePlot(
-  { data, layout, config, style, className },
+  { data, layout, config, style, className, onPlotClick },
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -141,6 +142,12 @@ const SafePlot = forwardRef<HTMLDivElement, SafePlotProps>(function SafePlot(
           isInitializedRef.current = true;
         }
 
+        // Attach click handler if provided (remove previous handlers first)
+        el.removeAllListeners("plotly_click");
+        if (onPlotClick) {
+          el.on("plotly_click", onPlotClick);
+        }
+
         // Force a relayout to ensure proper sizing after animation frames settle
         requestAnimationFrame(() => {
           if (isMountedRef.current && isInitializedRef.current && containerRef.current) {
@@ -158,6 +165,10 @@ const SafePlot = forwardRef<HTMLDivElement, SafePlotProps>(function SafePlot(
           isInitializedRef.current = false;
           Plotly.newPlot(el, data || [], finalLayout, config || {});
           isInitializedRef.current = true;
+          el.removeAllListeners("plotly_click");
+          if (onPlotClick) {
+            el.on("plotly_click", onPlotClick);
+          }
         } catch (e2) {
           console.error("SafePlot: Error rendering plot (retry)", e2);
         }
@@ -166,7 +177,7 @@ const SafePlot = forwardRef<HTMLDivElement, SafePlotProps>(function SafePlot(
 
     // Use requestAnimationFrame to ensure the container is painted and has dimensions
     requestAnimationFrame(doRender);
-  }, [plotlyLoaded, data, layout, config]);
+  }, [plotlyLoaded, data, layout, config, onPlotClick]);
 
   // Effect 3: Handle window resize for responsive behavior
   useEffect(() => {

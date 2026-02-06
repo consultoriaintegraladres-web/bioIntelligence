@@ -12,18 +12,25 @@ interface PieChart3DProps {
   }>;
   title?: string;
   themeMode?: ThemeMode;
+  onItemClick?: (tipoValidacion: string) => void;
 }
 
-export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMode = "dark" }: PieChart3DProps) {
+export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMode = "dark", onItemClick }: PieChart3DProps) {
   const isLight = themeMode === "light";
   const textColor = isLight ? "#1a1a1a" : "#ffffff";
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Store sorted data for click handler
+  const sortedDataRef = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    return [...data].sort((a, b) => b.value - a.value).slice(0, 10);
+  }, [data]);
 
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return null;
 
     // Sort by value (descending) and take top 10
-    const sortedData = [...data].sort((a, b) => b.value - a.value).slice(0, 10);
+    const sortedData = sortedDataRef;
     
     // Format value for display
     const formatValue = (v: number) => {
@@ -113,7 +120,16 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
         sort: false,
       },
     ];
-  }, [data, isLight, textColor]);
+  }, [sortedDataRef, isLight, textColor]);
+
+  const handlePlotClick = (event: any) => {
+    if (!onItemClick || !event?.points?.[0]) return;
+    const pointIndex = event.points[0].i;
+    const clickedItem = sortedDataRef[pointIndex];
+    if (clickedItem) {
+      onItemClick(clickedItem.name);
+    }
+  };
 
   // Calculate total value for center annotation
   const totalValue = useMemo(() => {
@@ -139,6 +155,7 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
     <div ref={containerRef} className="relative w-full h-full">
       <Plot
         data={chartData}
+        onPlotClick={handlePlotClick}
         layout={{
           autosize: true,
           paper_bgcolor: "transparent",

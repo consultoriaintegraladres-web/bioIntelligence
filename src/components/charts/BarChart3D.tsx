@@ -12,18 +12,25 @@ interface BarChart3DProps {
   }>;
   title?: string;
   themeMode?: ThemeMode;
+  onItemClick?: (tipoValidacion: string) => void;
 }
 
-export function BarChart3D({ data, title = "Distribución por Tipo de Validación", themeMode = "dark" }: BarChart3DProps) {
+export function BarChart3D({ data, title = "Distribución por Tipo de Validación", themeMode = "dark", onItemClick }: BarChart3DProps) {
   const isLight = themeMode === "light";
   const textColor = isLight ? "#1a1a1a" : "#ffffff";
   const gridColor = isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.15)";
+
+  // Store sorted data for click handler
+  const sortedDataRef = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    return [...data].sort((a, b) => b.valor - a.valor).slice(0, 12);
+  }, [data]);
 
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return null;
 
     // Sort by valor (descending) and take top 12
-    const sortedData = [...data].sort((a, b) => b.valor - a.valor).slice(0, 12);
+    const sortedData = sortedDataRef;
 
     // Truncate labels - max 60 chars, split in 2 lines if needed
     const labels = sortedData.map((d) => {
@@ -97,7 +104,16 @@ export function BarChart3D({ data, title = "Distribución por Tipo de Validació
         width: 0.7,
       },
     ];
-  }, [data, textColor, isLight]);
+  }, [sortedDataRef, textColor, isLight]);
+
+  const handlePlotClick = (event: any) => {
+    if (!onItemClick || !event?.points?.[0]) return;
+    const pointIndex = event.points[0].pointNumber;
+    const clickedItem = sortedDataRef[pointIndex];
+    if (clickedItem) {
+      onItemClick(clickedItem.name);
+    }
+  };
 
   if (!chartData) {
     return (
@@ -111,6 +127,7 @@ export function BarChart3D({ data, title = "Distribución por Tipo de Validació
     <div className="relative w-full h-full">
     <Plot
       data={chartData}
+      onPlotClick={handlePlotClick}
       layout={{
         autosize: true,
         paper_bgcolor: "transparent",
