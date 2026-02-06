@@ -40,13 +40,20 @@ npm run dev
 
 ## Variables de Entorno
 
-Crear archivo `.env` con:
+Crear archivo `.env.local` con:
 
 ```env
 DATABASE_URL="mysql://user:password@host:port/database"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret-key"
+GEMINI_API_KEY="your-gemini-api-key"
 ```
+
+### Obtener API Key de Gemini
+
+1. Ve a [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Crea una nueva API key
+3. Agrega la key a tu archivo `.env.local` como `GEMINI_API_KEY`
 
 ## Usuarios de Prueba
 

@@ -19,10 +19,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, FileText, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Download, FileText, ArrowUpDown, ArrowUp, ArrowDown, Brain } from "lucide-react";
 import { ThemeMode, FilterValues } from "@/contexts/app-context";
 import { exportToExcel } from "@/lib/excel-export";
 import { format } from "date-fns";
+import { AISummaryModal } from "./AISummaryModal";
 
 interface HallazgoDetalle {
   inconsistencia_id: number;
@@ -69,6 +70,9 @@ export function HallazgosModal({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [modalSortField, setModalSortField] = useState<SortField | null>(null);
   const [modalSortDirection, setModalSortDirection] = useState<SortDirection>(null);
+  const [showAISummary, setShowAISummary] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
 
   // Build query string for hallazgos modal
   const hallazgosQueryString = useMemo(() => {
@@ -205,6 +209,42 @@ export function HallazgosModal({
     });
   };
 
+  const handleExplainWithAI = async () => {
+    const hallazgosToAnalyze = sortedHallazgos.length > 0 ? sortedHallazgos : (hallazgosData?.data || []);
+    
+    if (hallazgosToAnalyze.length === 0) {
+      return;
+    }
+
+    setIsLoadingAI(true);
+    setShowAISummary(true);
+    setAiSummary(null);
+
+    try {
+      const response = await fetch("/api/ai/summarize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          hallazgos: hallazgosToAnalyze,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al generar el resumen");
+      }
+
+      const data = await response.json();
+      setAiSummary(data.summary || "No se pudo generar el resumen");
+    } catch (error) {
+      console.error("Error al obtener resumen de IA:", error);
+      setAiSummary("Error al generar el resumen. Por favor, intente nuevamente.");
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
+
   const ModalSortIcon = ({ field }: { field: SortField }) => {
     if (modalSortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-50" />;
     if (modalSortDirection === "asc") return <ArrowUp className="w-3 h-3 ml-1 text-[#10B981]" />;
@@ -218,6 +258,7 @@ export function HallazgosModal({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className={`${isLight ? "bg-white border-gray-200" : "bg-[#12121a] border-[#1e1e2e]"} overflow-hidden p-0`}
@@ -250,16 +291,28 @@ export function HallazgosModal({
           <p className={`text-sm ${subTextColor}`}>
             {(sortedHallazgos.length > 0 ? sortedHallazgos : hallazgosData?.data || []).length} registros encontrados
           </p>
-          <Button
-            onClick={handleExportHallazgos}
-            variant="outline"
-            size="sm"
-            disabled={!hallazgosData?.data?.length}
-            className={`text-sm ${isLight ? "border-gray-300 text-gray-700 hover:bg-gray-100" : "border-[#9333EA]/50 text-[#10B981] hover:bg-[#9333EA]/10"}`}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Exportar Excel
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleExplainWithAI}
+              variant="outline"
+              size="sm"
+              disabled={!hallazgosData?.data?.length || isLoadingAI}
+              className={`text-sm ${isLight ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-purple-500/50 text-purple-400 hover:bg-purple-500/10"}`}
+            >
+              <Brain className="w-4 h-4 mr-2" />
+              Explícamelo
+            </Button>
+            <Button
+              onClick={handleExportHallazgos}
+              variant="outline"
+              size="sm"
+              disabled={!hallazgosData?.data?.length}
+              className={`text-sm ${isLight ? "border-gray-300 text-gray-700 hover:bg-gray-100" : "border-[#9333EA]/50 text-[#10B981] hover:bg-[#9333EA]/10"}`}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exportar Excel
+            </Button>
+          </div>
         </div>
 
         <div className="overflow-auto flex-1 px-6 py-4" style={{ maxHeight: `${modalSize.height - 150}px` }}>
@@ -372,5 +425,17 @@ export function HallazgosModal({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* AI Summary Modal */}
+    <AISummaryModal
+      open={showAISummary}
+      onOpenChange={setShowAISummary}
+      summary={aiSummary}
+      isLoading={isLoadingAI}
+      totalHallazgos={(sortedHallazgos.length > 0 ? sortedHallazgos : hallazgosData?.data || []).length}
+      resumidos={Math.min(10, (sortedHallazgos.length > 0 ? sortedHallazgos : hallazgosData?.data || []).length)}
+      themeMode={themeMode}
+    />
+    </>
   );
 }
