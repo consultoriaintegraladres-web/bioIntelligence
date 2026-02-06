@@ -211,7 +211,7 @@ export default function ResumenPage() {
             </h1>
           </div>
           <p className={`${subTextColor} mt-1 text-xs md:text-sm leading-relaxed max-w-2xl`}>
-            Es Tablero de gestión especializado
+            Tablero de Gestión y Control Especializado
           </p>
         </div>
       </motion.div>

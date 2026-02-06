@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { format, subDays } from "date-fns";
-import { Calendar, Filter, RotateCcw, Search, AlertCircle, CheckCircle, FileText } from "lucide-react";
+import { Calendar, Filter, RotateCcw, Search, AlertCircle, CheckCircle, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,6 +62,7 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
   const [loteInput, setLoteInput] = useState("");
   const [loteValidation, setLoteValidation] = useState<{ checked: boolean; exists: boolean } | null>(null);
   const [isValidatingLote, setIsValidatingLote] = useState(false);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const { data: ipsSuggestions } = useQuery({
     queryKey: ["ips_suggestions", ipsSearch],
@@ -212,7 +213,7 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
             <h3 className={`text-base font-semibold ${textColor}`}>Filtros Dinámicos</h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Fecha Inicio */}
             <div className="space-y-2">
               <Label className={`text-sm font-medium ${labelColor}`}>Fecha Inicio</Label>
@@ -222,7 +223,7 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
                   type="date"
                   value={filters.fecha_inicio || ""}
                   onChange={(e) => handleFilterChange("fecha_inicio", e.target.value)}
-                  className={`pl-10 ${inputBg} ${inputText} text-base h-11`}
+                  className={`pl-10 ${inputBg} ${inputText} text-sm h-9`}
                 />
               </div>
             </div>
@@ -236,7 +237,7 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
                   type="date"
                   value={filters.fecha_fin || ""}
                   onChange={(e) => handleFilterChange("fecha_fin", e.target.value)}
-                  className={`pl-10 ${inputBg} ${inputText} text-base h-11`}
+                  className={`pl-10 ${inputBg} ${inputText} text-sm h-9`}
                 />
               </div>
             </div>
@@ -256,7 +257,7 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
                       setShowIpsSuggestions(true);
                     }}
                     onFocus={() => setShowIpsSuggestions(true)}
-                    className={`pl-10 ${inputBg} ${inputText} text-base h-11 placeholder:text-gray-500`}
+                    className={`pl-10 ${inputBg} ${inputText} text-sm h-9 placeholder:text-gray-500`}
                   />
                   
                   {showIpsSuggestions && ipsSuggestions && ipsSuggestions.length > 0 && (
@@ -286,7 +287,7 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
                   placeholder="Código..."
                   value={filters.codigo_habilitacion || ""}
                   onChange={(e) => handleFilterChange("codigo_habilitacion", e.target.value)}
-                  className={`${inputBg} ${inputText} text-base h-11 placeholder:text-gray-500`}
+                  className={`${inputBg} ${inputText} text-sm h-9 placeholder:text-gray-500`}
                 />
               </div>
             )}
@@ -306,49 +307,6 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
               </div>
             </div>
 
-            {/* Tipo Validación */}
-            <div className="space-y-2">
-              <Label className={`text-sm font-medium ${labelColor}`}>Tipo Validación</Label>
-              <Select
-                value={filters.tipo_validacion || "all"}
-                onValueChange={(value) => handleFilterChange("tipo_validacion", value === "all" ? "" : value)}
-              >
-                <SelectTrigger className={`${inputBg} ${inputText} text-base h-11`}>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent className={`${isLight ? "bg-white border-gray-200" : "bg-[#1a1a2e] border-[#2a2a3e]"} max-h-64`}>
-                  <SelectItem value="all" className={`${textColor} text-base`}>Todos</SelectItem>
-                  {tiposValidacion?.map((tipo) => (
-                    <SelectItem key={tipo} value={tipo} className={`text-base ${textColor}`}>
-                      <span className="block max-w-[300px]" title={tipo}>
-                        {truncateText(tipo)}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Origen */}
-            <div className="space-y-2">
-              <Label className={`text-sm font-medium ${labelColor}`}>Origen</Label>
-              <Select
-                value={filters.origen || "all"}
-                onValueChange={(value) => handleFilterChange("origen", value === "all" ? "" : value)}
-              >
-                <SelectTrigger className={`${inputBg} ${inputText} text-base h-11`}>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent className={isLight ? "bg-white border-gray-200" : "bg-[#1a1a2e] border-[#2a2a3e]"}>
-                  <SelectItem value="all" className={`${textColor} text-base`}>Todos</SelectItem>
-                  {origenes?.map((origen) => (
-                    <SelectItem key={origen} value={origen} className={`text-base ${textColor}`}>
-                      {origen}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
             {/* Tipo Envío */}
             <div className="space-y-2">
@@ -357,12 +315,12 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
                 value={filters.tipo_envio || "Primera vez"}
                 onValueChange={(value) => handleFilterChange("tipo_envio", value)}
               >
-                <SelectTrigger className={`${inputBg} ${inputText} text-base h-11`}>
+                <SelectTrigger className={`${inputBg} ${inputText} text-sm h-9`}>
                   <SelectValue placeholder="Primera vez" />
                 </SelectTrigger>
                 <SelectContent className={isLight ? "bg-white border-gray-200" : "bg-[#1a1a2e] border-[#2a2a3e]"}>
                   {tiposEnvio?.map((tipo) => (
-                    <SelectItem key={tipo} value={tipo} className={`text-base ${textColor}`}>
+                    <SelectItem key={tipo} value={tipo} className={`text-sm ${textColor}`}>
                       {tipo}
                     </SelectItem>
                   ))}
@@ -382,7 +340,7 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
                     placeholder="Ej: 1234"
                     value={loteInput}
                     onChange={(e) => handleLoteChange(e.target.value)}
-                    className={`${inputBg} ${inputText} text-base h-11 placeholder:text-gray-500 pr-10 ${
+                    className={`${inputBg} ${inputText} text-sm h-9 placeholder:text-gray-500 pr-10 ${
                       loteValidation?.checked && !loteValidation.exists
                         ? "border-red-500/50 focus:border-red-500"
                         : loteValidation?.checked && loteValidation.exists
@@ -415,11 +373,80 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
             )}
           </div>
 
+          {/* Más Filtros - Desplegable */}
+          <div className="mt-4">
+            <button
+              onClick={() => setShowMoreFilters(!showMoreFilters)}
+              className={`flex items-center gap-2 text-sm font-medium ${labelColor} hover:${textColor} transition-colors`}
+            >
+              {showMoreFilters ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+              Más filtros
+            </button>
+            
+            {showMoreFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
+              >
+                {/* Tipo Validación */}
+                <div className="space-y-2">
+                  <Label className={`text-sm font-medium ${labelColor}`}>Tipo Validación</Label>
+                  <Select
+                    value={filters.tipo_validacion || "all"}
+                    onValueChange={(value) => handleFilterChange("tipo_validacion", value === "all" ? "" : value)}
+                  >
+                    <SelectTrigger className={`${inputBg} ${inputText} text-sm h-9`}>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent className={`${isLight ? "bg-white border-gray-200" : "bg-[#1a1a2e] border-[#2a2a3e]"} max-h-64`}>
+                      <SelectItem value="all" className={`${textColor} text-sm`}>Todos</SelectItem>
+                      {tiposValidacion?.map((tipo) => (
+                        <SelectItem key={tipo} value={tipo} className={`text-sm ${textColor}`}>
+                          <span className="block max-w-[300px]" title={tipo}>
+                            {truncateText(tipo)}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Origen */}
+                <div className="space-y-2">
+                  <Label className={`text-sm font-medium ${labelColor}`}>Origen</Label>
+                  <Select
+                    value={filters.origen || "all"}
+                    onValueChange={(value) => handleFilterChange("origen", value === "all" ? "" : value)}
+                  >
+                    <SelectTrigger className={`${inputBg} ${inputText} text-sm h-9`}>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent className={isLight ? "bg-white border-gray-200" : "bg-[#1a1a2e] border-[#2a2a3e]"}>
+                      <SelectItem value="all" className={`${textColor} text-sm`}>Todos</SelectItem>
+                      {origenes?.map((origen) => (
+                        <SelectItem key={origen} value={origen} className={`text-sm ${textColor}`}>
+                          {origen}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
           {/* Action Buttons */}
           <div className={`flex items-center gap-3 mt-6 pt-4 border-t ${isLight ? "border-gray-200" : "border-[#1e1e2e]"}`}>
             <Button
               onClick={handleApplyFilters}
-              className="bg-gradient-to-r from-[#6B2D7B] to-[#4CAF50] hover:from-[#5B1D6B] hover:to-[#3CA040] text-white text-base h-11 px-6"
+              className="bg-gradient-to-r from-[#6B2D7B] to-[#4CAF50] hover:from-[#5B1D6B] hover:to-[#3CA040] text-white text-sm h-9 px-5"
             >
               <Filter className="w-4 h-4 mr-2" />
               Aplicar Filtros
@@ -427,14 +454,14 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
             <Button
               variant="outline"
               onClick={handleReset}
-              className={`text-base h-11 ${isLight ? "border-gray-300 text-gray-700 hover:bg-gray-100" : "border-[#2a2a3e] text-gray-400 hover:text-white hover:bg-[#1a1a2e]"}`}
+              className={`text-sm h-9 ${isLight ? "border-gray-300 text-gray-700 hover:bg-gray-100" : "border-[#2a2a3e] text-gray-400 hover:text-white hover:bg-[#1a1a2e]"}`}
             >
               <RotateCcw className="w-4 h-4 mr-2" />
               Limpiar
             </Button>
             {!isAdmin && (
               <span className="text-sm text-amber-500 ml-auto">
-                * Rango máximo: 1 mes
+                * Rango máximo: 3 meses
               </span>
             )}
           </div>
