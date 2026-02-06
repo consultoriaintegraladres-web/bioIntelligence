@@ -19,42 +19,42 @@ const slides: Slide[] = [
     title: "BIORETAIL - Consultoría en salud",
     content: "Somos una organización de consultoría en salud con 11 años de experiencia, que genera valor a sus clientes por medio de un capital humano especializado y experto, la gestión del conocimiento y el uso de las tecnologías de información y comunicaciones.",
     image: "/images/portfolio/bioretail-consultoria.jpg",
-    gradient: "from-cyan-500/20 to-blue-500/20",
+    gradient: "from-cyan-300/40 via-sky-300/35 to-blue-300/40",
   },
   {
     id: 2,
     title: "Oportunidad en el Negocio del SOAT",
     content: "Gestión de los accidentes de tránsito y eventos catastróficos (ECAT). Prestación de servicios médico quirúrgicos y traslados asistenciales a las víctimas de eventos ECAT. Línea del sector salud con mayor potencial para la generación de rentabilidad y liquidez a los prestadores de servicios de salud (PSS) en el 2026.",
     image: "/images/portfolio/oportunidad-soat.jpg",
-    gradient: "from-purple-500/20 to-pink-500/20",
+    gradient: "from-violet-300/40 via-purple-300/35 to-fuchsia-300/40",
   },
   {
     id: 3,
     title: "Evolución de la Auditoría en Salud",
     content: "La Resolución 00012758 de 2023 establece el Sistema de Auditoría por Alertas (SAA). La ADRES ha firmado alianzas con gigantes de la industria tecnológica para desarrollar auditoría inteligente de cuentas médicas, buscando reducir tiempos de respuesta y evitar fraudes mediante inteligencia artificial.",
     image: "/images/portfolio/evolucion-auditoria.jpeg",
-    gradient: "from-emerald-500/20 to-teal-500/20",
+    gradient: "from-teal-300/40 via-cyan-300/35 to-emerald-300/40",
   },
   {
     id: 4,
     title: "ADRES – Auditor y Pagador Inteligente",
     content: "La ADRES presenta la sala de inteligencia, una herramienta digital integrada para visualizar indicadores clave del sector como recaudo, pagos y reconocimientos y auditorías, a través de tecnología, análisis de datos e inteligencia artificial. Se espera que para marzo de 2026 se paguen, en cuestión de días, cuentas que anteriormente tomaban varios meses.",
     image: "/images/portfolio/adres-pagador.jpg",
-    gradient: "from-amber-500/20 to-orange-500/20",
+    gradient: "from-sky-300/40 via-blue-300/35 to-cyan-300/40",
   },
   {
     id: 5,
     title: "Plataforma Estratégica para la Gestión del SOAT",
     content: "Incluye suministro de material de osteosíntesis y biomateriales, cumplimiento de instrucciones de la Circular 015 de 2016, estrategias de mitigación de fraudes, capacitaciones, parametrización de servicios (PATROFIAS), procesos conciliatorios con Aseguradoras SOAT y tableros de control para análisis estratégico.",
     image: "/images/portfolio/plataforma-soat.jpg",
-    gradient: "from-red-500/20 to-rose-500/20",
+    gradient: "from-purple-300/40 via-violet-300/35 to-fuchsia-300/40",
   },
   {
     id: 6,
     title: "Beneficios de las TAAS",
     content: "Optimiza mayor reconocimiento (recaudo) en la primera presentación de la reclamación y en la gestión de glosa. Enfoque estratégico en evitar glosas totales (Killer) de mayor impacto económico y mejorar la gestión de procedimientos quirúrgicos + MAOS + Biomateriales. Optimización del talento humano y costo efectividad entre el valor recuperado y la inversión realizada.",
     image: "/images/portfolio/beneficios-taas.jpg",
-    gradient: "from-violet-500/20 to-purple-500/20",
+    gradient: "from-emerald-300/40 via-teal-300/35 to-cyan-300/40",
   },
 ];
 
@@ -102,7 +102,7 @@ export default function PortfolioSlides() {
           className={`absolute inset-0 p-8 md:p-12 bg-gradient-to-br ${slides[currentSlide].gradient}`}
         >
           {slides[currentSlide].image && (
-            <div className="absolute inset-0 opacity-15 overflow-hidden">
+            <div className="absolute inset-0 opacity-50 overflow-hidden">
               <Image
                 src={slides[currentSlide].image}
                 alt={slides[currentSlide].title}
@@ -149,8 +149,8 @@ export default function PortfolioSlides() {
             onClick={() => goToSlide(index)}
             className={`w-2 h-2 rounded-full transition-all ${
               index === currentSlide
-                ? "bg-cyan-400 w-8"
-                : "bg-white/30 hover:bg-white/50"
+                ? "bg-cyan-300 w-8 shadow-lg shadow-cyan-300/50"
+                : "bg-white/40 hover:bg-white/60"
             }`}
             aria-label={`Ir a slide ${index + 1}`}
           />
