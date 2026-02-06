@@ -46,7 +46,6 @@ import {
 } from "lucide-react";
 import { useAppContext } from "@/contexts/app-context";
 import { exportToExcel } from "@/lib/excel-export";
-import { DynamicFilters } from "@/components/filters/DynamicFilters";
 import { FilterValues } from "@/contexts/app-context";
 import { HallazgosModal } from "@/components/HallazgosModal";
 
@@ -129,12 +128,6 @@ export default function ControlFacturasPage() {
     },
   });
 
-  const handleFiltersChange = (newFilters: FilterValues) => {
-    setPage(1);
-    if (newFilters.nombre_ips) {
-      setSelectedIpsName(newFilters.nombre_ips);
-    }
-  };
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -235,12 +228,24 @@ export default function ControlFacturasPage() {
           </p>
         </div>
 
-        {/* Filters */}
-        <Card className={`${cardBg} mb-6`}>
-          <CardContent className="p-4">
-            <DynamicFilters onFiltersChange={handleFiltersChange} showLoteFilter={true} />
-          </CardContent>
-        </Card>
+        {/* Info Banner - Los filtros se aplican desde el Dashboard */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="mb-6"
+        >
+          <Card className={`${isLight ? "bg-blue-50 border-blue-200" : "bg-blue-900/20 border-blue-800/30"} backdrop-blur-xl`}>
+            <CardContent className="py-4">
+              <div className="flex items-center gap-3">
+                <Filter className="w-5 h-5 text-blue-500" />
+                <p className={`text-sm ${textColor}`}>
+                  Los filtros se aplican desde la pestaña <strong className="text-blue-500">Dashboard</strong>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Table Card */}
         <Card className={cardBg}>
