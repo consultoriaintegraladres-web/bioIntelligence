@@ -37,49 +37,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Tomar los primeros 10 hallazgos
-    const hallazgosToSummarize = hallazgos.slice(0, 10);
+    // Tomar máximo 1000 hallazgos para análisis
+    const hallazgosToSummarize = hallazgos.slice(0, Math.min(1000, hallazgos.length));
 
     // Formatear los hallazgos para el prompt
     const hallazgosFormatted = hallazgosToSummarize.map((h: HallazgoDetalle, index: number) => {
-      return `
-Hallazgo ${index + 1}:
-- Tipo de Validación: ${h.tipo_validacion || "N/A"}
-- Origen: ${h.origen || "N/A"}
-- Descripción del Servicio: ${h.descripcion_servicio || "N/A"}
-- Observación: ${h.observacion || "N/A"}
-- Número de Factura: ${h.Numero_factura || "N/A"}
-- Cantidad: ${h.cantidad || "N/A"}
-- Valor Total: ${h.valor_total || "N/A"}
-`;
+      return `[${index + 1}] Tipo: ${h.tipo_validacion || "N/A"} | Origen: ${h.origen || "N/A"} | Observación: ${h.observacion || "N/A"} | Factura: ${h.Numero_factura || "N/A"} | Valor: ${h.valor_total || "N/A"}`;
     }).join("\n");
 
-    const prompt = `Eres un experto certificado en auditoría médica y análisis de hallazgos en facturación de servicios de salud por accidentes de tránsito (ECAT), con conocimiento profundo de la normatividad ADRES y el Manual de Auditoría ADRES.
+    const totalHallazgos = hallazgos.length;
+    const analizados = hallazgosToSummarize.length;
 
-INSTRUCCIONES IMPORTANTES:
-- Responde con seguridad y precisión, basándote en la normatividad vigente de ADRES
-- NO uses frases como "al parecer", "probablemente", "podría ser" o similares
-- Usa lenguaje técnico profesional y preciso
-- Cita la normatividad ADRES cuando sea relevante
-- Sé directo y seguro en tus afirmaciones
+    const prompt = `Eres un experto certificado en normatividad ECAT Colombia ADRES y Manual de Auditoría de Reclamaciones Personas Jurídicas, especializado en análisis de hallazgos de auditoría médica.
+
+INSTRUCCIONES CRÍTICAS:
+- Analiza y agrupa los hallazgos por tipologías o casuísticas similares
+- Identifica MÁXIMO 5 tipologías diferentes (si solo hay una, muestra solo una)
+- NO expliques cada hallazgo individualmente
+- NO uses frases como "aparentemente", "sugiere", "probablemente", "podría ser", "parece que"
+- Habla con seguridad y precisión técnica, como experto en normatividad ADRES
+- Usa lenguaje técnico profesional y directo
+- Cita normativas ADRES cuando sea relevante
 
 CONTEXTO NORMATIVO:
 - Normatividad ADRES para ECAT (Eventos Catastróficos)
-- Manual de Auditoría ADRES
+- Manual de Auditoría de Reclamaciones Personas Jurídicas ADRES
 - Resolución 3374 de 2000 y normativas relacionadas
 - Protocolos de validación de facturación SOAT
 
-Analiza los siguientes hallazgos y proporciona un resumen técnico y profesional de cada uno, explicando con precisión:
+TAREA:
+Analiza los siguientes ${analizados} hallazgos (de un total de ${totalHallazgos}) y agrupa por tipologías similares de errores o inconsistencias.
 
-1. Qué tipo de inconsistencia representa cada hallazgo según la normatividad ADRES
-2. Por qué es relevante para la auditoría de ECAT
-3. Qué información clave contiene cada uno y su impacto en la facturación
-4. Referencia normativa cuando aplique
+Para cada tipología identificada, proporciona:
+1. Nombre de la tipología (título descriptivo y técnico)
+2. Descripción técnica de la inconsistencia según normatividad ADRES
+3. Cantidad aproximada de hallazgos que pertenecen a esta tipología
+4. Normativa ADRES aplicable (si aplica)
+5. Impacto en la auditoría ECAT
+
+FORMATO DE RESPUESTA:
+Usa el siguiente formato para cada tipología:
+
+**TIPOLOGÍA [Número]: [Nombre de la Tipología]**
+- Descripción: [Descripción técnica precisa]
+- Cantidad de casos: [Aproximadamente X hallazgos]
+- Normativa aplicable: [Citar normativa ADRES si aplica]
+- Impacto: [Impacto en auditoría ECAT]
 
 Hallazgos a analizar:
 ${hallazgosFormatted}
 
-Proporciona un resumen estructurado y profesional, numerando cada hallazgo del 1 al ${hallazgosToSummarize.length}. Usa lenguaje técnico preciso y evita cualquier expresión de incertidumbre.`;
+IMPORTANTE: Si todos los hallazgos pertenecen a una sola tipología, muestra solo una. Si hay múltiples tipologías, agrupa hasta máximo 5. Responde con seguridad técnica, sin expresiones de duda.`;
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 

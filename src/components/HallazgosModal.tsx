@@ -210,11 +210,14 @@ export function HallazgosModal({
   };
 
   const handleExplainWithAI = async () => {
-    const hallazgosToAnalyze = sortedHallazgos.length > 0 ? sortedHallazgos : (hallazgosData?.data || []);
+    const allHallazgos = sortedHallazgos.length > 0 ? sortedHallazgos : (hallazgosData?.data || []);
     
-    if (hallazgosToAnalyze.length === 0) {
+    if (allHallazgos.length === 0) {
       return;
     }
+
+    // Limitar a máximo 1000 hallazgos para análisis
+    const hallazgosToAnalyze = allHallazgos.slice(0, Math.min(1000, allHallazgos.length));
 
     setIsLoadingAI(true);
     setShowAISummary(true);
