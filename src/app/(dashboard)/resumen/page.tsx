@@ -13,7 +13,7 @@ import {
   DollarSign,
   Package,
   TrendingUp,
-  Bot,
+  Brain,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import type { FilterValues } from "@/components/filters/DynamicFilters";
@@ -204,20 +204,16 @@ export default function ResumenPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className={`text-3xl font-bold ${textColor}`}>
-            Dashboard de Hallazgos
-          </h1>
-          <p className={`${subTextColor} mt-1 text-base`}>
-            Análisis de hallazgos detectados por IA
+          <div className="flex items-center gap-3">
+            <Brain className="w-6 h-6 md:w-7 md:h-7 text-[#10B981]" />
+            <h1 className={`text-xl md:text-2xl font-bold ${textColor}`}>
+              Tablero Inteligente de Control
+            </h1>
+          </div>
+          <p className={`${subTextColor} mt-1 text-xs md:text-sm leading-relaxed max-w-2xl`}>
+            Es Tablero de gestión especializado
           </p>
         </div>
-        <Badge
-          variant="outline"
-          className="border-[#9333EA]/50 text-[#10B981] bg-[#9333EA]/10 px-4 py-2 text-sm"
-        >
-          <Bot className="w-4 h-4 mr-2" />
-          Powered by AI
-        </Badge>
       </motion.div>
 
       {/* Filters */}

@@ -168,7 +168,7 @@ export function Sidebar({ selectedIpsName }: SidebarProps) {
                 
                 <div className="mt-4 px-4">
                   <p className={`text-[10px] ${subTextColor} text-center`}>
-                    v1.0.0 • Powered by AI
+                    v1.0.0
                   </p>
                 </div>
               </div>
