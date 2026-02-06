@@ -392,19 +392,9 @@ export function ResumenTable({ data, isLoading, themeMode = "dark", filters = {}
                 onClick={() => setSelectedTipoValidacion(row.tipo_validacion)}
               >
                 <TableCell className="max-w-[350px] py-5 px-4">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className={`text-base ${textColor} cursor-help leading-relaxed block`}>
-                        {truncateText(row.tipo_validacion, 60)}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="right"
-                      className={`max-w-lg p-3 ${isLight ? "bg-white border-gray-200 text-gray-900" : "bg-[#1e1e2e] border-[#2a2a3e] text-white"}`}
-                    >
-                      <p className="text-sm leading-relaxed">{row.tipo_validacion}</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <span className={`text-base ${textColor} leading-relaxed block whitespace-normal break-words`}>
+                    {row.tipo_validacion}
+                  </span>
                 </TableCell>
                 <TableCell className="text-center py-5 px-4">
                   <Badge
@@ -429,22 +419,12 @@ export function ResumenTable({ data, isLoading, themeMode = "dark", filters = {}
                 </TableCell>
                 <TableCell className="max-w-[280px] py-5 px-4">
                   {row.Recomendacion ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-2 cursor-help">
-                          <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                          <span className={`text-base ${textColor} leading-relaxed`}>
-                            {truncateText(row.Recomendacion, 50)}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent
-                        side="left"
-                        className={`max-w-md p-3 ${isLight ? "bg-white border-gray-200 text-gray-900" : "bg-[#1e1e2e] border-[#2a2a3e] text-white"}`}
-                      >
-                        <p className="text-sm leading-relaxed">{row.Recomendacion}</p>
-                      </TooltipContent>
-                    </Tooltip>
+                    <div className="flex items-start gap-2">
+                      <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0 mt-1" />
+                      <span className={`text-base ${textColor} leading-relaxed whitespace-normal break-words`}>
+                        {row.Recomendacion}
+                      </span>
+                    </div>
                   ) : (
                     <span className={`text-sm ${subTextColor}`}>Sin recomendación</span>
                   )}
@@ -602,17 +582,17 @@ export function ResumenTable({ data, isLoading, themeMode = "dark", filters = {}
                             {item.origen || "-"}
                           </Badge>
                         </TableCell>
-                        <TableCell className={`text-sm ${textColor} max-w-[200px] py-3`} title={item.tipo_validacion || ""}>
-                          {truncateText(item.tipo_validacion || "", 35)}
+                        <TableCell className={`text-sm ${textColor} max-w-[200px] py-3`}>
+                          <span className="whitespace-normal break-words block">{item.tipo_validacion || "-"}</span>
                         </TableCell>
-                        <TableCell className={`text-sm ${textColor} max-w-[200px] py-3`} title={item.descripcion_servicio || ""}>
-                          {truncateText(item.descripcion_servicio || "", 35)}
+                        <TableCell className={`text-sm ${textColor} max-w-[200px] py-3`}>
+                          <span className="whitespace-normal break-words block">{item.descripcion_servicio || "-"}</span>
                         </TableCell>
                         <TableCell className="text-right font-mono text-[#10B981] text-sm py-3">
                           {formatCurrencyStr(item.valor_total)}
                         </TableCell>
-                        <TableCell className={`text-sm ${textColor} max-w-[200px] py-3`} title={item.observacion || ""}>
-                          {truncateText(item.observacion || "", 35)}
+                        <TableCell className={`text-sm ${textColor} max-w-[200px] py-3`}>
+                          <span className="whitespace-normal break-words block">{item.observacion || "-"}</span>
                         </TableCell>
                       </TableRow>
                     ));
