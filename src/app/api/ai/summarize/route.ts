@@ -70,9 +70,9 @@ Proporciona un resumen estructurado, numerando cada hallazgo del 1 al ${hallazgo
       );
     }
 
-    // Llamar a Gemini API
+    // Llamar a Gemini API - Usando Gemini 1.5 Flash (modelo más reciente disponible)
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
