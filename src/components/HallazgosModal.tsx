@@ -232,14 +232,27 @@ export function HallazgosModal({
       });
 
       if (!response.ok) {
-        throw new Error("Error al generar el resumen");
+        const errorData = await response.json().catch(() => ({ error: "Error desconocido" }));
+        throw new Error(errorData.error || "Error al generar el resumen");
       }
 
       const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
       setAiSummary(data.summary || "No se pudo generar el resumen");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al obtener resumen de IA:", error);
-      setAiSummary("Error al generar el resumen. Por favor, intente nuevamente.");
+      const errorMessage = error.message || "Error al generar el resumen. Por favor, intente nuevamente.";
+      
+      // Mensaje más amigable si falta la API key
+      if (errorMessage.includes("API key") || errorMessage.includes("no configurada")) {
+        setAiSummary("⚠️ Error: La API key de Gemini no está configurada. Por favor, agregue GEMINI_API_KEY en el archivo .env.local");
+      } else {
+        setAiSummary(`❌ Error: ${errorMessage}`);
+      }
     } finally {
       setIsLoadingAI(false);
     }

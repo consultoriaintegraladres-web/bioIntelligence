@@ -94,9 +94,17 @@ Proporciona un resumen estructurado, numerando cada hallazgo del 1 al ${hallazgo
 
     if (!response.ok) {
       const errorData = await response.text();
+      let errorMessage = "Error al comunicarse con la API de Gemini";
+      try {
+        const errorJson = JSON.parse(errorData);
+        errorMessage = errorJson.error?.message || errorMessage;
+      } catch {
+        // Si no es JSON, usar el texto directamente
+        errorMessage = errorData || errorMessage;
+      }
       console.error("Error de Gemini API:", errorData);
       return NextResponse.json(
-        { error: "Error al comunicarse con la API de Gemini" },
+        { error: errorMessage },
         { status: 500 }
       );
     }
