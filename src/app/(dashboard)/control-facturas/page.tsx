@@ -138,6 +138,28 @@ export default function ControlFacturasPage() {
     },
   });
 
+  // Query para datos consolidados del encabezado
+  const consolidadoQueryString = useMemo(() => {
+    const params = new URLSearchParams();
+    if (filters.codigo_habilitacion) params.set("codigo_habilitacion", filters.codigo_habilitacion);
+    if (filters.lote_de_carga) params.set("numero_lote", filters.lote_de_carga);
+    if (filters.nombre_ips) params.set("nombre_ips", filters.nombre_ips);
+    if (filters.fecha_inicio) params.set("fecha_inicio", filters.fecha_inicio);
+    if (filters.fecha_fin) params.set("fecha_fin", filters.fecha_fin);
+    if (filters.nombre_envio) params.set("nombre_envio", filters.nombre_envio);
+    if (filters.tipo_envio) params.set("tipo_envio", filters.tipo_envio);
+    return params.toString();
+  }, [filters]);
+
+  const { data: consolidadoData, isLoading: isLoadingConsolidado } = useQuery({
+    queryKey: ["consolidado_facturas", consolidadoQueryString],
+    queryFn: async () => {
+      const res = await fetch(`/api/consolidado-facturas?${consolidadoQueryString}`);
+      if (!res.ok) throw new Error("Error al obtener datos consolidados");
+      return res.json();
+    },
+  });
+
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -265,7 +287,7 @@ export default function ControlFacturasPage() {
           </Card>
         </motion.div>
 
-        {/* KPI Summary Cards - Primera Revisión */}
+        {/* KPI Summary Cards - Vista Consolidado */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -279,7 +301,11 @@ export default function ControlFacturasPage() {
                 <div>
                   <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Total Facturas</p>
                   <div className={`text-2xl font-bold mt-1 ${textColor}`}>
-                    {isLoading ? <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} /> : (data?.summary?.total_facturas ?? 0).toLocaleString("es-CO")}
+                    {isLoadingConsolidado ? (
+                      <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
+                    ) : (
+                      (consolidadoData?.totals?.totalFacturas ?? 0).toLocaleString("es-CO")
+                    )}
                   </div>
                 </div>
                 <div className={`p-3 rounded-xl ${isLight ? "bg-blue-100" : "bg-blue-500/15"}`}>
@@ -296,7 +322,11 @@ export default function ControlFacturasPage() {
                 <div>
                   <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Con Hallazgos</p>
                   <div className={`text-2xl font-bold mt-1 text-amber-500`}>
-                    {isLoading ? <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} /> : (data?.summary?.facturas_con_hallazgos ?? 0).toLocaleString("es-CO")}
+                    {isLoadingConsolidado ? (
+                      <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
+                    ) : (
+                      (consolidadoData?.totals?.totalConHallazgos ?? 0).toLocaleString("es-CO")
+                    )}
                   </div>
                 </div>
                 <div className={`p-3 rounded-xl ${isLight ? "bg-amber-100" : "bg-amber-500/15"}`}>
@@ -306,14 +336,35 @@ export default function ControlFacturasPage() {
             </CardContent>
           </Card>
 
-          {/* Valor Facturas Con Hallazgos */}
+          {/* Hallazgos Críticos - EN ROJO */}
           <Card className={`${cardBg} backdrop-blur-xl`}>
             <CardContent className="py-4 px-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Valor Con Hallazgos</p>
+                  <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Hallazgos Críticos</p>
+                  <div className={`text-2xl font-bold mt-1 text-red-500`}>
+                    {isLoadingConsolidado ? (
+                      <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
+                    ) : (
+                      (consolidadoData?.totals?.totalHallazgosCriticos ?? 0).toLocaleString("es-CO")
+                    )}
+                  </div>
+                </div>
+                <div className={`p-3 rounded-xl ${isLight ? "bg-red-100" : "bg-red-500/15"}`}>
+                  <AlertCircle className="w-6 h-6 text-red-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Valor Total Hallazgos Críticos - EN ROJO */}
+          <Card className={`${cardBg} backdrop-blur-xl`}>
+            <CardContent className="py-4 px-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Valor Hallazgos Críticos</p>
                   <div className={`text-xl font-bold mt-1 text-red-500`}>
-                    {isLoading ? (
+                    {isLoadingConsolidado ? (
                       <Skeleton className={`h-7 w-28 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
                     ) : (
                       new Intl.NumberFormat("es-CO", {
@@ -321,7 +372,7 @@ export default function ControlFacturasPage() {
                         currency: "COP",
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
-                      }).format(data?.summary?.valor_facturas_con_hallazgos ?? 0)
+                      }).format(consolidadoData?.totals?.totalValorHallazgosCriticos ?? 0)
                     )}
                   </div>
                 </div>
@@ -331,19 +382,57 @@ export default function ControlFacturasPage() {
               </div>
             </CardContent>
           </Card>
+        </motion.div>
 
-          {/* Facturas Ok Sin Hallazgos */}
+        {/* Cards adicionales - Facturas Sin Hallazgos y Total Reclamado */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6"
+        >
+          {/* Facturas Sin Hallazgos */}
           <Card className={`${cardBg} backdrop-blur-xl`}>
             <CardContent className="py-4 px-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Ok Sin Hallazgos</p>
+                  <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Sin Hallazgos</p>
                   <div className={`text-2xl font-bold mt-1 text-emerald-500`}>
-                    {isLoading ? <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} /> : (data?.summary?.facturas_ok ?? 0).toLocaleString("es-CO")}
+                    {isLoadingConsolidado ? (
+                      <Skeleton className={`h-7 w-16 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
+                    ) : (
+                      (consolidadoData?.totals?.totalSinHallazgos ?? 0).toLocaleString("es-CO")
+                    )}
                   </div>
                 </div>
                 <div className={`p-3 rounded-xl ${isLight ? "bg-emerald-100" : "bg-emerald-500/15"}`}>
                   <FileCheck className="w-6 h-6 text-emerald-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Suma Reclamado */}
+          <Card className={`${cardBg} backdrop-blur-xl`}>
+            <CardContent className="py-4 px-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-xs font-medium uppercase tracking-wider ${subTextColor}`}>Total Reclamado</p>
+                  <div className={`text-xl font-bold mt-1 ${textColor}`}>
+                    {isLoadingConsolidado ? (
+                      <Skeleton className={`h-7 w-32 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
+                    ) : (
+                      new Intl.NumberFormat("es-CO", {
+                        style: "currency",
+                        currency: "COP",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(consolidadoData?.totals?.totalReclamado ?? 0)
+                    )}
+                  </div>
+                </div>
+                <div className={`p-3 rounded-xl ${isLight ? "bg-blue-100" : "bg-blue-500/15"}`}>
+                  <DollarSign className="w-6 h-6 text-blue-500" />
                 </div>
               </div>
             </CardContent>
