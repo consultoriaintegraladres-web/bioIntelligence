@@ -55,23 +55,53 @@ GEMINI_API_KEY="your-gemini-api-key"
 2. Crea una nueva API key
 3. Agrega la key a tu archivo `.env.local` como `GEMINI_API_KEY`
 
-### Configurar Variables de Entorno en Vercel
+### Configurar Variables de Entorno en Vercel (Producción)
 
-Para producción en Vercel, debes configurar las variables de entorno en el dashboard de Vercel:
+Para desplegar en producción en Vercel, sigue estos pasos:
 
-1. Ve a tu proyecto en [Vercel Dashboard](https://vercel.com/dashboard)
-2. Selecciona tu proyecto
-3. Ve a **Settings** → **Environment Variables**
-4. Agrega las siguientes variables:
-   - `DATABASE_URL` - URL de conexión a MySQL
-   - `NEXTAUTH_URL` - URL de tu aplicación (ej: `https://tu-app.vercel.app`)
-   - `NEXTAUTH_SECRET` - Secret key para NextAuth (genera una con `openssl rand -base64 32`)
-   - `GEMINI_API_KEY` - Tu API key de Gemini
-5. Selecciona los ambientes donde aplicar (Production, Preview, Development)
-6. Haz clic en **Save**
-7. **Re-deploy** tu aplicación para que los cambios surtan efecto
+#### 1. Acceder al Dashboard de Vercel
+- Ve a [Vercel Dashboard](https://vercel.com/dashboard)
+- Inicia sesión con tu cuenta
+- Selecciona tu proyecto
 
-**Nota importante:** Las variables de entorno en Vercel están **encriptadas y seguras**. Nunca las almacenes en la base de datos ni las expongas en el código del cliente.
+#### 2. Configurar Variables de Entorno
+- Ve a **Settings** → **Environment Variables**
+- Haz clic en **Add New** para cada variable
+
+**Variables requeridas:**
+
+| Variable | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `DATABASE_URL` | URL de conexión a MySQL (Railway) | `mysql://user:pass@host:port/db` |
+| `NEXTAUTH_URL` | URL de tu aplicación en producción | `https://tu-app.vercel.app` |
+| `NEXTAUTH_SECRET` | Secret key para NextAuth (genera con `openssl rand -base64 32`) | `tu-secret-key-aqui` |
+| `GEMINI_API_KEY` | API key de Gemini AI | `AIzaSy...` |
+| `R2_ACCOUNT_ID` | Cloudflare R2 Account ID | `c36beae8...` |
+| `R2_ACCESS_KEY_ID` | Cloudflare R2 Access Key | `d41ebfb4...` |
+| `R2_SECRET_ACCESS_KEY` | Cloudflare R2 Secret Key | `907b2791...` |
+| `R2_BUCKET_NAME` | Nombre del bucket R2 | `bioapp` |
+
+#### 3. Seleccionar Ambientes
+Para cada variable, selecciona los ambientes donde aplicará:
+- ✅ **Production** - Para producción
+- ✅ **Preview** - Para preview deployments
+- ✅ **Development** - Para desarrollo (opcional)
+
+#### 4. Guardar y Re-desplegar
+- Haz clic en **Save** después de agregar cada variable
+- Ve a **Deployments** → Selecciona el último deployment → **Redeploy**
+- O simplemente haz un nuevo push a GitHub y Vercel desplegará automáticamente
+
+#### 5. Verificar que las Variables Estén Cargadas
+- Ve a **Deployments** → Selecciona un deployment → **Build Logs**
+- Busca en los logs: `Environment Variables loaded`
+- Si ves errores relacionados con variables faltantes, verifica que estén configuradas correctamente
+
+**⚠️ Nota importante:** 
+- Las variables de entorno en Vercel están **encriptadas y seguras automáticamente**
+- **NUNCA** las almacenes en la base de datos
+- **NUNCA** las expongas en el código del cliente (solo en API routes del servidor)
+- Si cambias una variable, debes hacer **re-deploy** para que surta efecto
 
 ## Usuarios de Prueba
 

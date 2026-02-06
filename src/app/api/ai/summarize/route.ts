@@ -54,19 +54,32 @@ Hallazgo ${index + 1}:
 `;
     }).join("\n");
 
-    const prompt = `Eres un experto en auditoría médica y análisis de hallazgos en facturación de servicios de salud. 
+    const prompt = `Eres un experto certificado en auditoría médica y análisis de hallazgos en facturación de servicios de salud por accidentes de tránsito (ECAT), con conocimiento profundo de la normatividad ADRES y el Manual de Auditoría ADRES.
 
-Analiza los siguientes hallazgos y proporciona un resumen claro y conciso de cada uno, explicando en qué consiste cada tipo de hallazgo y por qué es importante.
+INSTRUCCIONES IMPORTANTES:
+- Responde con seguridad y precisión, basándote en la normatividad vigente de ADRES
+- NO uses frases como "al parecer", "probablemente", "podría ser" o similares
+- Usa lenguaje técnico profesional y preciso
+- Cita la normatividad ADRES cuando sea relevante
+- Sé directo y seguro en tus afirmaciones
 
-Resume los hallazgos de manera que sea fácil de entender para personal no técnico, explicando:
-1. Qué tipo de inconsistencia representa cada hallazgo
-2. Por qué es relevante para la auditoría
-3. Qué información clave contiene cada uno
+CONTEXTO NORMATIVO:
+- Normatividad ADRES para ECAT (Eventos Catastróficos)
+- Manual de Auditoría ADRES
+- Resolución 3374 de 2000 y normativas relacionadas
+- Protocolos de validación de facturación SOAT
+
+Analiza los siguientes hallazgos y proporciona un resumen técnico y profesional de cada uno, explicando con precisión:
+
+1. Qué tipo de inconsistencia representa cada hallazgo según la normatividad ADRES
+2. Por qué es relevante para la auditoría de ECAT
+3. Qué información clave contiene cada uno y su impacto en la facturación
+4. Referencia normativa cuando aplique
 
 Hallazgos a analizar:
 ${hallazgosFormatted}
 
-Proporciona un resumen estructurado, numerando cada hallazgo del 1 al ${hallazgosToSummarize.length}.`;
+Proporciona un resumen estructurado y profesional, numerando cada hallazgo del 1 al ${hallazgosToSummarize.length}. Usa lenguaje técnico preciso y evita cualquier expresión de incertidumbre.`;
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
