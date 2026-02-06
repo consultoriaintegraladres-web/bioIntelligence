@@ -242,57 +242,7 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
               </div>
             </div>
 
-            {/* Nombre IPS - Autocomplete (only for admin) */}
-            {isAdmin && (
-              <div className="space-y-2 relative">
-                <Label className={`text-sm font-medium ${labelColor}`}>Nombre IPS</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                  <Input
-                    type="text"
-                    placeholder="Buscar IPS..."
-                    value={ipsSearch}
-                    onChange={(e) => {
-                      setIpsSearch(e.target.value);
-                      setShowIpsSuggestions(true);
-                    }}
-                    onFocus={() => setShowIpsSuggestions(true)}
-                    className={`pl-10 ${inputBg} ${inputText} text-sm h-9 placeholder:text-gray-500`}
-                  />
-                  
-                  {showIpsSuggestions && ipsSuggestions && ipsSuggestions.length > 0 && (
-                    <div className={`absolute z-50 w-full mt-1 ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a2e] border-[#2a2a3e]"} border rounded-lg shadow-xl max-h-48 overflow-y-auto`}>
-                      {ipsSuggestions.map((ips, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => handleIpsSelect(ips)}
-                          className={`w-full px-4 py-3 text-left text-base ${textColor} hover:bg-[#6B2D7B]/20 transition-colors`}
-                        >
-                          {truncateText(ips)}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Código Habilitación (only for admin) */}
-            {isAdmin && (
-              <div className="space-y-2">
-                <Label className={`text-sm font-medium ${labelColor}`}>Código Habilitación</Label>
-                <Input
-                  type="text"
-                  placeholder="Código..."
-                  value={filters.codigo_habilitacion || ""}
-                  onChange={(e) => handleFilterChange("codigo_habilitacion", e.target.value)}
-                  className={`${inputBg} ${inputText} text-sm h-9 placeholder:text-gray-500`}
-                />
-              </div>
-            )}
-
-            {/* NUEVO: Nombre Envío con LIKE */}
+            {/* Nombre Envío */}
             <div className="space-y-2">
               <Label className={`text-sm font-medium ${labelColor}`}>Nombre Envío</Label>
               <div className="relative">
@@ -302,11 +252,10 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
                   placeholder="Buscar envío..."
                   value={filters.nombre_envio || ""}
                   onChange={(e) => handleFilterChange("nombre_envio", e.target.value)}
-                  className={`pl-10 ${inputBg} ${inputText} text-base h-11 placeholder:text-gray-500`}
+                  className={`pl-10 ${inputBg} ${inputText} text-sm h-9 placeholder:text-gray-500`}
                 />
               </div>
             </div>
-
 
             {/* Tipo Envío */}
             <div className="space-y-2">
@@ -327,50 +276,6 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Lote de Carga */}
-            {showLoteFilter && (
-              <div className="space-y-2">
-                <Label className={`text-sm font-medium ${labelColor}`}>Lote de Carga (Envío)</Label>
-                <div className="relative">
-                  <Input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    placeholder="Ej: 1234"
-                    value={loteInput}
-                    onChange={(e) => handleLoteChange(e.target.value)}
-                    className={`${inputBg} ${inputText} text-sm h-9 placeholder:text-gray-500 pr-10 ${
-                      loteValidation?.checked && !loteValidation.exists
-                        ? "border-red-500/50 focus:border-red-500"
-                        : loteValidation?.checked && loteValidation.exists
-                        ? "border-green-500/50 focus:border-green-500"
-                        : ""
-                    }`}
-                  />
-                  {isValidatingLote && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  )}
-                  {!isValidatingLote && loteValidation?.checked && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {loteValidation.exists ? (
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 text-red-500" />
-                      )}
-                    </div>
-                  )}
-                </div>
-                {loteValidation?.checked && !loteValidation.exists && loteInput && (
-                  <p className="text-sm text-red-500 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    No existe el envío ingresado
-                  </p>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Más Filtros - Desplegable */}
@@ -395,6 +300,56 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
                 transition={{ duration: 0.2 }}
                 className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
               >
+                {/* Nombre IPS - Autocomplete (only for admin) */}
+                {isAdmin && (
+                  <div className="space-y-2 relative">
+                    <Label className={`text-sm font-medium ${labelColor}`}>Nombre IPS</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <Input
+                        type="text"
+                        placeholder="Buscar IPS..."
+                        value={ipsSearch}
+                        onChange={(e) => {
+                          setIpsSearch(e.target.value);
+                          setShowIpsSuggestions(true);
+                        }}
+                        onFocus={() => setShowIpsSuggestions(true)}
+                        className={`pl-10 ${inputBg} ${inputText} text-sm h-9 placeholder:text-gray-500`}
+                      />
+                      
+                      {showIpsSuggestions && ipsSuggestions && ipsSuggestions.length > 0 && (
+                        <div className={`absolute z-50 w-full mt-1 ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a2e] border-[#2a2a3e]"} border rounded-lg shadow-xl max-h-48 overflow-y-auto`}>
+                          {ipsSuggestions.map((ips, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => handleIpsSelect(ips)}
+                              className={`w-full px-4 py-3 text-left text-sm ${textColor} hover:bg-[#6B2D7B]/20 transition-colors`}
+                            >
+                              {truncateText(ips)}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Código Habilitación (only for admin) */}
+                {isAdmin && (
+                  <div className="space-y-2">
+                    <Label className={`text-sm font-medium ${labelColor}`}>Código Habilitación</Label>
+                    <Input
+                      type="text"
+                      placeholder="Código..."
+                      value={filters.codigo_habilitacion || ""}
+                      onChange={(e) => handleFilterChange("codigo_habilitacion", e.target.value)}
+                      className={`${inputBg} ${inputText} text-sm h-9 placeholder:text-gray-500`}
+                    />
+                  </div>
+                )}
+
                 {/* Tipo Validación */}
                 <div className="space-y-2">
                   <Label className={`text-sm font-medium ${labelColor}`}>Tipo Validación</Label>
@@ -438,6 +393,50 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Lote de Carga */}
+                {showLoteFilter && (
+                  <div className="space-y-2">
+                    <Label className={`text-sm font-medium ${labelColor}`}>Lote de Carga (Envío)</Label>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder="Ej: 1234"
+                        value={loteInput}
+                        onChange={(e) => handleLoteChange(e.target.value)}
+                        className={`${inputBg} ${inputText} text-sm h-9 placeholder:text-gray-500 pr-10 ${
+                          loteValidation?.checked && !loteValidation.exists
+                            ? "border-red-500/50 focus:border-red-500"
+                            : loteValidation?.checked && loteValidation.exists
+                            ? "border-green-500/50 focus:border-green-500"
+                            : ""
+                        }`}
+                      />
+                      {isValidatingLote && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      )}
+                      {!isValidatingLote && loteValidation?.checked && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {loteValidation.exists ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 text-red-500" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {loteValidation?.checked && !loteValidation.exists && loteInput && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        No existe el envío ingresado
+                      </p>
+                    )}
+                  </div>
+                )}
               </motion.div>
             )}
           </div>
