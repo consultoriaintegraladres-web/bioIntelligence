@@ -318,7 +318,11 @@ export function HallazgosModal({
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-[#1e1e2e]">
           <DialogTitle className={`flex items-center gap-2 text-lg ${textColor}`}>
             <FileText className="w-5 h-5 text-[#10B981]" />
-            <span className="truncate">Hallazgos: {truncateText(filterValue, 60)}</span>
+            <span className="truncate">
+              {tipoEnvioFilter 
+                ? `Hallazgos - ${tipoEnvioFilter}` 
+                : `Hallazgos: ${truncateText(filterValue, 60)}`}
+            </span>
           </DialogTitle>
         </DialogHeader>
 
