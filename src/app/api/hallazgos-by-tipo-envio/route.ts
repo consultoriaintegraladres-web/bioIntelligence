@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const tipo_envio = searchParams.get("tipo_envio"); // 'Primera vez' o 'Revalidacion'
     const numero_lote = searchParams.get("numero_lote");
+    const numero_factura = searchParams.get("numero_factura");
     const codigo_habilitacion = searchParams.get("codigo_habilitacion");
     const nombre_ips = searchParams.get("nombre_ips");
     const fecha_inicio = searchParams.get("fecha_inicio");
@@ -84,6 +85,16 @@ export async function GET(request: NextRequest) {
     
     // RELACIÓN: lote_de_carga IN (SELECT numero_lote FROM control_lotes WHERE tipo_envio = ...)
     conditions.push(`i.lote_de_carga IN (${lotesSubquery})`);
+
+    // Filtrar por numero_lote específico si se proporciona
+    if (numero_lote && numero_lote.trim() !== "") {
+      conditions.push(`i.lote_de_carga = '${numero_lote}'`);
+    }
+
+    // Filtrar por Numero_factura específico si se proporciona
+    if (numero_factura && numero_factura.trim() !== "") {
+      conditions.push(`i.Numero_factura = '${numero_factura}'`);
+    }
 
     // Codigo habilitacion (solo para usuarios no admin, para seguridad)
     if (session.user.role !== "ADMIN") {

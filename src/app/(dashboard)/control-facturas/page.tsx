@@ -54,6 +54,7 @@ interface RevisionFactura {
   Numero_factura: string | null;
   Primera_revision: string | null;
   segunda_revision: string | null;
+  Total_reclamado_por_amparo_gastos_medicos_quirurgicos: number | string | null;
 }
 
 interface Inconsistencia {
@@ -148,10 +149,17 @@ export default function ControlFacturasPage() {
       const json = await res.json();
       const allData = json.data || [];
 
-      const headers = ["Número Lote", "Número Factura", "Primera Revisión", "Segunda Revisión"];
+      const headers = ["Número Lote", "Número Factura", "Valor Reclamado", "Primera Revisión", "Segunda Revisión"];
       const rows = allData.map((item: RevisionFactura) => [
         item.numero_lote || "",
         item.Numero_factura || "",
+        item.Total_reclamado_por_amparo_gastos_medicos_quirurgicos
+          ? new Intl.NumberFormat("es-CO", {
+              style: "currency",
+              currency: "COP",
+              minimumFractionDigits: 0,
+            }).format(Number(item.Total_reclamado_por_amparo_gastos_medicos_quirurgicos))
+          : "",
         item.Primera_revision || "",
         item.segunda_revision || "",
       ]);
@@ -295,6 +303,7 @@ export default function ControlFacturasPage() {
                   <TableRow className={headerBg}>
                     <TableHead className={textColor}>Número Lote</TableHead>
                     <TableHead className={textColor}>Número Factura</TableHead>
+                    <TableHead className={textColor}>Valor Reclamado</TableHead>
                     <TableHead className={textColor}>Primera Revisión</TableHead>
                     <TableHead className={textColor}>Segunda Revisión</TableHead>
                   </TableRow>
@@ -310,6 +319,9 @@ export default function ControlFacturasPage() {
                           <Skeleton className={`h-4 w-32 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
                         </TableCell>
                         <TableCell>
+                          <Skeleton className={`h-4 w-32 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
+                        </TableCell>
+                        <TableCell>
                           <Skeleton className={`h-4 w-40 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
                         </TableCell>
                         <TableCell>
@@ -319,7 +331,7 @@ export default function ControlFacturasPage() {
                     ))
                   ) : !data?.data?.length ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8">
+                      <TableCell colSpan={5} className="text-center py-8">
                         <div className="flex flex-col items-center gap-2">
                           <AlertCircle className={`w-8 h-8 ${subTextColor}`} />
                           <p className={subTextColor}>No se encontraron registros</p>
@@ -337,6 +349,15 @@ export default function ControlFacturasPage() {
                         </TableCell>
                         <TableCell className={textColor}>
                           {item.Numero_factura || "-"}
+                        </TableCell>
+                        <TableCell className={textColor}>
+                          {item.Total_reclamado_por_amparo_gastos_medicos_quirurgicos
+                            ? new Intl.NumberFormat("es-CO", {
+                                style: "currency",
+                                currency: "COP",
+                                minimumFractionDigits: 0,
+                              }).format(Number(item.Total_reclamado_por_amparo_gastos_medicos_quirurgicos))
+                            : "-"}
                         </TableCell>
                         <TableCell>
                           {renderRevisionCell(item.Primera_revision, item, "primera")}
@@ -421,6 +442,7 @@ export default function ControlFacturasPage() {
             tipo_envio: modalTipoEnvio,
             lote_de_carga: selectedFactura.numero_lote?.toString() || "",
             numero_lote: selectedFactura.numero_lote?.toString() || "",
+            numero_factura: selectedFactura.Numero_factura || "",
           }}
           themeMode={themeMode}
           tipoEnvioFilter={modalTipoEnvio}

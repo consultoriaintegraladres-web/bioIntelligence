@@ -6,6 +6,7 @@ export type ThemeMode = "dark" | "light" | "futuristic";
 
 export interface FilterValues {
   numero_lote?: string;
+  numero_factura?: string;
   fecha_inicio?: string;
   fecha_fin?: string;
   nombre_ips?: string;

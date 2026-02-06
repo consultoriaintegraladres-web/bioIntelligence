@@ -109,7 +109,8 @@ export async function GET(request: NextRequest) {
         numero_lote,
         Numero_factura,
         Primera_revision,
-        segunda_revision
+        segunda_revision,
+        Total_reclamado_por_amparo_gastos_medicos_quirurgicos
       FROM revision_facturas
       WHERE ${whereClause}
       ORDER BY numero_lote DESC, Numero_factura ASC

@@ -85,6 +85,7 @@ export function HallazgosModal({
       params.set("tipo_envio", tipoEnvioFilter);
       if (filters.codigo_habilitacion) params.set("codigo_habilitacion", filters.codigo_habilitacion);
       if (filters.lote_de_carga || filters.numero_lote) params.set("numero_lote", filters.lote_de_carga || filters.numero_lote || "");
+      if (filters.numero_factura) params.set("numero_factura", filters.numero_factura);
       if (filters.fecha_inicio) params.set("fecha_inicio", filters.fecha_inicio);
       if (filters.fecha_fin) params.set("fecha_fin", filters.fecha_fin);
       if (filters.nombre_ips) params.set("nombre_ips", filters.nombre_ips);
