@@ -55,6 +55,24 @@ GEMINI_API_KEY="your-gemini-api-key"
 2. Crea una nueva API key
 3. Agrega la key a tu archivo `.env.local` como `GEMINI_API_KEY`
 
+### Configurar Variables de Entorno en Vercel
+
+Para producción en Vercel, debes configurar las variables de entorno en el dashboard de Vercel:
+
+1. Ve a tu proyecto en [Vercel Dashboard](https://vercel.com/dashboard)
+2. Selecciona tu proyecto
+3. Ve a **Settings** → **Environment Variables**
+4. Agrega las siguientes variables:
+   - `DATABASE_URL` - URL de conexión a MySQL
+   - `NEXTAUTH_URL` - URL de tu aplicación (ej: `https://tu-app.vercel.app`)
+   - `NEXTAUTH_SECRET` - Secret key para NextAuth (genera una con `openssl rand -base64 32`)
+   - `GEMINI_API_KEY` - Tu API key de Gemini
+5. Selecciona los ambientes donde aplicar (Production, Preview, Development)
+6. Haz clic en **Save**
+7. **Re-deploy** tu aplicación para que los cambios surtan efecto
+
+**Nota importante:** Las variables de entorno en Vercel están **encriptadas y seguras**. Nunca las almacenes en la base de datos ni las expongas en el código del cliente.
+
 ## Usuarios de Prueba
 
 | Rol   | Email                     | Contraseña |

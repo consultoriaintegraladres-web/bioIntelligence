@@ -64,15 +64,21 @@ Proporciona un resumen estructurado, numerando cada hallazgo del 1 al ${hallazgo
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
     if (!GEMINI_API_KEY) {
+      console.error("❌ GEMINI_API_KEY no está configurada en las variables de entorno");
       return NextResponse.json(
-        { error: "API key de Gemini no configurada" },
+        { error: "API key de Gemini no configurada. Verifica que GEMINI_API_KEY esté en las variables de entorno." },
         { status: 500 }
       );
     }
 
-    // Llamar a Gemini API - Usando Gemini 1.5 Flash (modelo más reciente disponible)
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+    // Log para verificar que la API key está presente (sin mostrar el valor completo)
+    console.log(`✅ GEMINI_API_KEY encontrada: ${GEMINI_API_KEY.substring(0, 10)}...`);
+
+    // Llamar a Gemini API - Intentando diferentes modelos disponibles
+    // Primero intentamos con gemini-1.5-flash, si falla probamos gemini-pro
+    let modelName = "gemini-1.5-flash";
+    let response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -92,19 +98,74 @@ Proporciona un resumen estructurado, numerando cada hallazgo del 1 al ${hallazgo
       }
     );
 
+    // Si el modelo no está disponible, intentar con gemini-pro
+    if (!response.ok) {
+      const errorText = await response.text();
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.error?.message?.includes("not found") || errorJson.error?.message?.includes("not supported")) {
+          console.log(`Modelo ${modelName} no disponible, intentando con gemini-pro...`);
+          modelName = "gemini-pro";
+          response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      {
+                        text: prompt,
+                      },
+                    ],
+                  },
+                ],
+              }),
+            }
+          );
+        }
+      } catch {
+        // Si no es JSON, continuar con el error original
+      }
+    }
+
     if (!response.ok) {
       const errorData = await response.text();
       let errorMessage = "Error al comunicarse con la API de Gemini";
+      let errorDetails: any = {};
+      
       try {
         const errorJson = JSON.parse(errorData);
         errorMessage = errorJson.error?.message || errorMessage;
+        errorDetails = errorJson.error || {};
+        console.error(`❌ Error de Gemini API (modelo: ${modelName}):`, {
+          message: errorMessage,
+          code: errorDetails.code,
+          status: errorDetails.status,
+          fullError: errorJson
+        });
       } catch {
         // Si no es JSON, usar el texto directamente
         errorMessage = errorData || errorMessage;
+        console.error(`❌ Error de Gemini API (modelo: ${modelName}):`, errorData);
       }
-      console.error("Error de Gemini API:", errorData);
+      
+      // Mensaje más descriptivo para el usuario
+      if (errorMessage.includes("not found") || errorMessage.includes("not supported")) {
+        errorMessage = `El modelo "${modelName}" no está disponible. Verifica que tu API key tenga acceso a este modelo o que el nombre del modelo sea correcto.`;
+      } else if (errorMessage.includes("API key")) {
+        errorMessage = "API key inválida o sin permisos. Verifica tu GEMINI_API_KEY en las variables de entorno.";
+      }
+      
       return NextResponse.json(
-        { error: errorMessage },
+        { 
+          error: errorMessage,
+          modelUsed: modelName,
+          details: process.env.NODE_ENV === "development" ? errorDetails : undefined
+        },
         { status: 500 }
       );
     }
