@@ -124,9 +124,8 @@ IMPORTANTE: Si todos los hallazgos pertenecen a una sola tipología, muestra sol
     // Log para verificar que la API key está presente (sin mostrar el valor completo)
     console.log(`✅ GEMINI_API_KEY encontrada: ${GEMINI_API_KEY.substring(0, 10)}...`);
 
-    // Llamar a Gemini API - Usando gemini-2.0-flash (modelo rápido y estable)
-    // Modelos disponibles: gemini-3-flash-preview, gemini-2.5-flash, gemini-2.0-flash
-    const modelName = "gemini-2.0-flash";
+    // Llamar a Gemini API - Usando gemini-2.5-flash-lite
+    const modelName = "gemini-2.5-flash-lite";
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
       {
