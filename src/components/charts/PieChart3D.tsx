@@ -50,18 +50,18 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
     const values = sortedData.map((d) => d.value);
     const cantidades = sortedData.map((d) => d.cantidad || 0);
 
-    // FUTURISTIC NEON COLOR PALETTE - Brighter colors
+    // PREMIUM METALLIC SHINE COLORS - Brighter, more vibrant with shine effect
     const colors = [
-      "rgba(147, 51, 234, 0.95)",   // Vivid Purple
-      "rgba(16, 185, 129, 0.95)",   // Emerald Green
-      "rgba(236, 72, 153, 0.95)",   // Pink
-      "rgba(59, 130, 246, 0.95)",   // Blue
-      "rgba(245, 158, 11, 0.95)",   // Amber
-      "rgba(139, 92, 246, 0.95)",   // Violet
-      "rgba(34, 197, 94, 0.95)",    // Green
-      "rgba(249, 115, 22, 0.95)",   // Orange
-      "rgba(14, 165, 233, 0.95)",   // Sky Blue
-      "rgba(168, 85, 247, 0.95)",   // Purple
+      "rgba(147, 51, 234, 0.98)",   // Vivid Purple - Shiny
+      "rgba(16, 185, 129, 0.98)",   // Emerald Green - Shiny
+      "rgba(236, 72, 153, 0.98)",   // Pink - Shiny
+      "rgba(59, 130, 246, 0.98)",   // Blue - Shiny
+      "rgba(245, 158, 11, 0.98)",   // Amber - Shiny
+      "rgba(139, 92, 246, 0.98)",   // Violet - Shiny
+      "rgba(34, 197, 94, 0.98)",    // Green - Shiny
+      "rgba(249, 115, 22, 0.98)",   // Orange - Shiny
+      "rgba(14, 165, 233, 0.98)",   // Sky Blue - Shiny
+      "rgba(168, 85, 247, 0.98)",   // Purple - Shiny
     ];
 
     // Build hover text for each item
@@ -81,25 +81,39 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
         marker: {
           colors,
           line: {
-            color: isLight ? "#ffffff" : "#0a0a0f",
-            width: 3,
+            color: isLight ? "#ffffff" : "rgba(255,255,255,0.4)",
+            width: 4,
+          },
+          // Add pattern for shine effect
+          pattern: {
+            shape: "" as const,
           },
         },
         textinfo: "percent" as const,
         textposition: "outside" as const,
         textfont: { 
           color: textColor, 
-          size: 14, 
+          size: 15,
           family: "system-ui, -apple-system, sans-serif",
         },
         outsidetextfont: {
           color: textColor,
-          size: 13,
+          size: 14,
+          family: "system-ui, -apple-system, sans-serif",
         },
         hovertemplate: hoverTexts,
-        pull: values.map((_, i) => (i === 0 ? 0.08 : i === 1 ? 0.04 : 0)),
+        // Enhanced pull effect for 3D depth
+        pull: values.map((_, i) => {
+          if (i === 0) return 0.12;  // Largest segment pops out more
+          if (i === 1) return 0.06;
+          if (i === 2) return 0.03;
+          return 0;
+        }),
         rotation: 45,
         customdata: cantidades,
+        // Add 3D effect with depth
+        scalegroup: "1",
+        scalemode: "group",
       },
     ];
   }, [data, isLight, textColor]);
@@ -125,39 +139,80 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
   }
 
   return (
-    <Plot
-      data={chartData}
-      layout={{
-        paper_bgcolor: "transparent",
-        plot_bgcolor: "transparent",
-        font: { color: textColor, family: "system-ui, -apple-system, sans-serif", size: 14 },
-        showlegend: true,
-        legend: {
-          orientation: "v" as const,
-          y: 0.5,
-          x: 1.02,
-          xanchor: "left" as const,
-          font: { size: 13, color: textColor },
-          bgcolor: "transparent",
-        },
-        margin: { l: 20, r: 180, t: 30, b: 30 },
-        hoverlabel: {
-          bgcolor: isLight ? "#ffffff" : "#1e1e2e",
-          bordercolor: "#9333EA",
-          font: { color: isLight ? "#1a1a1a" : "#fff", size: 14 },
-        },
-        annotations: [
-          {
-            text: `<b>Total</b><br>${formatTotalValue(totalValue)}`,
-            showarrow: false,
-            font: { size: 16, color: textColor, family: "system-ui" },
-            x: 0.4,
-            y: 0.5,
+    <div className="relative w-full h-full">
+      {/* Shine overlay effect for 3D depth */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-10"
+        style={{
+          background: isLight 
+            ? "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15) 0%, transparent 60%)"
+            : "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08) 0%, transparent 60%)",
+          borderRadius: "50%",
+        }}
+      />
+      <Plot
+        data={chartData}
+        layout={{
+          paper_bgcolor: "transparent",
+          plot_bgcolor: "transparent",
+          font: { 
+            color: textColor, 
+            family: "system-ui, -apple-system, sans-serif", 
+            size: 14 
           },
-        ],
-      }}
-      config={{ displayModeBar: false, responsive: true }}
-      style={{ width: "100%", height: "100%" }}
-    />
+          showlegend: true,
+          legend: {
+            orientation: "v" as const,
+            y: 0.5,
+            x: 1.02,
+            xanchor: "left" as const,
+            font: { size: 13, color: textColor, family: "system-ui" },
+            bgcolor: "transparent",
+            bordercolor: isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)",
+            borderwidth: 1,
+            itemclick: "toggleothers" as const,
+            itemdoubleclick: "toggle" as const,
+          },
+          margin: { l: 20, r: 180, t: 30, b: 30 },
+          hoverlabel: {
+            bgcolor: isLight ? "#ffffff" : "#1e1e2e",
+            bordercolor: "#9333EA",
+            borderwidth: 2,
+            font: { color: isLight ? "#1a1a1a" : "#fff", size: 14, family: "system-ui" },
+            shadow: true,
+          },
+          annotations: [
+            {
+              text: `<b>Total</b><br>${formatTotalValue(totalValue)}`,
+              showarrow: false,
+              font: { 
+                size: 18, 
+                color: textColor, 
+                family: "system-ui, -apple-system, sans-serif",
+                weight: "bold",
+              },
+              x: 0.4,
+              y: 0.5,
+              bgcolor: isLight ? "rgba(255,255,255,0.9)" : "rgba(30,30,46,0.9)",
+              bordercolor: isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.2)",
+              borderwidth: 2,
+              borderpad: 8,
+            },
+          ],
+        }}
+        config={{ 
+          displayModeBar: false, 
+          responsive: true,
+          doubleClick: "reset",
+        }}
+        style={{ 
+          width: "100%", 
+          height: "100%",
+          filter: isLight 
+            ? "drop-shadow(0 8px 16px rgba(0,0,0,0.15))" 
+            : "drop-shadow(0 8px 24px rgba(147,51,234,0.4))",
+        }}
+      />
+    </div>
   );
 }

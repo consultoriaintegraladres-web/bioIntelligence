@@ -1,0 +1,14 @@
+<svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.3" />
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg1)"/>
+  <circle cx="960" cy="540" r="300" fill="none" stroke="#06b6d4" stroke-width="3" opacity="0.5"/>
+  <circle cx="960" cy="540" r="200" fill="none" stroke="#3b82f6" stroke-width="2" opacity="0.5"/>
+  <text x="960" y="500" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#ffffff" text-anchor="middle" opacity="0.9">BIORETAIL</text>
+  <text x="960" y="580" font-family="Arial, sans-serif" font-size="36" fill="#e0f2fe" text-anchor="middle" opacity="0.8">Consultoría en Salud</text>
+  <text x="960" y="650" font-family="Arial, sans-serif" font-size="24" fill="#bae6fd" text-anchor="middle" opacity="0.7">11 años de experiencia</text>
+</svg>

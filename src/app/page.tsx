@@ -18,70 +18,75 @@ import {
   Sparkles,
   Brain,
   Activity,
-  TrendingUp
+  TrendingUp,
+  FileCheck,
+  FileText,
+  Scan,
+  Wrench
 } from "lucide-react";
+import PortfolioSlides from "@/components/PortfolioSlides";
 
 const robots = [
   {
     id: 1,
-    name: "PreAudit AI",
-    description: "Realiza preauditoría completa de facturas en segundos",
-    icon: FileSearch,
+    name: "FURPRO",
+    description: "Validador de archivos planos. Valida, verifica y entrega resultados de anexos técnicos (FURIPS 1 y 2) dentro de 1 hábil. Evita la glosa 2102.",
+    icon: FileCheck,
     color: "from-cyan-500 to-blue-600",
     shadowColor: "shadow-cyan-500/30",
   },
   {
     id: 2,
-    name: "DocVerify AI",
-    description: "Audita FURIPS vs soportes médicos con precisión del 99.9%",
-    icon: Shield,
+    name: "HC BOT",
+    description: "Consistencia de información - soportes. Valida coherencia entre FURIPS 1 y soportes clínicos. Resultado en 1 hábil. Evita la glosa 2103.",
+    icon: FileText,
     color: "from-purple-500 to-pink-600",
     shadowColor: "shadow-purple-500/30",
   },
   {
     id: 3,
-    name: "DataSync AI",
-    description: "Valida consistencia entre factura y medios magnéticos",
-    icon: Activity,
+    name: "AUDIT-X",
+    description: "Preauditoría. Valida servicios y tecnologías facturados contrastándolos con criterios de auditoría vigentes. Resultado en 1 hábil.",
+    icon: FileSearch,
     color: "from-emerald-500 to-teal-600",
     shadowColor: "shadow-emerald-500/30",
   },
   {
     id: 4,
-    name: "ADRES Comply AI",
-    description: "Preauditoría de servicios con normativa ADRES actualizada",
-    icon: Scale,
+    name: "FACT SCAN",
+    description: "Consistencia de información - factura. Valida coherencia entre FURIPS 2 y soportes clínicos. Resultado en 1 hábil. Evita la glosa 2108.",
+    icon: Scan,
     color: "from-amber-500 to-orange-600",
     shadowColor: "shadow-amber-500/30",
   },
   {
     id: 5,
-    name: "SurgeryAudit AI",
-    description: "Audita cirugías, justificaciones y material de osteosíntesis",
+    name: "QUIRUBOT",
+    description: "Descripción quirúrgica - MAOS. Verifica correcto diligenciamiento de descripción quirúrgica, vías de acceso, reglas de liquidación y material de osteosíntesis. Resultado en 1 hábil.",
     icon: Stethoscope,
     color: "from-red-500 to-rose-600",
     shadowColor: "shadow-red-500/30",
   },
   {
     id: 6,
-    name: "PriceCheck AI",
-    description: "Audita precios y techos MAOs en Colombia automáticamente",
+    name: "MAOS-X",
+    description: "MAOS - Comparativo. Comparación estadística nacional de tarifas MAOS, establecimiento de VMR, identificación de aporte del proveedor y comparación de ítems. Resultado en 1-15 días hábiles.",
     icon: DollarSign,
     color: "from-green-500 to-emerald-600",
     shadowColor: "shadow-green-500/30",
   },
   {
     id: 7,
-    name: "GlosaResponse AI",
-    description: "Responde automáticamente las glosas de la IPS",
+    name: "BIORESPONSE",
+    description: "Gestión de glosas ADRES. Estructura FURIPS 1 y 2 para responder glosas, genera respuestas estratégicas predeterminadas y verifica consistencia de ítems y valores.",
     icon: MessageSquareReply,
     color: "from-blue-500 to-indigo-600",
     shadowColor: "shadow-blue-500/30",
   },
   {
     id: 8,
-    name: "AutoGlosa AI",
-    description: "Descarga, transcribe y responde glosas de aseguradoras",
+    name: "BIORESPONSE SURE",
+    description: "Gestión de glosas SOAT. Verificación y captura de información de soportes con IA, genera respuestas estratégicas, homologa codificaciones y valida calidad de respuestas.",
     icon: Download,
     color: "from-violet-500 to-purple-600",
     shadowColor: "shadow-violet-500/30",
@@ -258,6 +263,13 @@ export default function LandingPage() {
               <div className="w-1.5 h-3 bg-cyan-400 rounded-full animate-bounce" />
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* PORTFOLIO SLIDES SECTION - Debajo del hero */}
+      <section className="relative py-16 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+        <div className="max-w-7xl mx-auto px-8">
+          <PortfolioSlides />
         </div>
       </section>
 

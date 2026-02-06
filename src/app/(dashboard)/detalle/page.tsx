@@ -182,15 +182,13 @@ export default function DetallePage() {
         "IPS",
         "Origen",
         "Tipo Validación",
+        "Observación",
         "Tipo Servicio",
         "Código Servicio",
         "Descripción Servicio",
         "Cantidad",
         "Valor Unitario",
         "Valor Total",
-        "Fecha",
-        "Lote",
-        "Observación",
       ];
 
       const rows = json.data.map((item: Inconsistencia) => [
@@ -198,15 +196,13 @@ export default function DetallePage() {
         item.IPS || "",
         item.origen || "",
         item.tipo_validacion || "",
+        item.observacion || "",
         item.tipo_servicio || "",
         item.codigo_del_servicio || "",
         item.descripcion_servicio || "",
         item.cantidad || "",
         item.valor_unitario || "",
         item.valor_total || "",
-        item.fecha || "",
-        item.lote_de_carga || "",
-        item.observacion || "",
       ]);
 
       exportToExcel({

@@ -1,0 +1,17 @@
+<svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#f97316;stop-opacity:0.3" />
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg4)"/>
+  <rect x="560" y="340" width="800" height="400" rx="30" fill="none" stroke="#f59e0b" stroke-width="5" opacity="0.6"/>
+  <text x="960" y="450" font-family="Arial, sans-serif" font-size="52" font-weight="bold" fill="#ffffff" text-anchor="middle" opacity="0.9">ADRES</text>
+  <text x="960" y="520" font-family="Arial, sans-serif" font-size="40" fill="#fcd34d" text-anchor="middle" opacity="0.8">AUDITOR Y PAGADOR</text>
+  <text x="960" y="590" font-family="Arial, sans-serif" font-size="36" fill="#fde68a" text-anchor="middle" opacity="0.8">INTELIGENTE</text>
+  <rect x="700" y="650" width="520" height="60" rx="10" fill="#f59e0b" opacity="0.3"/>
+  <text x="960" y="690" font-family="Arial, sans-serif" font-size="24" fill="#fef3c7" text-anchor="middle" opacity="0.9">Sala de Inteligencia</text>
+  <circle cx="400" cy="540" r="60" fill="#f59e0b" opacity="0.2"/>
+  <circle cx="1520" cy="540" r="60" fill="#f97316" opacity="0.2"/>
+</svg>
