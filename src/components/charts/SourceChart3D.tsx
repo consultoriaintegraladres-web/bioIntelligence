@@ -1,11 +1,8 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import { ThemeMode } from "@/contexts/app-context";
-import type { Data } from "plotly.js";
-
-const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
+import Plot from "./SafePlot";
 
 interface SourceChart3DProps {
   data: Array<{
@@ -75,7 +72,7 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
           `Cantidad: ${cantidades[i].toLocaleString()}<extra></extra>`
         ),
       },
-    ] as Data[];
+    ] as any[];
   }, [data, isLight, textColor]);
 
   if (!chartData) {
@@ -87,9 +84,11 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
   }
 
   return (
+    <div className="relative w-full h-full">
     <Plot
       data={chartData}
       layout={{
+        autosize: true,
         paper_bgcolor: "transparent",
         plot_bgcolor: "transparent",
         font: { color: textColor, family: "system-ui, -apple-system, sans-serif", size: 14 },
@@ -116,5 +115,6 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
       config={{ displayModeBar: false, responsive: true }}
       style={{ width: "100%", height: "100%" }}
     />
+    </div>
   );
 }

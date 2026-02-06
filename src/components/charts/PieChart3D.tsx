@@ -1,10 +1,8 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { ThemeMode } from "@/contexts/app-context";
-
-const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
+import Plot from "./SafePlot";
 
 interface PieChart3DProps {
   data: Array<{
@@ -19,6 +17,7 @@ interface PieChart3DProps {
 export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMode = "dark" }: PieChart3DProps) {
   const isLight = themeMode === "light";
   const textColor = isLight ? "#1a1a1a" : "#ffffff";
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -78,42 +77,40 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
         labels,
         type: "pie" as const,
         hole: 0.45,
+        // Constrain the pie to a square domain so it doesn't deform
+        domain: {
+          x: [0.0, 0.65],
+          y: [0.05, 0.95],
+        },
         marker: {
           colors,
           line: {
             color: isLight ? "#ffffff" : "rgba(255,255,255,0.4)",
-            width: 4,
-          },
-          // Add pattern for shine effect
-          pattern: {
-            shape: "" as const,
+            width: 3,
           },
         },
         textinfo: "percent" as const,
         textposition: "outside" as const,
         textfont: { 
           color: textColor, 
-          size: 15,
+          size: 14,
           family: "system-ui, -apple-system, sans-serif",
         },
         outsidetextfont: {
           color: textColor,
-          size: 14,
+          size: 13,
           family: "system-ui, -apple-system, sans-serif",
         },
         hovertemplate: hoverTexts,
-        // Enhanced pull effect for 3D depth
+        // Subtle pull effect for 3D depth
         pull: values.map((_, i) => {
-          if (i === 0) return 0.12;  // Largest segment pops out more
-          if (i === 1) return 0.06;
-          if (i === 2) return 0.03;
+          if (i === 0) return 0.06;
+          if (i === 1) return 0.03;
           return 0;
         }),
         rotation: 45,
         customdata: cantidades,
-        // Add 3D effect with depth
-        scalegroup: "1",
-        scalemode: "group",
+        sort: false,
       },
     ];
   }, [data, isLight, textColor]);
@@ -139,20 +136,11 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
   }
 
   return (
-    <div className="relative w-full h-full">
-      {/* Shine overlay effect for 3D depth */}
-      <div 
-        className="absolute inset-0 pointer-events-none z-10"
-        style={{
-          background: isLight 
-            ? "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15) 0%, transparent 60%)"
-            : "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08) 0%, transparent 60%)",
-          borderRadius: "50%",
-        }}
-      />
+    <div ref={containerRef} className="relative w-full h-full">
       <Plot
         data={chartData}
         layout={{
+          autosize: true,
           paper_bgcolor: "transparent",
           plot_bgcolor: "transparent",
           font: { 
@@ -164,16 +152,16 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
           legend: {
             orientation: "v" as const,
             y: 0.5,
-            x: 1.02,
+            x: 0.72,
             xanchor: "left" as const,
-            font: { size: 13, color: textColor, family: "system-ui" },
+            font: { size: 12, color: textColor, family: "system-ui" },
             bgcolor: "transparent",
             bordercolor: isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)",
             borderwidth: 1,
             itemclick: "toggleothers" as const,
             itemdoubleclick: "toggle" as const,
           },
-          margin: { l: 20, r: 180, t: 30, b: 30 },
+          margin: { l: 10, r: 10, t: 30, b: 30 },
           hoverlabel: {
             bgcolor: isLight ? "#ffffff" : "#1e1e2e",
             bordercolor: "#9333EA",
@@ -191,7 +179,7 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
                 family: "system-ui, -apple-system, sans-serif",
                 weight: "bold",
               },
-              x: 0.4,
+              x: 0.325,
               y: 0.5,
               bgcolor: isLight ? "rgba(255,255,255,0.9)" : "rgba(30,30,46,0.9)",
               bordercolor: isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.2)",

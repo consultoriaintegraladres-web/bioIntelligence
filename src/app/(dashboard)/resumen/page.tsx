@@ -15,7 +15,15 @@ import {
   TrendingUp,
   Bot,
 } from "lucide-react";
-import { DynamicFilters, FilterValues } from "@/components/filters/DynamicFilters";
+import dynamic from "next/dynamic";
+import type { FilterValues } from "@/components/filters/DynamicFilters";
+
+// Dynamic import with ssr: false to avoid hydration mismatch
+// (Radix Select generates random aria-controls IDs that differ between server and client)
+const DynamicFilters = dynamic(
+  () => import("@/components/filters/DynamicFilters").then((mod) => mod.DynamicFilters),
+  { ssr: false }
+);
 import { BarChart3D } from "@/components/charts/BarChart3D";
 import { PieChart3D } from "@/components/charts/PieChart3D";
 import { SourceChart3D } from "@/components/charts/SourceChart3D";
