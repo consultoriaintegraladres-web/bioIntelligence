@@ -21,16 +21,16 @@ export async function GET(request: NextRequest) {
     const codigo_habilitacion = searchParams.get("codigo_habilitacion");
     const nombre_envio = searchParams.get("nombre_envio");
 
-    // Validate date range is max 1 month for non-admin users
+    // Validate date range is max 3 months for non-admin users
     if (fecha_inicio && fecha_fin && session.user.role !== "ADMIN") {
       const startDate = new Date(fecha_inicio);
       const endDate = new Date(fecha_fin);
       const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffDays > 31) {
+      if (diffDays > 93) {
         return NextResponse.json(
-          { error: "El rango de fechas no puede exceder 1 mes" },
+          { error: "El rango de fechas no puede exceder 3 meses" },
           { status: 400 }
         );
       }

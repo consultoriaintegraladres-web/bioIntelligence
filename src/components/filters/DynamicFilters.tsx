@@ -130,8 +130,8 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
         const end = new Date(newFilters.fecha_fin);
         const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
         
-        if (diffDays > 31) {
-          toast.error("El rango de fechas no puede exceder 1 mes");
+        if (diffDays > 93) {
+          toast.error("El rango de fechas no puede exceder 3 meses");
           return;
         }
       }
