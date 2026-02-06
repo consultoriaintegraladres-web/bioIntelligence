@@ -143,9 +143,13 @@ const SafePlot = forwardRef<HTMLDivElement, SafePlotProps>(function SafePlot(
         }
 
         // Attach click handler if provided (remove previous handlers first)
-        el.removeAllListeners("plotly_click");
-        if (onPlotClick) {
-          el.on("plotly_click", onPlotClick);
+        // Plotly adds custom methods to the DOM element, so we need to cast to any
+        const plotlyEl = el as any;
+        if (plotlyEl.removeAllListeners) {
+          plotlyEl.removeAllListeners("plotly_click");
+        }
+        if (onPlotClick && plotlyEl.on) {
+          plotlyEl.on("plotly_click", onPlotClick);
         }
 
         // Force a relayout to ensure proper sizing after animation frames settle
@@ -165,9 +169,12 @@ const SafePlot = forwardRef<HTMLDivElement, SafePlotProps>(function SafePlot(
           isInitializedRef.current = false;
           Plotly.newPlot(el, data || [], finalLayout, config || {});
           isInitializedRef.current = true;
-          el.removeAllListeners("plotly_click");
-          if (onPlotClick) {
-            el.on("plotly_click", onPlotClick);
+          const plotlyEl = el as any;
+          if (plotlyEl.removeAllListeners) {
+            plotlyEl.removeAllListeners("plotly_click");
+          }
+          if (onPlotClick && plotlyEl.on) {
+            plotlyEl.on("plotly_click", onPlotClick);
           }
         } catch (e2) {
           console.error("SafePlot: Error rendering plot (retry)", e2);
