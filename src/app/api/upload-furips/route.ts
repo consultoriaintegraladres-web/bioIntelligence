@@ -253,9 +253,9 @@ export async function POST(request: NextRequest) {
 
     // Solo ADMIN e IPS pueden cargar archivos
     const userRole = (session.user as any).role;
-    if (userRole === "ANALYST") {
+    if (userRole === "ANALYST" || userRole === "COORDINADOR") {
       return NextResponse.json(
-        { error: "Los analistas no pueden cargar archivos" },
+        { error: userRole === "COORDINADOR" ? "Los coordinadores no pueden cargar archivos" : "Los analistas no pueden cargar archivos" },
         { status: 403 }
       );
     }

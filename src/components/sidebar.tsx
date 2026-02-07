@@ -28,19 +28,19 @@ const menuItems = [
     href: "/resumen",
     label: "Dashboard",
     icon: LayoutDashboard,
-    roles: ["ADMIN", "USER", "ANALYST"],
+    roles: ["ADMIN", "USER", "ANALYST", "COORDINADOR"],
   },
   {
     href: "/detalle",
     label: "Detalle Hallazgos",
     icon: FileSearch,
-    roles: ["ADMIN", "USER", "ANALYST"],
+    roles: ["ADMIN", "USER", "ANALYST", "COORDINADOR"],
   },
   {
     href: "/control-facturas",
     label: "Tablero de Control Facturas",
     icon: Receipt,
-    roles: ["ADMIN", "USER", "ANALYST"],
+    roles: ["ADMIN", "USER", "ANALYST", "COORDINADOR"],
   },
   {
     href: "/carga-furips",
@@ -52,7 +52,7 @@ const menuItems = [
     href: "/validacion-envios",
     label: "Validación Envíos",
     icon: ClipboardCheck,
-    roles: ["ADMIN", "USER", "ANALYST"],
+    roles: ["ADMIN", "USER", "ANALYST", "COORDINADOR"],
   },
   {
     href: "/admin/prompts",
@@ -124,8 +124,10 @@ export function Sidebar({ selectedIpsName }: SidebarProps) {
                       {(session?.user as any)?.role === "ADMIN" 
                         ? "Administrador" 
                         : (session?.user as any)?.role === "ANALYST" 
-                          ? "Analista" 
-                          : "Usuario IPS"}
+                          ? "Analista"
+                          : (session?.user as any)?.role === "COORDINADOR"
+                            ? "Coordinador"
+                            : "Usuario IPS"}
                     </p>
                   </div>
                 </div>

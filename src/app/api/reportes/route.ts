@@ -31,7 +31,8 @@ export async function GET(request: NextRequest) {
     lotesFilters.push("nombre_envio NOT LIKE '%RG%' COLLATE utf8mb4_general_ci");
     
     // Codigo habilitacion
-    if (session.user.role !== "ADMIN") {
+    const canViewAllIPS = session.user.role === "ADMIN" || session.user.role === "COORDINADOR";
+    if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
         lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%' COLLATE utf8mb4_general_ci`);
@@ -79,8 +80,8 @@ export async function GET(request: NextRequest) {
     // Este filtro ya incluye: IPS, fecha, codigo_habilitacion, tipo_envio, nombre_envio
     incFilters.push(`i.lote_de_carga IN (${lotesSubquery})`);
     
-    // Codigo habilitacion en inconsistencias (solo para usuarios no-admin, como seguridad extra)
-    if (session.user.role !== "ADMIN") {
+    // Codigo habilitacion en inconsistencias (solo para usuarios no-admin/coordinador, como seguridad extra)
+    if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
         incFilters.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '${userCodigo}%'`);

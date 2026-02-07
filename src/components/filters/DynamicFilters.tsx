@@ -31,7 +31,10 @@ export type { FilterValues };
 export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: DynamicFiltersProps) {
   const { data: session } = useSession();
   const { themeMode, filters: contextFilters, setFilters: setContextFilters } = useAppContext();
-  const isAdmin = session?.user?.role === "ADMIN";
+  const userRole = (session?.user as any)?.role;
+  const isAdmin = userRole === "ADMIN";
+  const isCoordinador = userRole === "COORDINADOR";
+  const canViewAllIPS = isAdmin || isCoordinador;
 
   const isLight = themeMode === "light";
   const textColor = isLight ? "text-gray-900" : "text-white";
@@ -72,7 +75,7 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
       const json = await res.json();
       return (json.data || []) as string[];
     },
-    enabled: ipsSearch.length >= 2 && isAdmin,
+    enabled: ipsSearch.length >= 2 && canViewAllIPS,
   });
 
   const { data: tiposValidacion } = useQuery({
@@ -124,7 +127,7 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
   );
 
   const handleFilterChange = (key: keyof FilterValues, value: string) => {
-    if ((key === "fecha_inicio" || key === "fecha_fin") && !isAdmin) {
+    if ((key === "fecha_inicio" || key === "fecha_fin") && !canViewAllIPS) {
       const newFilters = { ...filters, [key]: value };
       if (newFilters.fecha_inicio && newFilters.fecha_fin) {
         const start = new Date(newFilters.fecha_inicio);
@@ -242,8 +245,8 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
               </div>
             </div>
 
-            {/* Nombre IPS - Autocomplete (only for admin) */}
-            {isAdmin && (
+            {/* Nombre IPS - Autocomplete (only for admin/coordinador) */}
+            {canViewAllIPS && (
               <div className="space-y-2 relative">
                 <Label className={`text-sm font-medium ${labelColor}`}>Nombre IPS</Label>
                 <div className="relative">
@@ -336,8 +339,8 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
                   </div>
                 </div>
 
-                {/* Código Habilitación (only for admin) */}
-                {isAdmin && (
+                {/* Código Habilitación (only for admin/coordinador) */}
+                {canViewAllIPS && (
                   <div className="space-y-2">
                     <Label className={`text-sm font-medium ${labelColor}`}>Código Habilitación</Label>
                     <Input
@@ -458,7 +461,7 @@ export function DynamicFilters({ onFiltersChange, showLoteFilter = true }: Dynam
               <RotateCcw className="w-4 h-4 mr-2" />
               Limpiar
             </Button>
-            {!isAdmin && (
+            {!canViewAllIPS && (
               <span className="text-sm text-amber-500 ml-auto">
                 * Rango máximo: 3 meses
               </span>

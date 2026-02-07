@@ -908,6 +908,7 @@ enum Role {
   ADMIN
   USER
   ANALYST
+  COORDINADOR
 }
 
 enum EstadoEnvio {

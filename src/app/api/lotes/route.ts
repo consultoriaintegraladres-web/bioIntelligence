@@ -46,8 +46,9 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    // Filter by codigo_habilitacion for non-admin users
-    if (session.user.role !== "ADMIN" && session.user.codigoHabilitacion) {
+    // Filter by codigo_habilitacion for non-admin/coordinador users
+    const canViewAllIPS = session.user.role === "ADMIN" || session.user.role === "COORDINADOR";
+    if (!canViewAllIPS && session.user.codigoHabilitacion) {
       where.codigo_habilitacion = {
         startsWith: session.user.codigoHabilitacion.substring(0, 10),
       };

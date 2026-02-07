@@ -46,6 +46,8 @@ export default function CargaFuripsPage() {
 
   const userRole = (session?.user as any)?.role;
   const isAnalyst = userRole === "ANALYST";
+  const isCoordinador = userRole === "COORDINADOR";
+  const isRestricted = isAnalyst || isCoordinador;
 
   // Colores dinámicos según el tema
   const textColor = themeMode === "light" ? "text-gray-900" : "text-white";
@@ -74,8 +76,8 @@ export default function CargaFuripsPage() {
     setError(null);
   };
 
-  // Si es analista, mostrar mensaje de solo lectura
-  if (isAnalyst) {
+  // Si es analista o coordinador, mostrar mensaje de solo lectura
+  if (isRestricted) {
     return (
       <div className="min-h-screen p-6">
         <motion.div
@@ -92,7 +94,9 @@ export default function CargaFuripsPage() {
                 Acceso Restringido
               </h1>
               <p className={subTextColor}>
-                Los analistas no pueden cargar archivos FURIPS
+                {isCoordinador 
+                  ? "Los coordinadores no pueden cargar archivos FURIPS"
+                  : "Los analistas no pueden cargar archivos FURIPS"}
               </p>
             </div>
           </div>

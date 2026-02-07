@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
     lotesFilters.push("nombre_envio NOT LIKE '%RG%' COLLATE utf8mb4_general_ci");
     
     // Codigo habilitacion
-    if (session.user.role !== "ADMIN") {
+    const canViewAllIPS = session.user.role === "ADMIN" || session.user.role === "COORDINADOR";
+    if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
         lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%' COLLATE utf8mb4_general_ci`);
@@ -81,8 +82,8 @@ export async function GET(request: NextRequest) {
     // RELACIÓN: lote_de_carga IN (SELECT numero_lote FROM control_lotes WHERE ...)
     conditions.push(`i.lote_de_carga IN (${lotesSubquery})`);
 
-    // Codigo habilitacion (solo para usuarios no admin, para seguridad)
-    if (session.user.role !== "ADMIN") {
+    // Codigo habilitacion (solo para usuarios no admin/coordinador, para seguridad)
+    if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
         conditions.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '${userCodigo}%'`);

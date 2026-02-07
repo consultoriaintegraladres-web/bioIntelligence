@@ -8,14 +8,14 @@ declare module "next-auth" {
       email: string;
       name: string;
       codigoHabilitacion: string | null;
-      role: "ADMIN" | "USER" | "ANALYST";
+      role: "ADMIN" | "USER" | "ANALYST" | "COORDINADOR";
     } & DefaultSession["user"];
   }
 
   interface User extends DefaultUser {
     id: string;
     codigoHabilitacion: string | null;
-    role: "ADMIN" | "USER" | "ANALYST";
+    role: "ADMIN" | "USER" | "ANALYST" | "COORDINADOR";
   }
 }
 
@@ -23,6 +23,6 @@ declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     id: string;
     codigoHabilitacion: string | null;
-    role: "ADMIN" | "USER" | "ANALYST";
+    role: "ADMIN" | "USER" | "ANALYST" | "COORDINADOR";
   }
 }

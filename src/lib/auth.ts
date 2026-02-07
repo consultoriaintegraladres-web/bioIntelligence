@@ -13,6 +13,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log("❌ Auth: Credenciales faltantes");
           return null;
         }
 
@@ -21,8 +22,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (!user || !user.password) {
+          console.log(`❌ Auth: Usuario no encontrado o sin contraseña: ${credentials.email}`);
           return null;
         }
+
+        console.log(`🔍 Auth: Usuario encontrado - Email: ${user.email}, Rol: ${user.role}`);
 
         const isValid = await bcrypt.compare(
           credentials.password as string,
@@ -30,8 +34,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         );
 
         if (!isValid) {
+          console.log(`❌ Auth: Contraseña inválida para: ${credentials.email}`);
           return null;
         }
+
+        console.log(`✅ Auth: Autenticación exitosa - Email: ${user.email}, Rol: ${user.role}`);
 
         return {
           id: String(user.id),
@@ -54,7 +61,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub as string;
-        session.user.role = token.role as "ADMIN" | "USER" | "ANALYST";
+        session.user.role = token.role as "ADMIN" | "USER" | "ANALYST" | "COORDINADOR";
         session.user.codigoHabilitacion = token.codigoHabilitacion as string | null;
       }
       return session;

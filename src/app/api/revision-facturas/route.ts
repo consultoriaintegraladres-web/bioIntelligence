@@ -56,7 +56,8 @@ export async function GET(request: NextRequest) {
     lotesFilters.push("nombre_envio NOT LIKE '%RG%' COLLATE utf8mb4_general_ci");
     
     // Codigo habilitacion
-    if (session.user.role !== "ADMIN") {
+    const canViewAllIPS = session.user.role === "ADMIN" || session.user.role === "COORDINADOR";
+    if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
         lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%' COLLATE utf8mb4_general_ci`);
