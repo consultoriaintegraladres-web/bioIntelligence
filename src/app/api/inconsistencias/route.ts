@@ -33,21 +33,21 @@ export async function GET(request: NextRequest) {
     const lotesFilters: string[] = [];
     
     // Excluir RG
-    lotesFilters.push("nombre_envio NOT LIKE '%RG%'");
+    lotesFilters.push("nombre_envio NOT LIKE '%RG%' COLLATE utf8mb4_general_ci");
     
     // Codigo habilitacion
     if (session.user.role !== "ADMIN") {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
-        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%'`);
+        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%' COLLATE utf8mb4_general_ci`);
       }
     } else if (codigo_habilitacion && codigo_habilitacion.trim() !== "") {
-      lotesFilters.push(`codigo_habilitación LIKE '%${codigo_habilitacion}%'`);
+      lotesFilters.push(`codigo_habilitación LIKE '%${codigo_habilitacion}%' COLLATE utf8mb4_general_ci`);
     }
 
     // Nombre IPS
     if (nombre_ips && nombre_ips.trim() !== "") {
-      lotesFilters.push(`nombre_ips LIKE '%${nombre_ips}%'`);
+      lotesFilters.push(`nombre_ips LIKE '%${nombre_ips}%' COLLATE utf8mb4_general_ci`);
     }
 
     // Fecha creacion
@@ -57,12 +57,12 @@ export async function GET(request: NextRequest) {
 
     // Nombre envio
     if (nombre_envio && nombre_envio.trim() !== "") {
-      lotesFilters.push(`nombre_envio LIKE '%${nombre_envio}%'`);
+      lotesFilters.push(`nombre_envio LIKE '%${nombre_envio}%' COLLATE utf8mb4_general_ci`);
     }
 
     // Tipo envio
     if (tipo_envio && tipo_envio.trim() !== "") {
-      lotesFilters.push(`tipo_envio = '${tipo_envio}'`);
+      lotesFilters.push(`tipo_envio = '${tipo_envio}' COLLATE utf8mb4_general_ci`);
     }
 
     const lotesWhere = lotesFilters.join(" AND ");

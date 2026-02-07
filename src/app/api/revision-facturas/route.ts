@@ -9,9 +9,9 @@ function serializeResults(data: any[]): any[] {
     for (const [key, value] of Object.entries(row)) {
       if (typeof value === "bigint") {
         serialized[key] = Number(value);
-      } else if (value !== null && value !== undefined && typeof value === "object" && typeof value.toNumber === "function") {
+      } else if (value !== null && value !== undefined && typeof value === "object" && "toNumber" in value && typeof (value as any).toNumber === "function") {
         // Handle Prisma Decimal
-        serialized[key] = value.toNumber();
+        serialized[key] = (value as any).toNumber();
       } else if (value !== null && value !== undefined && typeof value === "object" && !(value instanceof Date) && typeof value.toString === "function") {
         // Handle other numeric-like objects
         const str = value.toString();
@@ -52,22 +52,22 @@ export async function GET(request: NextRequest) {
     // ============================================================
     const lotesFilters: string[] = [];
     
-    // Excluir RG
-    lotesFilters.push("nombre_envio NOT LIKE '%RG%'");
+    // Excluir RG - COLLATE para evitar conflicto de collation
+    lotesFilters.push("nombre_envio NOT LIKE '%RG%' COLLATE utf8mb4_general_ci");
     
     // Codigo habilitacion
     if (session.user.role !== "ADMIN") {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
-        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%'`);
+        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%' COLLATE utf8mb4_general_ci`);
       }
     } else if (codigo_habilitacion && codigo_habilitacion.trim() !== "") {
-      lotesFilters.push(`codigo_habilitación LIKE '%${codigo_habilitacion}%'`);
+      lotesFilters.push(`codigo_habilitación LIKE '%${codigo_habilitacion}%' COLLATE utf8mb4_general_ci`);
     }
 
     // Nombre IPS - usar COLLATE para evitar problemas de collation
     if (nombre_ips && nombre_ips.trim() !== "") {
-      lotesFilters.push(`nombre_ips COLLATE utf8mb4_general_ci LIKE '%${nombre_ips}%' COLLATE utf8mb4_general_ci`);
+      lotesFilters.push(`nombre_ips LIKE '%${nombre_ips}%' COLLATE utf8mb4_general_ci`);
     }
 
     // Fecha creacion
@@ -77,12 +77,12 @@ export async function GET(request: NextRequest) {
 
     // Nombre envio
     if (nombre_envio && nombre_envio.trim() !== "") {
-      lotesFilters.push(`nombre_envio LIKE '%${nombre_envio}%'`);
+      lotesFilters.push(`nombre_envio LIKE '%${nombre_envio}%' COLLATE utf8mb4_general_ci`);
     }
 
     // Tipo envio
     if (tipo_envio && tipo_envio.trim() !== "") {
-      lotesFilters.push(`tipo_envio = '${tipo_envio}'`);
+      lotesFilters.push(`tipo_envio = '${tipo_envio}' COLLATE utf8mb4_general_ci`);
     }
 
     // ============================================================
@@ -101,12 +101,15 @@ export async function GET(request: NextRequest) {
 
     // Search filter
     if (search) {
-      whereConditions.push(`(Numero_factura LIKE '%${search}%' OR CAST(numero_lote AS CHAR) LIKE '%${search}%')`);
+      whereConditions.push(`(Numero_factura LIKE '%${search}%' COLLATE utf8mb4_general_ci OR CAST(numero_lote AS CHAR) LIKE '%${search}%' COLLATE utf8mb4_general_ci)`);
     }
 
     const whereClause = whereConditions.join(" AND ");
 
     console.log("📋 revision_facturas WHERE:", whereClause);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'revision-facturas/route.ts:109',message:'WHERE clause built',data:{whereClause,lotesFilters},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
 
     // Count query - CAST to SIGNED to avoid BigInt serialization issues
     const countQuery = `
@@ -132,9 +135,9 @@ export async function GET(request: NextRequest) {
     // Summary query - KPIs solo de Primera Revisión (usar SIGNED para evitar Decimal/BigInt)
     const summaryQuery = `
       SELECT
-        CAST(SUM(CASE WHEN Primera_revision LIKE '%Ver hallazgos%' OR Primera_revision LIKE '%Ver Hallazgos%' THEN 1 ELSE 0 END) AS SIGNED) as facturas_con_hallazgos,
-        CAST(COALESCE(SUM(CASE WHEN Primera_revision LIKE '%Ver hallazgos%' OR Primera_revision LIKE '%Ver Hallazgos%' THEN Total_reclamado_por_amparo_gastos_medicos_quirurgicos ELSE 0 END), 0) AS SIGNED) as valor_facturas_con_hallazgos,
-        CAST(SUM(CASE WHEN Primera_revision LIKE '%Ok%hallazgos%' THEN 1 ELSE 0 END) AS SIGNED) as facturas_ok,
+        CAST(SUM(CASE WHEN Primera_revision LIKE '%Ver hallazgos%' COLLATE utf8mb4_general_ci OR Primera_revision LIKE '%Ver Hallazgos%' COLLATE utf8mb4_general_ci THEN 1 ELSE 0 END) AS SIGNED) as facturas_con_hallazgos,
+        CAST(COALESCE(SUM(CASE WHEN Primera_revision LIKE '%Ver hallazgos%' COLLATE utf8mb4_general_ci OR Primera_revision LIKE '%Ver Hallazgos%' COLLATE utf8mb4_general_ci THEN Total_reclamado_por_amparo_gastos_medicos_quirurgicos ELSE 0 END), 0) AS SIGNED) as valor_facturas_con_hallazgos,
+        CAST(SUM(CASE WHEN Primera_revision LIKE '%Ok%hallazgos%' COLLATE utf8mb4_general_ci THEN 1 ELSE 0 END) AS SIGNED) as facturas_ok,
         CAST(COUNT(*) AS SIGNED) as total_facturas
       FROM revision_facturas
       WHERE ${whereClause}
@@ -150,6 +153,10 @@ export async function GET(request: NextRequest) {
     const dataResult = serializeResults(rawDataResult);
     const serializedSummary = serializeResults(summaryResult);
     const total = Number(countResult[0]?.total || 0);
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'revision-facturas/route.ts:153',message:'Query success',data:{total,dataCount:dataResult.length,summary:serializedSummary[0]},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
 
     return NextResponse.json({
       data: dataResult,

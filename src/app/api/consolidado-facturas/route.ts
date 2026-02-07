@@ -9,8 +9,8 @@ function serializeResults(data: any[]): any[] {
     for (const [key, value] of Object.entries(row)) {
       if (typeof value === "bigint") {
         serialized[key] = Number(value);
-      } else if (value !== null && value !== undefined && typeof value === "object" && typeof value.toNumber === "function") {
-        serialized[key] = value.toNumber();
+      } else if (value !== null && value !== undefined && typeof value === "object" && "toNumber" in value && typeof (value as any).toNumber === "function") {
+        serialized[key] = (value as any).toNumber();
       } else if (value !== null && value !== undefined && typeof value === "object" && !(value instanceof Date) && typeof value.toString === "function") {
         const str = value.toString();
         const num = Number(str);
@@ -56,22 +56,22 @@ export async function GET(request: NextRequest) {
     // ============================================================
     const lotesFilters: string[] = [];
     
-    // Excluir RG
-    lotesFilters.push("nombre_envio NOT LIKE '%RG%'");
+    // Excluir RG - COLLATE para evitar conflicto de collation
+    lotesFilters.push("nombre_envio NOT LIKE '%RG%' COLLATE utf8mb4_general_ci");
     
     // Codigo habilitacion
     if (session.user.role !== "ADMIN") {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
-        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%'`);
+        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%' COLLATE utf8mb4_general_ci`);
       }
     } else if (codigo_habilitacion && codigo_habilitacion.trim() !== "") {
-      lotesFilters.push(`codigo_habilitación LIKE '%${codigo_habilitacion}%'`);
+      lotesFilters.push(`codigo_habilitación LIKE '%${codigo_habilitacion}%' COLLATE utf8mb4_general_ci`);
     }
 
     // Nombre IPS - usar COLLATE para evitar problemas de collation
     if (nombre_ips && nombre_ips.trim() !== "") {
-      lotesFilters.push(`nombre_ips COLLATE utf8mb4_general_ci LIKE '%${nombre_ips}%' COLLATE utf8mb4_general_ci`);
+      lotesFilters.push(`nombre_ips LIKE '%${nombre_ips}%' COLLATE utf8mb4_general_ci`);
     }
 
     // Fecha creacion
@@ -81,12 +81,12 @@ export async function GET(request: NextRequest) {
 
     // Nombre envio
     if (nombre_envio && nombre_envio.trim() !== "") {
-      lotesFilters.push(`nombre_envio LIKE '%${nombre_envio}%'`);
+      lotesFilters.push(`nombre_envio LIKE '%${nombre_envio}%' COLLATE utf8mb4_general_ci`);
     }
 
     // Tipo envio
     if (tipo_envio && tipo_envio.trim() !== "") {
-      lotesFilters.push(`tipo_envio = '${tipo_envio}'`);
+      lotesFilters.push(`tipo_envio = '${tipo_envio}' COLLATE utf8mb4_general_ci`);
     }
 
     // ============================================================
@@ -214,9 +214,9 @@ export async function GET(request: NextRequest) {
       
       const result = await prisma.$queryRawUnsafe<any[]>(query);
       console.log(`✅ Resultados obtenidos:`, result.length);
-      if (result.length > 0) {
-        console.log(`📊 Primer resultado:`, JSON.stringify(result[0], null, 2));
-      }
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'consolidado-facturas/route.ts:218',message:'Query results count',data:{count:result.length,viewName},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       dataResult = result;
     }
 
@@ -259,6 +259,10 @@ export async function GET(request: NextRequest) {
 
     console.log("📊 Totales calculados:", totals);
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'consolidado-facturas/route.ts:260',message:'Totals calculated',data:{totals,serializedCount:serializedData.length,firstRow:serializedData[0]},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+
     // Asegurar que todos los valores numéricos sean números, no BigInt
     const safeTotals = {
       totalFacturas: Number(totals.totalFacturas) || 0,
@@ -275,10 +279,10 @@ export async function GET(request: NextRequest) {
       viewName, // Para debug
     });
   } catch (error: any) {
-    console.error("❌ Error fetching consolidado_facturas:", error);
-    console.error("❌ Error message:", error.message);
-    console.error("❌ Error stack:", error.stack);
-    console.error("❌ Error completo:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    console.error("❌ Error fetching consolidado_facturas:", error?.message);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'consolidado-facturas/route.ts:catch',message:'API error caught',data:{errorMessage:error?.message,errorName:error?.constructor?.name},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     
     return NextResponse.json(
       { 

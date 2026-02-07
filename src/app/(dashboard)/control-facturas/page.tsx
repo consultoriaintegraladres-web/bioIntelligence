@@ -164,8 +164,14 @@ export default function ControlFacturasPage() {
             data,
             url: `/api/consolidado-facturas?${consolidadoQueryString}`
           });
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'control-facturas/page.tsx:queryFn',message:'API error response',data:{status:res.status,apiData:data},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
           throw new Error(data.error || data.details || `Error ${res.status}: ${res.statusText}`);
         }
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'control-facturas/page.tsx:queryFn',message:'API success response',data:{totals:data?.totals,viewName:data?.viewName,dataCount:data?.data?.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         return data;
       } catch (error: any) {
         console.error("❌ Error completo en consolidado-facturas:", error);
