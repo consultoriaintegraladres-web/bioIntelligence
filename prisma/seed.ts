@@ -8,6 +8,7 @@ enum Role {
   ADMIN = "ADMIN",
   USER = "USER",
   ANALYST = "ANALYST",
+  COORDINADOR = "COORDINADOR",
 }
 
 // IPS users to create - will fetch codigo_habilitacion from database
@@ -95,6 +96,58 @@ async function main() {
     console.log("ℹ️ Usuario analista ya existe");
   }
 
+  // Create Coordinador users
+  const coordinadores = [
+    {
+      email: "coordinador.gerencia@bioretail.com",
+      password: "G3r3nc14$2026!B1oR3t41l",
+      nombre: "Coordinador Gerencia",
+      codigo_habilitacion: "0000000000",
+    },
+    {
+      email: "coordinador.presidencia@bioretail.com",
+      password: "Pr3s1d3nc14$2026!B1oR3t41l",
+      nombre: "Coordinador Presidencia",
+      codigo_habilitacion: "0000000000",
+    },
+    {
+      email: "coordinador.auditoria@bioretail.com",
+      password: "Aud1t0r14$2026!B1oR3t41l",
+      nombre: "Coordinador Auditoria",
+      codigo_habilitacion: "0000000000",
+    },
+  ];
+
+  console.log("\n👔 Creando usuarios Coordinadores...\n");
+
+  for (const coord of coordinadores) {
+    const existingCoord = await prisma.user.findUnique({
+      where: { email: coord.email },
+    });
+
+    if (!existingCoord) {
+      const hashedPassword = await bcrypt.hash(coord.password, 12);
+      
+      await prisma.user.create({
+        data: {
+          email: coord.email,
+          password: hashedPassword,
+          nombre: coord.nombre,
+          codigo_habilitacion: coord.codigo_habilitacion,
+          role: Role.COORDINADOR,
+        },
+      });
+      
+      console.log(`✅ Usuario coordinador creado:`);
+      console.log(`   📧 Email: ${coord.email}`);
+      console.log(`   🔑 Password: ${coord.password}`);
+      console.log(`   👔 Rol: ${coord.nombre}`);
+      console.log("");
+    } else {
+      console.log(`ℹ️ Usuario ${coord.email} ya existe`);
+    }
+  }
+
   // Get distinct IPS from control_lotes to create users (PostgreSQL compatible)
   const ipsData = await prisma.$queryRawUnsafe<{ nombre_ips: string; codigo_habilitacion: string }[]>(`
     SELECT DISTINCT nombre_ips, codigo_habilitación as codigo_habilitacion
@@ -172,6 +225,13 @@ async function main() {
   console.log("\n📊 ANALISTA:");
   console.log("   Email: analista@bioretail.com");
   console.log("   Password: Analista2026!");
+  console.log("\n👔 COORDINADORES:");
+  console.log("   Email: coordinador.gerencia@bioretail.com");
+  console.log("   Password: G3r3nc14$2026!B1oR3t41l");
+  console.log("   Email: coordinador.presidencia@bioretail.com");
+  console.log("   Password: Pr3s1d3nc14$2026!B1oR3t41l");
+  console.log("   Email: coordinador.auditoria@bioretail.com");
+  console.log("   Password: Aud1t0r14$2026!B1oR3t41l");
   console.log("\n🏥 USUARIOS IPS:");
   
   const allUsers = await prisma.user.findMany({
