@@ -6,8 +6,8 @@ import { processFuripsData } from "@/lib/furips-processor";
 import AdmZip from "adm-zip";
 import path from "path";
 
-// maxDuration máximo para plan Hobby de Vercel (5 minutos)
-export const maxDuration = 300;
+// maxDuration aumentado para Railway (30 minutos) - permite archivos ZIP pesados
+export const maxDuration = 1800;
 
 export async function POST(request: NextRequest) {
   // #region agent log

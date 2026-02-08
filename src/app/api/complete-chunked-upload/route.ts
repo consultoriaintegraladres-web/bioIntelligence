@@ -11,8 +11,8 @@ import AdmZip from "adm-zip";
 
 const TEMP_DIR = path.join(os.tmpdir(), "furips-uploads");
 
-// maxDuration máximo para plan Hobby de Vercel (5 minutos)
-export const maxDuration = 300;
+// maxDuration aumentado para Railway (30 minutos) - permite archivos ZIP pesados
+export const maxDuration = 1800;
 
 export async function POST(request: NextRequest) {
   try {

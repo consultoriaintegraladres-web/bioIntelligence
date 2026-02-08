@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { uploadMultipleFilesToR2, isR2Configured } from "@/lib/cloudflare-r2";
 import { processFuripsData } from "@/lib/furips-processor";
 
-// Aumentar maxDuration para procesamiento de datos
-export const maxDuration = 300; // 5 minutos
+// maxDuration aumentado para Railway (30 minutos) - permite procesamiento de archivos pesados
+export const maxDuration = 1800;
 
 export async function POST(request: NextRequest) {
   try {
