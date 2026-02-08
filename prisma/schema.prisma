@@ -725,7 +725,7 @@ model tipificacion_servicios {
 }
 
 model tipos_de_servicio {
-  id        Int    @id
+  id        Int    @id @default(autoincrement())
   categoria String @db.VarChar(50)
 }
 
