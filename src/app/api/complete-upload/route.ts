@@ -117,7 +117,12 @@ export async function POST(request: NextRequest) {
         furips2Content || "",
         furtranContent,
         envio.id,
-        session.user?.email || "unknown"
+        session.user?.email || "unknown",
+        nombreIps,
+        codigoHabilitacion,
+        cantidadFacturas,
+        valorTotal,
+        idEnvio
       );
       
       dataInsertSuccess = processResult.success;

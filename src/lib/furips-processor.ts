@@ -511,7 +511,12 @@ export async function processFuripsData(
   furips2Content: string,
   furtranContent: string | null,
   numeroLote: number,
-  usuario: string
+  usuario: string,
+  nombreIps?: string,
+  codigoHabilitacion?: string,
+  cantidadFacturas?: number,
+  valorReclamado?: number,
+  nombreEnvio?: string
 ): Promise<ProcessResult> {
   const warnings: ValidationWarning[] = [];
   const result: ProcessResult = {
@@ -536,38 +541,9 @@ export async function processFuripsData(
     const usuarioTruncado = usuario.substring(0, 20);
     console.log(`👤 Usuario: ${usuarioTruncado}`);
 
-    // ==================== CREAR BACKUPS ====================
-    console.log("📦 Creando backups de tablas existentes...");
-
-    // Backup FURIPS1
-    const furips1BackupCount = await prisma.$executeRaw`
-      INSERT INTO furips1_backup SELECT * FROM furips1
-    `;
-    result.backupsCreated.furips1 = Number(furips1BackupCount);
-    console.log(`✅ Backup FURIPS1: ${result.backupsCreated.furips1} registros`);
-
-    // Backup FURIPS2
-    const furips2BackupCount = await prisma.$executeRaw`
-      INSERT INTO furips2_backup SELECT * FROM furips2
-    `;
-    result.backupsCreated.furips2 = Number(furips2BackupCount);
-    console.log(`✅ Backup FURIPS2: ${result.backupsCreated.furips2} registros`);
-
-    // Backup FURTRAN (SOLO si existe contenido)
-    if (furtranContent && furtranContent.trim() !== "") {
-      try {
-        const furtranBackupCount = await prisma.$executeRaw`
-          INSERT INTO FURTRAN_backup SELECT * FROM FURTRAN
-        `;
-        result.backupsCreated.furtran = Number(furtranBackupCount);
-        console.log(`✅ Backup FURTRAN: ${result.backupsCreated.furtran} registros`);
-      } catch (err) {
-        console.warn("⚠️ No se pudo crear backup de FURTRAN (posiblemente vacía)");
-      }
-    }
-
     // ==================== ELIMINAR DATOS EXISTENTES ====================
-    console.log("🗑️  Limpiando tablas...");
+    // Borrar datos anteriores antes de insertar nuevos (sin backups por ahora)
+    console.log("🗑️  Limpiando tablas anteriores...");
     
     await prisma.$executeRaw`DELETE FROM furips1`;
     await prisma.$executeRaw`DELETE FROM furips2`;
@@ -575,7 +551,7 @@ export async function processFuripsData(
       await prisma.$executeRaw`DELETE FROM FURTRAN`;
     }
 
-    console.log("✅ Tablas limpiadas");
+    console.log("✅ Tablas limpiadas - listas para nuevos datos");
 
     // ==================== PROCESAR FURIPS1 (INSERT MASIVO) ====================
     if (furips1Content) {
@@ -710,6 +686,62 @@ export async function processFuripsData(
       }
       
       console.log(`✅ FURTRAN: ${result.recordsProcessed.furtran} registros insertados`);
+    }
+
+    // ==================== INSERTAR EN control_lotes ====================
+    if (nombreIps && codigoHabilitacion && nombreEnvio) {
+      console.log("📋 Insertando registro en control_lotes...");
+      
+      try {
+        // Calcular valor total desde FURIPS2 si no se proporciona
+        let valorTotal = valorReclamado || 0;
+        if (!valorTotal && result.recordsProcessed.furips2 > 0) {
+          // Calcular desde FURIPS2 si está disponible
+          const valorResult = await prisma.$queryRaw<Array<{ total: number }>>`
+            SELECT COALESCE(SUM(CAST(Valor_total_reclamado AS DECIMAL(18,2))), 0) as total
+            FROM furips2
+            WHERE numero_lote = ${numeroLote}
+          `;
+          valorTotal = Number(valorResult[0]?.total || 0);
+        }
+
+        // Insertar o actualizar en control_lotes usando Prisma
+        await prisma.controlLote.upsert({
+          where: { id: numeroLote },
+          update: {
+            numero_lote: numeroLote,
+            fecha_creacion: new Date(),
+            nombre_ips: nombreIps,
+            codigo_habilitacion: codigoHabilitacion,
+            cantidad_facturas: cantidadFacturas || result.recordsProcessed.furips1,
+            valor_reclamado: valorTotal,
+            nombre_envio: nombreEnvio,
+            tipo_envio: "FURIPS",
+          },
+          create: {
+            id: numeroLote,
+            numero_lote: numeroLote,
+            fecha_creacion: new Date(),
+            nombre_ips: nombreIps,
+            codigo_habilitacion: codigoHabilitacion,
+            cantidad_facturas: cantidadFacturas || result.recordsProcessed.furips1,
+            valor_reclamado: valorTotal,
+            nombre_envio: nombreEnvio,
+            tipo_envio: "FURIPS",
+          },
+        });
+        
+        console.log(`✅ Registro insertado en control_lotes: ${nombreEnvio}`);
+      } catch (error: any) {
+        console.error("⚠️ Error al insertar en control_lotes:", error.message);
+        warnings.push({
+          line: 0,
+          field: "control_lotes",
+          issue: `Error al insertar en control_lotes: ${error.message}`,
+          originalValue: nombreEnvio || "",
+          adjustedValue: "NO INSERTADO",
+        });
+      }
     }
 
     result.warnings = warnings;
