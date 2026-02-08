@@ -604,7 +604,7 @@ model posibles_inconsistencias_robot {
   cantidad                                      Int?
   valor_unitario                                Decimal?  @db.Decimal(18, 2)
   valor_total                                   Decimal?  @db.Decimal(18, 2)
-  fecha                                         DateTime? @default(dbgenerated("(curdate())")) @db.Date
+  fecha                                         DateTime? @default(now()) @db.Date
   lote_de_carga                                 String?   @db.VarChar(50)
   id_factura_furips1                            String?   @db.VarChar(1000)
   usuario                                       String?   @db.VarChar(20)
