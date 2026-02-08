@@ -55,7 +55,11 @@ export async function notifyN8nWebhook(bucket: string, filePath: string): Promis
 }
 
 function getR2Client(): S3Client {
-  if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+  const accountId = process.env.R2_ACCOUNT_ID || R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID || R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || R2_SECRET_ACCESS_KEY;
+  
+  if (!accountId || !accessKeyId || !secretAccessKey) {
     throw new Error(
       "R2 credentials not configured. Please set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY in .env"
     );
@@ -63,10 +67,10 @@ function getR2Client(): S3Client {
 
   return new S3Client({
     region: "auto",
-    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: {
-      accessKeyId: R2_ACCESS_KEY_ID,
-      secretAccessKey: R2_SECRET_ACCESS_KEY,
+      accessKeyId: accessKeyId,
+      secretAccessKey: secretAccessKey,
     },
   });
 }
@@ -101,9 +105,14 @@ async function uploadLargeFileMultipart(
   key: string,
   mimeType: string
 ): Promise<void> {
+  const bucketName = process.env.R2_BUCKET_NAME || R2_BUCKET_NAME;
+  if (!bucketName) {
+    throw new Error("R2_BUCKET_NAME not configured in .env");
+  }
+  
   // Crear multipart upload
   const createCommand = new CreateMultipartUploadCommand({
-    Bucket: R2_BUCKET_NAME!,
+    Bucket: bucketName,
     Key: key,
     ContentType: mimeType,
   });
@@ -124,7 +133,7 @@ async function uploadLargeFileMultipart(
       const partBuffer = buffer.slice(start, end);
 
       const uploadCommand = new UploadPartCommand({
-        Bucket: R2_BUCKET_NAME!,
+        Bucket: bucketName,
         Key: key,
         PartNumber: partNumber,
         UploadId,
@@ -146,7 +155,7 @@ async function uploadLargeFileMultipart(
 
     // Completar multipart upload
     const completeCommand = new CompleteMultipartUploadCommand({
-      Bucket: R2_BUCKET_NAME!,
+      Bucket: bucketName,
       Key: key,
       UploadId,
       MultipartUpload: { Parts: parts },
@@ -155,10 +164,10 @@ async function uploadLargeFileMultipart(
     await client.send(completeCommand);
     console.log(`✅ Multipart upload completado: ${key}`);
   } catch (error) {
-    // Abortar multipart upload en caso de error
+      // Abortar multipart upload en caso de error
     try {
       const abortCommand = new AbortMultipartUploadCommand({
-        Bucket: R2_BUCKET_NAME!,
+        Bucket: bucketName,
         Key: key,
         UploadId,
       });
@@ -182,7 +191,8 @@ export async function uploadFileToR2Organized(
   idEnvio: string,
   mimeType: string = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
-  if (!R2_BUCKET_NAME) {
+  const bucketName = process.env.R2_BUCKET_NAME || R2_BUCKET_NAME;
+  if (!bucketName) {
     throw new Error("R2_BUCKET_NAME not configured in .env");
   }
 
@@ -206,7 +216,7 @@ export async function uploadFileToR2Organized(
   } else {
     // Upload simple para archivos pequeños
     const command = new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: bucketName,
       Key: key,
       Body: fileBuffer,
       ContentType: mimeType,
@@ -215,7 +225,8 @@ export async function uploadFileToR2Organized(
     await client.send(command);
   }
 
-  const url = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${key}`;
+  const accountId = process.env.R2_ACCOUNT_ID || R2_ACCOUNT_ID;
+  const url = `https://${accountId}.r2.cloudflarestorage.com/${bucketName}/${key}`;
 
   console.log(`✅ Archivo subido exitosamente a R2: ${key}`);
 
