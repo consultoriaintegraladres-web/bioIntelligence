@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
 
     // Get distinct IPS names from control_lotes
-    const result = await prisma.$queryRawUnsafe<{ nombre_ips: string }[]>(`
+    const query = `
       SELECT DISTINCT nombre_ips 
       FROM control_lotes 
       WHERE nombre_ips IS NOT NULL 
@@ -22,7 +22,11 @@ export async function GET(request: NextRequest) {
         ${search ? `AND nombre_ips ILIKE '%${search}%'` : ""}
       ORDER BY nombre_ips
       LIMIT 20
-    `);
+    `;
+    
+    console.log("[IPS] Query:", query);
+    const result = await prisma.$queryRawUnsafe<{ nombre_ips: string }[]>(query);
+    console.log("[IPS] Resultados:", result.length, "registros");
 
     return NextResponse.json({
       success: true,

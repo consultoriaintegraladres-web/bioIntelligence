@@ -317,11 +317,13 @@ export async function GET(request: NextRequest) {
           LIMIT 200
         `;
 
+        console.log("[REPORTES] Query IPS:", query);
         const result = await prisma.$queryRawUnsafe<any[]>(query);
+        console.log("[REPORTES] Resultados IPS:", result.length, "registros");
 
         return NextResponse.json({
           success: true,
-          data: result.map((item) => item.nombre_ips),
+          data: result.map((item) => item.nombre_ips).filter(Boolean),
         });
       }
 
@@ -333,11 +335,13 @@ export async function GET(request: NextRequest) {
           ORDER BY tipo_envio
         `;
 
+        console.log("[REPORTES] Query tipos_envio:", query);
         const result = await prisma.$queryRawUnsafe<any[]>(query);
+        console.log("[REPORTES] Resultados tipos_envio:", result.length, "registros");
 
         return NextResponse.json({
           success: true,
-          data: result.map((item) => item.tipo_envio),
+          data: result.map((item) => item.tipo_envio).filter(Boolean),
         });
       }
 

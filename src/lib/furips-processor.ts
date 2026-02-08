@@ -545,10 +545,10 @@ export async function processFuripsData(
     // Borrar datos anteriores antes de insertar nuevos (sin backups por ahora)
     console.log("🗑️  Limpiando tablas anteriores...");
     
-    await prisma.$executeRaw`DELETE FROM furips1`;
-    await prisma.$executeRaw`DELETE FROM furips2`;
+    await prisma.$executeRaw`DELETE FROM "furips1"`;
+    await prisma.$executeRaw`DELETE FROM "furips2"`;
     if (furtranContent && furtranContent.trim() !== "") {
-      await prisma.$executeRaw`DELETE FROM FURTRAN`;
+      await prisma.$executeRaw`DELETE FROM "FURTRAN"`;
     }
 
     console.log("✅ Tablas limpiadas - listas para nuevos datos");
@@ -706,6 +706,10 @@ export async function processFuripsData(
         }
 
         // Insertar o actualizar en control_lotes usando Prisma
+        // Convertir valores a Decimal para PostgreSQL
+        const cantidadFacturasDecimal = new Prisma.Decimal(cantidadFacturas || result.recordsProcessed.furips1 || 0);
+        const valorTotalDecimal = new Prisma.Decimal(valorTotal || 0);
+        
         await prisma.controlLote.upsert({
           where: { id: numeroLote },
           update: {
@@ -713,8 +717,8 @@ export async function processFuripsData(
             fecha_creacion: new Date(),
             nombre_ips: nombreIps,
             codigo_habilitacion: codigoHabilitacion,
-            cantidad_facturas: cantidadFacturas || result.recordsProcessed.furips1,
-            valor_reclamado: valorTotal,
+            cantidad_facturas: cantidadFacturasDecimal,
+            valor_reclamado: valorTotalDecimal,
             nombre_envio: nombreEnvio,
             tipo_envio: "FURIPS",
           },
@@ -724,8 +728,8 @@ export async function processFuripsData(
             fecha_creacion: new Date(),
             nombre_ips: nombreIps,
             codigo_habilitacion: codigoHabilitacion,
-            cantidad_facturas: cantidadFacturas || result.recordsProcessed.furips1,
-            valor_reclamado: valorTotal,
+            cantidad_facturas: cantidadFacturasDecimal,
+            valor_reclamado: valorTotalDecimal,
             nombre_envio: nombreEnvio,
             tipo_envio: "FURIPS",
           },
