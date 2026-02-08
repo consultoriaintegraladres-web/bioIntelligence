@@ -55,12 +55,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.role = user.role;
         token.codigoHabilitacion = user.codigoHabilitacion;
+        token.email = user.email;
+        token.id = user.id;
+      }
+      // Validar que el token tenga datos válidos
+      if (!token.email || !token.id || !token.role) {
+        return null as any; // Invalidar token si falta información crítica
       }
       return token;
     },
     async session({ session, token }) {
+      // Validar que el token tenga datos válidos antes de crear la sesión
+      if (!token.email || !token.id || !token.role) {
+        return null as any; // Invalidar sesión si falta información crítica
+      }
+      
       if (session.user) {
-        session.user.id = token.sub as string;
+        session.user.id = token.id as string;
+        session.user.email = token.email as string;
         session.user.role = token.role as "ADMIN" | "USER" | "ANALYST" | "COORDINADOR";
         session.user.codigoHabilitacion = token.codigoHabilitacion as string | null;
       }

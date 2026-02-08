@@ -3,7 +3,14 @@ import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
-  const isLoggedIn = !!req.auth;
+  
+  // Validar que la sesión sea válida (debe tener email y user válido)
+  const session = req.auth;
+  const isValidSession = !!(
+    session?.user?.email && 
+    session?.user?.id &&
+    (session?.user as any)?.role
+  );
 
   // Public routes - Landing page and login are accessible without authentication
   const publicRoutes = ["/", "/login", "/api/auth"];
@@ -19,17 +26,27 @@ export default auth((req) => {
 
   if (isPublicRoute || isStaticFile) {
     // If logged in and trying to access login, redirect to dashboard
-    if (isLoggedIn && pathname === "/login") {
+    if (isValidSession && pathname === "/login") {
       return NextResponse.redirect(new URL("/resumen", req.url));
     }
     return NextResponse.next();
   }
 
-  // Protected routes - redirect to login if not authenticated
-  if (!isLoggedIn) {
+  // Protected routes - redirect to login if not authenticated or session is invalid
+  if (!isValidSession) {
+    // Limpiar cookies de sesión inválidas
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+    
+    const response = NextResponse.redirect(loginUrl);
+    
+    // Eliminar cookies de sesión inválidas
+    response.cookies.delete("authjs.session-token");
+    response.cookies.delete("__Secure-authjs.session-token");
+    response.cookies.delete("next-auth.session-token");
+    response.cookies.delete("__Secure-next-auth.session-token");
+    
+    return response;
   }
 
   return NextResponse.next();
