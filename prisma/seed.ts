@@ -70,7 +70,7 @@ async function main() {
     console.log("ℹ️ Usuario analista ya existe");
   }
 
-  // Get distinct IPS from control_lotes to create users
+  // Get distinct IPS from control_lotes to create users (PostgreSQL compatible)
   const ipsData = await prisma.$queryRawUnsafe<{ nombre_ips: string; codigo_habilitacion: string }[]>(`
     SELECT DISTINCT nombre_ips, codigo_habilitación as codigo_habilitacion
     FROM control_lotes 
@@ -79,7 +79,11 @@ async function main() {
       AND codigo_habilitación IS NOT NULL
     ORDER BY nombre_ips
     LIMIT 5
-  `);
+  `).catch(() => {
+    // Si no hay datos en control_lotes aún, usar usuarios predefinidos
+    console.log("⚠️ No hay datos en control_lotes, usando usuarios predefinidos");
+    return [];
+  });
 
   console.log("\n📋 IPS encontradas en la base de datos:");
   ipsData.forEach((ips, i) => {
