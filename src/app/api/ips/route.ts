@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       FROM control_lotes 
       WHERE nombre_ips IS NOT NULL 
         AND nombre_ips != ''
-        ${search ? `AND nombre_ips LIKE '%${search}%' COLLATE utf8mb4_general_ci` : ""}
+        ${search ? `AND nombre_ips ILIKE '%${search}%'` : ""}
       ORDER BY nombre_ips
       LIMIT 20
     `);

@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     const ipsResult = await prisma.$queryRaw<{ nombre_ips: string }[]>`
       SELECT DISTINCT nombre_ips 
       FROM control_lotes 
-      WHERE LEFT(codigo_habilitación, 10) = ${codigoHab}
+      WHERE SUBSTRING(codigo_habilitación, 1, 10) = ${codigoHab}
       LIMIT 1
     `;
 

@@ -33,22 +33,22 @@ export async function GET(request: NextRequest) {
     const lotesFilters: string[] = [];
     
     // Excluir RG
-    lotesFilters.push("nombre_envio NOT LIKE '%RG%' COLLATE utf8mb4_general_ci");
+    lotesFilters.push("nombre_envio NOT ILIKE '%RG%'");
     
     // Codigo habilitacion
     const canViewAllIPS = session.user.role === "ADMIN" || session.user.role === "COORDINADOR";
     if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
-        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%' COLLATE utf8mb4_general_ci`);
+        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%'`);
       }
     } else if (codigo_habilitacion && codigo_habilitacion.trim() !== "") {
-      lotesFilters.push(`codigo_habilitación LIKE '%${codigo_habilitacion}%' COLLATE utf8mb4_general_ci`);
+      lotesFilters.push(`codigo_habilitación ILIKE '%${codigo_habilitacion}%'`);
     }
 
     // Nombre IPS
     if (nombre_ips && nombre_ips.trim() !== "") {
-      lotesFilters.push(`nombre_ips LIKE '%${nombre_ips}%' COLLATE utf8mb4_general_ci`);
+      lotesFilters.push(`nombre_ips ILIKE '%${nombre_ips}%'`);
     }
 
     // Fecha creacion
@@ -58,12 +58,12 @@ export async function GET(request: NextRequest) {
 
     // Nombre envio
     if (nombre_envio && nombre_envio.trim() !== "") {
-      lotesFilters.push(`nombre_envio LIKE '%${nombre_envio}%' COLLATE utf8mb4_general_ci`);
+      lotesFilters.push(`nombre_envio ILIKE '%${nombre_envio}%'`);
     }
 
     // Tipo envio
     if (tipo_envio && tipo_envio.trim() !== "") {
-      lotesFilters.push(`tipo_envio = '${tipo_envio}' COLLATE utf8mb4_general_ci`);
+      lotesFilters.push(`tipo_envio = '${tipo_envio}'`);
     }
 
     const lotesWhere = lotesFilters.join(" AND ");

@@ -52,23 +52,23 @@ export async function GET(request: NextRequest) {
     // ============================================================
     const lotesFilters: string[] = [];
     
-    // Excluir RG - COLLATE para evitar conflicto de collation
-    lotesFilters.push("nombre_envio NOT LIKE '%RG%' COLLATE utf8mb4_general_ci");
+    // Excluir RG
+    lotesFilters.push("nombre_envio NOT ILIKE '%RG%'");
     
     // Codigo habilitacion
     const canViewAllIPS = session.user.role === "ADMIN" || session.user.role === "COORDINADOR";
     if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
-        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%' COLLATE utf8mb4_general_ci`);
+        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%'`);
       }
     } else if (codigo_habilitacion && codigo_habilitacion.trim() !== "") {
-      lotesFilters.push(`codigo_habilitación LIKE '%${codigo_habilitacion}%' COLLATE utf8mb4_general_ci`);
+      lotesFilters.push(`codigo_habilitación ILIKE '%${codigo_habilitacion}%'`);
     }
 
-    // Nombre IPS - usar COLLATE para evitar problemas de collation
+    // Nombre IPS
     if (nombre_ips && nombre_ips.trim() !== "") {
-      lotesFilters.push(`nombre_ips LIKE '%${nombre_ips}%' COLLATE utf8mb4_general_ci`);
+      lotesFilters.push(`nombre_ips ILIKE '%${nombre_ips}%'`);
     }
 
     // Fecha creacion
@@ -78,12 +78,12 @@ export async function GET(request: NextRequest) {
 
     // Nombre envio
     if (nombre_envio && nombre_envio.trim() !== "") {
-      lotesFilters.push(`nombre_envio LIKE '%${nombre_envio}%' COLLATE utf8mb4_general_ci`);
+      lotesFilters.push(`nombre_envio ILIKE '%${nombre_envio}%'`);
     }
 
     // Tipo envio
     if (tipo_envio && tipo_envio.trim() !== "") {
-      lotesFilters.push(`tipo_envio = '${tipo_envio}' COLLATE utf8mb4_general_ci`);
+      lotesFilters.push(`tipo_envio = '${tipo_envio}'`);
     }
 
     // ============================================================
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
 
     // Search filter
     if (search) {
-      whereConditions.push(`(Numero_factura LIKE '%${search}%' COLLATE utf8mb4_general_ci OR CAST(numero_lote AS CHAR) LIKE '%${search}%' COLLATE utf8mb4_general_ci)`);
+      whereConditions.push(`(Numero_factura ILIKE '%${search}%' OR CAST(numero_lote AS TEXT) ILIKE '%${search}%')`);
     }
 
     const whereClause = whereConditions.join(" AND ");
@@ -112,9 +112,9 @@ export async function GET(request: NextRequest) {
     fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'revision-facturas/route.ts:109',message:'WHERE clause built',data:{whereClause,lotesFilters},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
     // #endregion
 
-    // Count query - CAST to SIGNED to avoid BigInt serialization issues
+    // Count query - CAST to INTEGER to avoid BigInt serialization issues
     const countQuery = `
-      SELECT CAST(COUNT(*) AS SIGNED) as total
+      SELECT CAST(COUNT(*) AS INTEGER) as total
       FROM revision_facturas
       WHERE ${whereClause}
     `;
@@ -133,13 +133,13 @@ export async function GET(request: NextRequest) {
       LIMIT ${limit} OFFSET ${skip}
     `;
 
-    // Summary query - KPIs solo de Primera Revisión (usar SIGNED para evitar Decimal/BigInt)
+    // Summary query - KPIs solo de Primera Revisión (usar INTEGER para evitar Decimal/BigInt)
     const summaryQuery = `
       SELECT
-        CAST(SUM(CASE WHEN Primera_revision LIKE '%Ver hallazgos%' COLLATE utf8mb4_general_ci OR Primera_revision LIKE '%Ver Hallazgos%' COLLATE utf8mb4_general_ci THEN 1 ELSE 0 END) AS SIGNED) as facturas_con_hallazgos,
-        CAST(COALESCE(SUM(CASE WHEN Primera_revision LIKE '%Ver hallazgos%' COLLATE utf8mb4_general_ci OR Primera_revision LIKE '%Ver Hallazgos%' COLLATE utf8mb4_general_ci THEN Total_reclamado_por_amparo_gastos_medicos_quirurgicos ELSE 0 END), 0) AS SIGNED) as valor_facturas_con_hallazgos,
-        CAST(SUM(CASE WHEN Primera_revision LIKE '%Ok%hallazgos%' COLLATE utf8mb4_general_ci THEN 1 ELSE 0 END) AS SIGNED) as facturas_ok,
-        CAST(COUNT(*) AS SIGNED) as total_facturas
+        CAST(SUM(CASE WHEN Primera_revision ILIKE '%Ver hallazgos%' OR Primera_revision ILIKE '%Ver Hallazgos%' THEN 1 ELSE 0 END) AS INTEGER) as facturas_con_hallazgos,
+        CAST(COALESCE(SUM(CASE WHEN Primera_revision ILIKE '%Ver hallazgos%' OR Primera_revision ILIKE '%Ver Hallazgos%' THEN Total_reclamado_por_amparo_gastos_medicos_quirurgicos ELSE 0 END), 0) AS INTEGER) as valor_facturas_con_hallazgos,
+        CAST(SUM(CASE WHEN Primera_revision ILIKE '%Ok%hallazgos%' THEN 1 ELSE 0 END) AS INTEGER) as facturas_ok,
+        CAST(COUNT(*) AS INTEGER) as total_facturas
       FROM revision_facturas
       WHERE ${whereClause}
     `;

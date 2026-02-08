@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     // Count query
     const countQuery = `
-      SELECT CAST(COUNT(*) AS SIGNED) as total
+      SELECT CAST(COUNT(*) AS INTEGER) as total
       FROM inconsistencias i
       INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
       WHERE ${whereClause}
