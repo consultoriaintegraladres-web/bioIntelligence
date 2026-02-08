@@ -20,7 +20,7 @@ const ipsUsersToCreate = [
 ];
 
 async function main() {
-  // Create/Update admin user
+  // Create/Update admin user (bioretail)
   const adminEmail = "admin@bioretail.com";
   
   const existingAdmin = await prisma.user.findUnique({
@@ -42,7 +42,32 @@ async function main() {
     
     console.log("✅ Usuario admin creado: admin@bioretail.com / Admin123!");
   } else {
-    console.log("ℹ️ Usuario admin ya existe");
+    console.log("ℹ️ Usuario admin ya existe: admin@bioretail.com");
+  }
+
+  // Create/Update admin user (hallazgos-ips) - del README
+  const adminEmail2 = "admin@hallazgos-ips.com";
+  
+  const existingAdmin2 = await prisma.user.findUnique({
+    where: { email: adminEmail2 },
+  });
+
+  if (!existingAdmin2) {
+    const hashedPassword = await bcrypt.hash("Admin123!", 12);
+    
+    await prisma.user.create({
+      data: {
+        email: adminEmail2,
+        password: hashedPassword,
+        nombre: "Administrador",
+        codigo_habilitacion: "0000000000",
+        role: Role.ADMIN,
+      },
+    });
+    
+    console.log("✅ Usuario admin creado: admin@hallazgos-ips.com / Admin123!");
+  } else {
+    console.log("ℹ️ Usuario admin ya existe: admin@hallazgos-ips.com");
   }
 
   // Create Analyst user
@@ -139,8 +164,10 @@ async function main() {
   console.log("\n" + "=".repeat(60));
   console.log("📊 RESUMEN DE CREDENCIALES");
   console.log("=".repeat(60));
-  console.log("\n🔐 ADMINISTRADOR:");
+  console.log("\n🔐 ADMINISTRADORES:");
   console.log("   Email: admin@bioretail.com");
+  console.log("   Password: Admin123!");
+  console.log("   Email: admin@hallazgos-ips.com");
   console.log("   Password: Admin123!");
   console.log("\n📊 ANALISTA:");
   console.log("   Email: analista@bioretail.com");
