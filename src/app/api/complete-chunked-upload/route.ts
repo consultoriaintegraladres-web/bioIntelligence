@@ -171,14 +171,6 @@ export async function POST(request: NextRequest) {
     // Obtener folderPath
     const folderPath = uploadResult.folderPath;
 
-    // Notificar al webhook de n8n después de subir todos los archivos extraídos
-    const bucketName = process.env.R2_BUCKET_NAME;
-    let webhookResponse = null;
-    if (bucketName) {
-      console.log(`📡 Notificando a n8n webhook sobre carpeta: ${folderPath}`);
-      webhookResponse = await notifyN8nWebhook(bucketName, folderPath);
-    }
-
     // Guardar registro en BD
     const envio = await prisma.controlEnvioIps.create({
       data: {
@@ -194,6 +186,18 @@ export async function POST(request: NextRequest) {
     });
 
     console.log("✅ Registro guardado en BD:", envio.id);
+
+    // Notificar al webhook de n8n después de crear el envío exitosamente
+    if (isR2Configured() && folderPath) {
+      const bucketName = process.env.R2_BUCKET_NAME;
+      if (bucketName) {
+        console.log(`📡 Notificando a n8n webhook sobre carpeta: ${folderPath}`);
+        await notifyN8nWebhook(bucketName, folderPath).catch((err) => {
+          console.error("⚠️ Error al notificar webhook n8n:", err?.message);
+          // No fallar el proceso si el webhook falla
+        });
+      }
+    }
 
     // Procesar e insertar datos en FURIPS1, FURIPS2, FURTRAN
     console.log("📊 Iniciando procesamiento de datos...");

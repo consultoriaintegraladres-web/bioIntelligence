@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { uploadMultipleFilesToR2, isR2Configured } from "@/lib/cloudflare-r2";
+import { uploadMultipleFilesToR2, isR2Configured, notifyN8nWebhook } from "@/lib/cloudflare-r2";
 import { processFuripsData } from "@/lib/furips-processor";
 
 // maxDuration aumentado para Railway (30 minutos) - permite procesamiento de archivos pesados
@@ -85,7 +85,8 @@ export async function POST(request: NextRequest) {
 
       if (filesToUpload.length > 0) {
         console.log(`📄 Subiendo ${filesToUpload.length} archivos FURIPS a R2...`);
-        await uploadMultipleFilesToR2(filesToUpload, nombreIps, idEnvio);
+        const r2Result = await uploadMultipleFilesToR2(filesToUpload, nombreIps, idEnvio);
+        folderPath = r2Result.folderPath;
       }
     }
 
@@ -104,6 +105,18 @@ export async function POST(request: NextRequest) {
     });
 
     console.log("✅ Registro guardado en BD:", envio.id);
+
+    // Notificar al webhook de n8n después de crear el envío exitosamente
+    if (isR2Configured() && folderPath) {
+      const bucketName = process.env.R2_BUCKET_NAME;
+      if (bucketName) {
+        console.log(`📡 Notificando a n8n webhook sobre carpeta: ${folderPath}`);
+        await notifyN8nWebhook(bucketName, folderPath).catch((err) => {
+          console.error("⚠️ Error al notificar webhook n8n:", err?.message);
+          // No fallar el proceso si el webhook falla
+        });
+      }
+    }
 
     // Procesar e insertar datos en FURIPS1, FURIPS2, FURTRAN
     console.log("📊 Iniciando procesamiento de datos...");

@@ -228,13 +228,6 @@ export async function POST(request: NextRequest) {
 
       console.log("✅ Archivos subidos exitosamente a R2");
       console.log("📁 Carpeta:", folderPath);
-
-      // Notificar al webhook de n8n después de subir todos los archivos extraídos
-      const bucketName = process.env.R2_BUCKET_NAME;
-      if (bucketName) {
-        console.log(`📡 Notificando a n8n webhook sobre carpeta: ${folderPath}`);
-        await notifyN8nWebhook(bucketName, folderPath);
-      }
       
     } catch (err: any) {
       const errorMessage = err?.message || "Error desconocido";
@@ -262,6 +255,18 @@ export async function POST(request: NextRequest) {
     });
 
     console.log("✅ Registro guardado en BD:", envio.id);
+
+    // Notificar al webhook de n8n después de crear el envío exitosamente
+    if (isR2Configured() && folderPath) {
+      const bucketName = process.env.R2_BUCKET_NAME;
+      if (bucketName) {
+        console.log(`📡 Notificando a n8n webhook sobre carpeta: ${folderPath}`);
+        await notifyN8nWebhook(bucketName, folderPath).catch((err) => {
+          console.error("⚠️ Error al notificar webhook n8n:", err?.message);
+          // No fallar el proceso si el webhook falla
+        });
+      }
+    }
 
     // ====================
     // PROCESAR E INSERTAR DATOS EN FURIPS1, FURIPS2, FURTRAN

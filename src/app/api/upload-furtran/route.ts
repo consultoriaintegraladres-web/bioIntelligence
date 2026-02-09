@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { uploadFileToR2Organized, isR2Configured } from "@/lib/cloudflare-r2";
+import { uploadFileToR2Organized, isR2Configured, notifyN8nWebhook } from "@/lib/cloudflare-r2";
 
 const FURTRAN_EXPECTED_FIELDS = 46;
 
@@ -168,6 +168,7 @@ export async function POST(request: NextRequest) {
 
     // Subir a R2 si está configurado
     let rutaStorage = "";
+    let folderPath = "";
     if (isR2Configured()) {
       try {
         const fileBuffer = Buffer.from(furtranContent, "utf-8");
@@ -179,6 +180,9 @@ export async function POST(request: NextRequest) {
           "text/plain"
         );
         rutaStorage = r2Result.url;
+        // Extraer folderPath del key (nombreIps/fecha_idEnvio/archivo -> nombreIps/fecha_idEnvio)
+        const keyParts = r2Result.key.split("/");
+        folderPath = keyParts.slice(0, -1).join("/");
         console.log("✅ FURTRAN subido a R2:", r2Result.key);
       } catch (err: any) {
         console.error("❌ Error uploading FURTRAN to R2:", err.message);
@@ -198,6 +202,20 @@ export async function POST(request: NextRequest) {
         estado: "EN_PROCESO",
       },
     });
+
+    console.log("✅ Registro guardado en BD:", envio.id);
+
+    // Notificar al webhook de n8n después de crear el envío exitosamente
+    if (isR2Configured() && folderPath) {
+      const bucketName = process.env.R2_BUCKET_NAME;
+      if (bucketName) {
+        console.log(`📡 Notificando a n8n webhook sobre carpeta: ${folderPath}`);
+        await notifyN8nWebhook(bucketName, folderPath).catch((err) => {
+          console.error("⚠️ Error al notificar webhook n8n:", err?.message);
+          // No fallar el proceso si el webhook falla
+        });
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -16,17 +16,17 @@ const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
 
 // Webhook de n8n para notificar uploads
-const N8N_WEBHOOK_URL = "https://validacionesbio.app.n8n.cloud/webhook/r2-upload";
+const N8N_WEBHOOK_URL = "https://validacionesbio.app.n8n.cloud/webhook/82bd687e-04a2-4505-a064-9092be8ad8c3";
 
 /**
- * Notifica al webhook de n8n cuando archivos se suben exitosamente a R2
+ * Notifica al webhook de n8n cuando archivos se suben exitosamente a R2 y se crea el envío
  * @param bucket - Nombre del bucket de R2
- * @param filePath - Ruta completa (Key) del archivo o carpeta dentro del bucket
+ * @param folderPath - Nombre de la carpeta donde quedan los archivos (formato: nombreIps/fecha_idEnvio)
  * @returns Respuesta del webhook o null si falla
  */
-export async function notifyN8nWebhook(bucket: string, filePath: string): Promise<any> {
+export async function notifyN8nWebhook(bucket: string, folderPath: string): Promise<any> {
   try {
-    console.log(`📡 Notificando a n8n webhook: ${filePath}`);
+    console.log(`📡 Notificando a n8n webhook sobre carpeta: ${folderPath}`);
     
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: "POST",
@@ -35,7 +35,7 @@ export async function notifyN8nWebhook(bucket: string, filePath: string): Promis
       },
       body: JSON.stringify({
         bucket: bucket,
-        file_path: filePath,
+        folder_path: folderPath,
       }),
     });
 
@@ -45,7 +45,7 @@ export async function notifyN8nWebhook(bucket: string, filePath: string): Promis
     }
 
     const result = await response.json().catch(() => ({ success: true }));
-    console.log(`✅ Webhook n8n notificado exitosamente para: ${filePath}`);
+    console.log(`✅ Webhook n8n notificado exitosamente para carpeta: ${folderPath}`);
     return result;
   } catch (error: any) {
     console.error(`❌ Error al notificar webhook n8n: ${error?.message}`);
