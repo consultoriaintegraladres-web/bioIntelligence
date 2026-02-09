@@ -9,8 +9,8 @@ Sistema de gestión de hallazgos e inconsistencias de IPS detectados por robot d
 - **Gráficos:** Plotly.js (3D interactivos)
 - **Estado:** TanStack Query v5
 - **Autenticación:** NextAuth.js v5 (JWT)
-- **ORM:** Prisma 5 + MySQL
-- **Base de datos:** MySQL (Railway)
+- **ORM:** Prisma 5 + PostgreSQL
+- **Base de datos:** PostgreSQL (Railway)
 
 ## Características
 
@@ -43,7 +43,7 @@ npm run dev
 Crear archivo `.env.local` con:
 
 ```env
-DATABASE_URL="mysql://user:password@host:port/database"
+DATABASE_URL="postgresql://user:password@host:port/database"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret-key"
 GEMINI_API_KEY="your-gemini-api-key"
@@ -55,24 +55,24 @@ GEMINI_API_KEY="your-gemini-api-key"
 2. Crea una nueva API key
 3. Agrega la key a tu archivo `.env.local` como `GEMINI_API_KEY`
 
-### Configurar Variables de Entorno en Vercel (Producción)
+### Configurar Variables de Entorno en Railway (Producción)
 
-Para desplegar en producción en Vercel, sigue estos pasos:
+Para desplegar en producción en Railway, sigue estos pasos:
 
-#### 1. Acceder al Dashboard de Vercel
-- Ve a [Vercel Dashboard](https://vercel.com/dashboard)
+#### 1. Acceder al Dashboard de Railway
+- Ve a [Railway Dashboard](https://railway.app/dashboard)
 - Inicia sesión con tu cuenta
 - Selecciona tu proyecto
 
 #### 2. Configurar Variables de Entorno
-- Ve a **Settings** → **Environment Variables**
-- Haz clic en **Add New** para cada variable
+- Ve a **Variables**
+- Haz clic en **New Variable** para cada variable
 
 **Variables requeridas:**
 
 | Variable | Descripción | Ejemplo |
 |----------|-------------|---------|
-| `DATABASE_URL` | URL de conexión a MySQL (Railway) | `mysql://user:pass@host:port/db` |
+| `DATABASE_URL` | URL de conexión a PostgreSQL (Railway) | `postgresql://user:pass@host:port/db` |
 | `NEXTAUTH_URL` | URL de tu aplicación en producción | `https://tu-app.vercel.app` |
 | `NEXTAUTH_SECRET` | Secret key para NextAuth (genera con `openssl rand -base64 32`) | `tu-secret-key-aqui` |
 | `GEMINI_API_KEY` | API key de Gemini AI | `AIzaSy...` |
@@ -81,27 +81,15 @@ Para desplegar en producción en Vercel, sigue estos pasos:
 | `R2_SECRET_ACCESS_KEY` | Cloudflare R2 Secret Key | `907b2791...` |
 | `R2_BUCKET_NAME` | Nombre del bucket R2 | `bioapp` |
 
-#### 3. Seleccionar Ambientes
-Para cada variable, selecciona los ambientes donde aplicará:
-- ✅ **Production** - Para producción
-- ✅ **Preview** - Para preview deployments
-- ✅ **Development** - Para desarrollo (opcional)
-
-#### 4. Guardar y Re-desplegar
+#### 3. Guardar y Re-desplegar
 - Haz clic en **Save** después de agregar cada variable
-- Ve a **Deployments** → Selecciona el último deployment → **Redeploy**
-- O simplemente haz un nuevo push a GitHub y Vercel desplegará automáticamente
-
-#### 5. Verificar que las Variables Estén Cargadas
-- Ve a **Deployments** → Selecciona un deployment → **Build Logs**
-- Busca en los logs: `Environment Variables loaded`
-- Si ves errores relacionados con variables faltantes, verifica que estén configuradas correctamente
+- Railway desplegará automáticamente al hacer push a GitHub
 
 **⚠️ Nota importante:** 
-- Las variables de entorno en Vercel están **encriptadas y seguras automáticamente**
-- **NUNCA** las almacenes en la base de datos
+- Las variables de entorno en Railway están **encriptadas y seguras**
+- **NUNCA** las almacenes en archivos del repositorio
 - **NUNCA** las expongas en el código del cliente (solo en API routes del servidor)
-- Si cambias una variable, debes hacer **re-deploy** para que surta efecto
+- Si cambias una variable, Railway re-desplegará automáticamente
 
 ## Usuarios de Prueba
 

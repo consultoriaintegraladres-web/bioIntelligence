@@ -35,7 +35,7 @@ Antes de hacer commit, verifica:
 
 ```bash
 # Buscar posibles credenciales expuestas
-git diff --cached | grep -i "password\|secret\|credential\|DATABASE_URL.*postgres\|DATABASE_URL.*mysql"
+git diff --cached | grep -i "password\|secret\|credential\|DATABASE_URL.*postgres"
 ```
 
 Si encuentras algo, **NO hagas commit**.

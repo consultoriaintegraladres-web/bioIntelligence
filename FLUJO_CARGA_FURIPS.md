@@ -63,13 +63,13 @@ DELETE FROM FURTRAN
 ##### 📅 **Fechas** (parseDate)
 - Acepta formatos: `YYYY-MM-DD` o `DD/MM/YYYY`
 - Valida rangos: 1900-2100, mes 1-12, día 1-31
-- Convierte a `Date` de MySQL
+- Convierte a `Date` de PostgreSQL
 - Si es inválida → `NULL` + advertencia
 
 ##### ⏰ **Horas** (parseTime)
 - Acepta formatos: `HH:MM:SS` o `HH:MM`
 - Valida rangos: horas 0-23, minutos 0-59, segundos 0-59
-- Convierte a `Time(0)` de MySQL
+- Convierte a `Time(0)` de PostgreSQL
 - Si es inválida → `NULL` + advertencia
 
 ##### 🔢 **Números Decimales** (parseDecimal)
@@ -232,7 +232,7 @@ processFurtranLine(fields, lineNumber, warnings)
 ### Ver envíos de hoy:
 ```sql
 SELECT * FROM control_envios_ips 
-WHERE DATE(fecha_carga) = CURDATE();
+WHERE DATE(fecha_carga) = CURRENT_DATE;
 ```
 
 ### Ver advertencias del último proceso:

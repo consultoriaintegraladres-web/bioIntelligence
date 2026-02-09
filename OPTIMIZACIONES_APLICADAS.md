@@ -37,7 +37,7 @@ function processFurips2Line(fields, numeroLote, usuario) {
 
 **Beneficios:**
 - ✅ Sin generación de warnings (no necesario)
-- ✅ MySQL maneja los tipos de datos
+- ✅ PostgreSQL maneja los tipos de datos
 - ✅ **10x más rápido** en procesamiento
 
 ---
@@ -151,7 +151,7 @@ Procesando FURIPS2...
 - ✅ Verificación de cantidad de campos (102, 9, 46)
 - ✅ Truncamiento a longitud máxima
 - ✅ Conversión de tipos básicos
-- ✅ MySQL maneja el resto
+- ✅ PostgreSQL maneja el resto
 
 ---
 
@@ -161,13 +161,13 @@ Procesando FURIPS2...
 > "Validar todo exhaustivamente, generar warnings detallados, insertar uno por uno"
 
 ### **Ahora:**
-> "Verificar estructura básica, dejar que MySQL valide tipos, insertar en batch"
+> "Verificar estructura básica, dejar que PostgreSQL valide tipos, insertar en batch"
 
 **Razón:** 
-- MySQL ya valida tipos de datos
+- PostgreSQL ya valida tipos de datos
 - Los warnings no son críticos para el proceso
 - La velocidad es más importante que advertencias detalladas
-- Si hay error, MySQL lo reportará
+- Si hay error, PostgreSQL lo reportará
 
 ---
 
