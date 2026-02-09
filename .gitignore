@@ -38,10 +38,10 @@ yarn-error.log*
 *credentials*
 *password*
 *secret*
-# Allow documentation files (they use placeholders/examples)
-# *database*.md
-# *DATABASE*.md
-# *CONNECTION*.md
+*database*.md
+*DATABASE*.md
+*CONNECTION*.md
+*CONFIGURAR*.md
 
 # vercel
 .vercel
