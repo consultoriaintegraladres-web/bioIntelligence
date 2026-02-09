@@ -188,13 +188,15 @@ export async function POST(request: NextRequest) {
     console.log("✅ Registro guardado en BD:", envio.id);
 
     // Notificar al webhook de n8n después de crear el envío exitosamente
+    let webhookResponse = null;
     if (isR2Configured() && folderPath) {
       const bucketName = process.env.R2_BUCKET_NAME;
       if (bucketName) {
         console.log(`📡 Notificando a n8n webhook sobre carpeta: ${folderPath}`);
-        await notifyN8nWebhook(bucketName, folderPath).catch((err) => {
+        webhookResponse = await notifyN8nWebhook(bucketName, folderPath).catch((err) => {
           console.error("⚠️ Error al notificar webhook n8n:", err?.message);
           // No fallar el proceso si el webhook falla
+          return null;
         });
       }
     }
