@@ -29,29 +29,28 @@ model ControlLote {
   cantidad_facturas   Decimal?  @db.Decimal(18, 0)
   valor_reclamado     Decimal?  @db.Decimal(18, 0)
   nombre_envio        String    @db.VarChar(50)
-  tipo_envio          String?   @db.VarChar(50)
+  tipo_envio          String?   @db.VarChar(30)
 
   @@map("control_lotes")
 }
 
 model Inconsistencia {
   inconsistencia_id                             Int       @id
-  Numero_factura                                String?   @db.Text
+  Numero_factura                                String?
   Codigo_habilitacion_prestador_servicios_salud String    @db.VarChar(50)
   IPS                                           String?   @db.VarChar(100)
   origen                                        String?   @db.VarChar(50)
   tipo_validacion                               String?   @db.VarChar(100)
-  observacion                                   String?   @db.Text
+  observacion                                   String?   @db.VarChar(1000)
   tipo_servicio                                 String?   @db.VarChar(100)
-  codigo_del_servicio                           String?   @db.Text
-  descripcion_servicio                          String?   @db.Text
+  codigo_del_servicio                           String?   @db.VarChar(5000)
+  descripcion_servicio                          String?   @db.VarChar(300)
   cantidad                                      Int?
   valor_unitario                                Decimal?  @db.Decimal(18, 2)
   valor_total                                   Decimal?  @db.Decimal(18, 2)
   fecha                                         DateTime? @db.Date
   lote_de_carga                                 String?   @db.VarChar(50)
-  id_factura_furips1                            String?   @db.Text
-  id_inconsistencia_inicial                     Int?
+  id_factura_furips1                            String?   @db.VarChar(1000)
   usuario                                       String?   @db.VarChar(20)
 
   @@map("inconsistencias")
@@ -90,16 +89,16 @@ model Furips1 {
   Fecha_nacimiento_victima                                    DateTime? @db.Date
   Fecha_fallecimiento                                         DateTime? @db.Date
   Sexo_victima                                                String?   @db.Char(1)
-  Direccion_residencia_victima                                String?   @db.Text
+  Direccion_residencia_victima                                String?   @db.VarChar(300)
   Codigo_departamento_de_residencia_victima                   String?   @db.Char(2)
   Codigo_municipio_residencia_victima                         String?   @db.Char(3)
   Telefono_victima                                            String?   @db.VarChar(20)
   Condicion_victima                                           String?   @db.VarChar(50)
   Naturaleza_evento                                           String?   @db.VarChar(50)
-  Descripcion_otro_evento                                     String?   @db.Text
-  Direccion_ocurrencia_evento                                 String?   @db.Text
+  Descripcion_otro_evento                                     String?   @db.VarChar(300)
+  Direccion_ocurrencia_evento                                 String?   @db.VarChar(300)
   Fecha_ocurrencia_evento                                     DateTime? @db.Date
-  Hora_ocurrencia_evento                                      DateTime? @db.Time(0)
+  Hora_ocurrencia_evento                                      DateTime? @db.Time(6)
   Codigo_departamento_ocurrencia_evento                       String?   @db.Char(2)
   Codigo_municipio_ocurrencia_evento                          String?   @db.Char(3)
   Zona_ocurrencia_evento                                      String?   @db.VarChar(50)
@@ -125,7 +124,7 @@ model Furips1 {
   Segundo_apellido_propietario                                String?   @db.VarChar(50)
   Primer_nombre_propietario                                   String?   @db.VarChar(50)
   Segundo_nombre_propietario                                  String?   @db.VarChar(50)
-  Direccion_residencia_propietario                            String?   @db.Text
+  Direccion_residencia_propietario                            String?   @db.VarChar(300)
   Telefono_residencia_propietario                             String?   @db.VarChar(20)
   Codigo_departamento_residencia_propietario                  String?   @db.Char(2)
   Codigo_municipio_residencia_propietario                     String?   @db.Char(3)
@@ -135,18 +134,18 @@ model Furips1 {
   Segundo_nombre_conductor                                    String?   @db.VarChar(50)
   Tipo_documento_identidad_conductor                          String?   @db.VarChar(10)
   Numero_documento_identidad_conductor                        String?   @db.VarChar(20)
-  Direccion_residencia_conductor                              String?   @db.Text
+  Direccion_residencia_conductor                              String?   @db.VarChar(300)
   Codigo_departamento_residencia_conductor                    String?   @db.Char(2)
   Codigo_municipio_residencia_conductor                       String?   @db.Char(3)
   Telefono_residencia_conductor                               String?   @db.VarChar(20)
   Tipo_referencia                                             String?   @db.VarChar(50)
   Fecha_remision                                              DateTime? @db.Date
-  Hora_salida                                                 DateTime? @db.Time(0)
+  Hora_salida                                                 DateTime? @db.Time(6)
   Codigo_habilitacion_prestador_servicios_de_salud_remitente  String?   @db.VarChar(50)
   Profesional_que_remite                                      String?   @db.VarChar(50)
   Cargo_persona_que_remite                                    String?   @db.VarChar(50)
   Fecha_ingreso                                               DateTime? @db.Date
-  Hora_ingreso                                                DateTime? @db.Time(0)
+  Hora_ingreso                                                DateTime? @db.Time(6)
   Codigo_habilitacion_prestador_servicios_salud_que_recibe    String?   @db.VarChar(50)
   Profesional_que_recibe                                      String?   @db.VarChar(50)
   Placa_ambulancia_que_realiza_el_traslado_interinstitucional String?   @db.VarChar(50)
@@ -156,9 +155,9 @@ model Furips1 {
   Tipo_servicio_transporte                                    String?   @db.VarChar(50)
   Zona_donde_recoge_victima                                   String?   @db.VarChar(50)
   Fecha_ingreso1                                              DateTime? @db.Date
-  Hora_ingreso1                                               DateTime? @db.Time(0)
+  Hora_ingreso1                                               DateTime? @db.Time(6)
   Fecha_egreso                                                DateTime? @db.Date
-  Hora_egreso                                                 DateTime? @db.Time(0)
+  Hora_egreso                                                 DateTime? @db.Time(6)
   Codigo_diagnostico_principal_ingreso                        String?   @db.VarChar(50)
   Codigo_diagnostico_ingreso_asociado_1                       String?   @db.VarChar(50)
   Codigo_diagnostico_ingreso_asociado_2                       String?   @db.VarChar(50)
@@ -176,8 +175,8 @@ model Furips1 {
   Total_reclamado_por_amparo_gastos_medicos_quirurgicos       Decimal?  @db.Decimal(18, 2)
   Total_facturado_por_amparo_gastos_transporte                Decimal?  @db.Decimal(18, 2)
   Total_reclamado_por_amparo_gastos_transporte                Decimal?  @db.Decimal(18, 2)
-  Manifestacion_servicios_habilitados                         String?   @db.Text
-  Descripcion_evento                                          String?   @db.Text
+  Manifestacion_servicios_habilitados                         String?   @db.VarChar(300)
+  Descripcion_evento                                          String?   @db.VarChar(1000)
   numero_lote                                                 Int?
   usuario                                                     String?   @db.VarChar(20)
 
@@ -190,7 +189,7 @@ model Furips2 {
   Numero_consecutivo_de_la_reclamacion          String?  @db.VarChar(50)
   Tipo_de_servicio                              String?  @db.VarChar(50)
   Codigo_del_servicio                           String?  @db.VarChar(50)
-  Descripcion_del_servicio_o_elemento_reclamado String?  @db.Text
+  Descripcion_del_servicio_o_elemento_reclamado String?  @db.VarChar(300)
   Cantidad_de_servicios                         Int?
   Valor_unitario                                Decimal? @db.Decimal(18, 2)
   Valor_total_facturado                         Decimal? @db.Decimal(18, 2)
@@ -233,7 +232,7 @@ model Furtran {
   Codigo_municipio_recoge_victima               String?   @db.VarChar(3)
   Zona_recoge_victima                           String?   @db.Char(1)
   Fecha_traslado_victima                        DateTime? @db.Date
-  Hora_traslado_victima                         DateTime? @db.Time(0)
+  Hora_traslado_victima                         DateTime? @db.Time(6)
   Codigo_habilitacion_IPS_recepcion             String?   @db.VarChar(12)
   Codigo_departamento_traslada_victima          String?   @db.VarChar(2)
   Codigo_municipio_traslada_victima             String?   @db.VarChar(3)
@@ -248,7 +247,7 @@ model Furtran {
   Numero_radicado_SIRAS                         String?   @db.VarChar(20)
   Valor_facturado                               Decimal?  @db.Decimal(15, 2)
   Valor_reclamado                               Decimal?  @db.Decimal(15, 2)
-  Manifestacion_servicios_habilitados           Int?      
+  Manifestacion_servicios_habilitados           Int?      @db.SmallInt
 
   @@map("FURTRAN")
   @@ignore
@@ -262,12 +261,12 @@ model CARTAS_DEVOLUCION {
   NUMERO_FACTURA_CON_CEROS        String?  @db.VarChar(25)
   VALOR_FACTURA                   Decimal? @db.Decimal(12, 2)
   CODIGO_DEVOLUCION               String?  @db.VarChar(10)
-  DESCRIPCION_CODIGO              String?  @db.Text
-  OBERVACION_ASOCIADA             String?  @db.Text
+  DESCRIPCION_CODIGO              String?  @db.VarChar(2000)
+  OBERVACION_ASOCIADA             String?
   CODIGO_HOMOLOGO                 String?  @db.VarChar(10)
-  DESCRIPCION_CODIGO_HOMOLOGO     String?  @db.Text
+  DESCRIPCION_CODIGO_HOMOLOGO     String?  @db.VarChar(1000)
   ESPACIO                         String?  @db.VarChar(2)
-  CONCATENADO                     String?  @db.Text
+  CONCATENADO                     String?
   ITEM_OBJETADO                   String?  @db.VarChar(255)
   CANTIDAD_DE_ITEM_OBJETADO       Decimal? @db.Decimal(8, 0)
   VALOR_UNITARIO_ITEM_OBJETADO    Decimal? @db.Decimal(12, 0)
@@ -284,7 +283,7 @@ model CARTAS_GLOSA {
   NUMERO_FACTURA               String?   @db.VarChar(20)
   VALOR_FACTURA                Decimal?  @db.Decimal(12, 2)
   CODIGO_DE_GLOSA              String?   @db.VarChar(10)
-  OBERVACION_ASOCIADA          String?   @db.Text
+  OBERVACION_ASOCIADA          String?
   CANTIDAD_TOTAL_ITEM_OBJETADO Decimal?  @db.Decimal(12, 2)
   CODIGO_DE_ITEM_OBJETADO      String?   @db.VarChar(50)
   DESCRIPCION_DE_ITEM_OBJETADO String?   @db.VarChar(2000)
@@ -310,27 +309,27 @@ model Encabezado_factura_Maos {
   Prefjio_autorizado            String?  @db.VarChar(4)
   Rango_inicial_autorizado      Decimal? @db.Decimal(8, 0)
   Rango_final_autorizado        Decimal? @db.Decimal(8, 0)
-  factura_auditada              String?  @db.VarChar(30)
+  factura_auditada              String?  @db.VarChar(20)
 }
 
 model auditoria_Cirugias {
-  id                     Int      @id @default(autoincrement())
-  Numero_factura         String?  @db.VarChar(20)
+  id                     Int     @id @default(autoincrement())
+  Numero_factura         String? @db.VarChar(20)
   nro_cirugia            Int?
   padre                  Int?
-  Descripcion            String?  @db.VarChar(255)
-  via_facturada          String?  @db.VarChar(20)
-  especialidad           String?  @db.VarChar(30)
-  multiples_vias         String?  @db.VarChar(20)
-  soportado              Boolean?
-  justificado            Boolean?
-  justificacion          String?  @db.VarChar(1200)
-  via_correcta           Boolean?
-  via_soportada          String?  @db.VarChar(30)
-  especialidad_soportada String?  @db.VarChar(30)
-  usuario                String?  @db.VarChar(50)
+  Descripcion            String? @db.VarChar(255)
+  facturada              String? @db.VarChar(20)
+  especialidad           String? @db.VarChar(30)
+  multiples_vias         String? @db.VarChar(20)
+  soportado              Int?    @db.SmallInt
+  justificado            Int?    @db.SmallInt
+  justificacion          String? @db.VarChar(1200)
+  via_correcta           Int?    @db.SmallInt
+  via_soportada          String? @db.VarChar(30)
+  especialidad_soportada String? @db.VarChar(30)
+  usuario                String? @db.VarChar(50)
   numero_lote            Int?
-  verificado             Boolean? 
+  verificado             Int?    @db.SmallInt
   cantidad_de_servicios  Int?
 }
 
@@ -338,18 +337,19 @@ model auditoria_Cirugias {
 model auditoria_maos {
   id                        Int
   numero_factura            String?  @db.VarChar(50)
-  tipo_de_servicio          String?  @db.VarChar(10)
-  descripcion_del_servcicio String?  @db.Text
+  tipo_de_servicio          String?  @db.VarChar(2)
+  descripcion_del_servcicio String   @db.VarChar(500)
   cantidad_de_servicios     Int?
   numero_lote               Int?
   usuario                   String?  @db.VarChar(50)
   codigo_del_servicio       String?  @db.VarChar(50)
   observacion               String?  @db.VarChar(500)
   justificacion             String?  @db.VarChar(200)
-  verificado                Boolean? 
-  factura_maos              Boolean? 
+  factura_maos              Int?     @db.SmallInt
   observacion_maos          String?  @db.VarChar(500)
   valor_maos                Decimal? @db.Decimal(18, 2)
+  facoste_encontrado        Int?     @db.SmallInt
+  verificado                Int?     @db.SmallInt
 
   @@ignore
 }
@@ -361,17 +361,17 @@ model cartas_glosa {
   numero_factura               String?   @db.VarChar(50)
   valor_factura                Decimal?  @db.Decimal(15, 2)
   codigo_de_glosa              String?   @db.VarChar(10)
-  observacion_asociada         String?   @db.Text
+  observacion_asociada         String?
   cantidad_total_item_objetado Decimal?  @db.Decimal(10, 2)
   codigo_de_item_objetado      String?   @db.VarChar(50)
-  descripcion_de_item_objetado String?   @db.Text
+  descripcion_de_item_objetado String?
   cantidad_de_item_objetado    Decimal?  @db.Decimal(10, 2)
   valor_unitario_item_objetado Decimal?  @db.Decimal(15, 2)
   valor_total_de_item_objetado Decimal?  @db.Decimal(15, 2)
   valor_total_glosado          Decimal?  @db.Decimal(15, 2)
-  fecha_auditoria              DateTime? 
+  fecha_auditoria              DateTime? @db.Timestamp(6)
   documento_analizado          String?   @db.VarChar(255)
-  fecha_sistema                DateTime? 
+  fecha_sistema                DateTime? @db.Timestamp(6)
   consecutivo_json             Int?
 }
 
@@ -384,7 +384,7 @@ model centro_costos_ctf {
   ENTIDAD       String?   @db.VarChar(255)
   FECHA_FACTURA DateTime? @map("FECHA FACTURA") @db.Date
   COD_SERVICIO  String?   @db.VarChar(50)
-  SERVICIO      String?   @db.Text
+  SERVICIO      String?   @db.VarChar(1000)
   CANTIDAD      Decimal?  @db.Decimal(18, 2)
   VR_UNITARIO   Decimal?  @db.Decimal(18, 2)
   VR_TOTAL      Decimal?  @db.Decimal(18, 2)
@@ -399,7 +399,7 @@ model centro_costos_ctf {
 model cirugias_facturadas {
   Numero_factura        String? @db.VarChar(50)
   padre                 String? @db.VarChar(50)
-  Descripcion           String? @db.Text
+  Descripcion           String?
   nro_cirugia           Int?
   grupo_final           String? @db.VarChar(50)
   SOPORTADA             Int?
@@ -415,52 +415,52 @@ model cirugias_facturadas {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model consistencias_servicios {
-  descripcion_f2     String?  @db.VarChar(600)
-  descripcion_fisico String?  @db.VarChar(600)
-  consistente        Boolean?
+  descripcion_f2     String? @db.VarChar(600)
+  descripcion_fisico String? @db.VarChar(600)
+  consistente        Int?    @db.SmallInt
 
   @@ignore
 }
 
 model datos_cuentas {
-  id                                       BigInt    @id  @default(autoincrement()) 
-  nro_factura                              String?   @db.Text
-  nombre_completo_paciente_detectad        String?   @db.Text
+  id                                       BigInt    @id @default(autoincrement())
+  nro_factura                              String?
+  nombre_completo_paciente_detectad        String?
   veces_nombre_completo_encontrado         Int?
-  tipo_documento_detectado                 String?   @db.Text
+  tipo_documento_detectado                 String?
   numero_documento_detectado               String?   @db.VarChar(50)
   veces_documento_completo_encontrado      Int?
-  existe_acreditacion_TA                   String?   @db.Text
-  profesional_indica_fecha_accidente       String?   @db.Text
+  existe_acreditacion_TA                   String?
+  profesional_indica_fecha_accidente       String?
   fecha_accidente_primera_fecha            DateTime? @db.Date
-  placa_vehiculo_mencionada                String?   @db.Text
-  placa_vehiculo_detectada                 String?   @db.Text
-  condicion_victima_mencionada             String?   @db.Text
-  condicion_victima_detectada              String?   @db.Text
-  direccion_ocurrencia_evento_mencionada   String?   @db.Text
-  direccion_ocurrencia_evento_detectada    String?   @db.Text
-  texto_acreditacion                       String?   @db.Text
-  texto_profesional_indica_fecha_accidente String?   @db.Text
+  placa_vehiculo_mencionada                String?
+  placa_vehiculo_detectada                 String?
+  condicion_victima_mencionada             String?
+  condicion_victima_detectada              String?
+  direccion_ocurrencia_evento_mencionada   String?
+  direccion_ocurrencia_evento_detectada    String?
+  texto_acreditacion                       String?
+  texto_profesional_indica_fecha_accidente String?
   fecha_accidente_ultima_fecha             DateTime? @db.Date
   numero_lote                              Int?
   usuario                                  String?   @db.VarChar(20)
-  evidencia_firma_responsable              Boolean?  
+  evidencia_firma_responsable              Boolean?
   nombre_paramedico                        String?   @db.VarChar(100)
-  furtran                                  Boolean?  
+  furtran                                  Boolean?
 }
 
 model datos_soportes {
   id                     Int      @id @default(autoincrement())
   numero_factura         String   @db.VarChar(50)
   fecha_encontrada       DateTime @db.Date
-  tipo_soporte           String?  @db.Text
+  tipo_soporte           String?
   se_encuentra_facturado Boolean?
   numero_lote            Int?
   usuario                String?  @db.VarChar(20)
 }
 
 model facturas_encabezado {
-  id                             Int        @default(autoincrement())
+  id                             Int       @default(autoincrement())
   numero_factura                 String    @id @db.VarChar(50)
   valor_total                    Decimal   @db.Decimal(18, 2)
   denominacion_factura           String?   @db.VarChar(100)
@@ -476,9 +476,9 @@ model facturas_encabezado {
   fecha_fin_resolucion_dian      DateTime? @db.Date
   consecutivo_inicial_autorizado String?   @db.VarChar(50)
   consecutivo_final_autorizado   String?   @db.VarChar(50)
-  total_concuerda                Int?      @default(0) 
+  total_concuerda                Int?      @db.SmallInt
   factura_inicial                String?   @db.VarChar(30)
-  reauditado                     Boolean?  @default(false)
+  reauditado                     Int?      @db.SmallInt
 }
 
 model facturas_tabuladas {
@@ -490,9 +490,9 @@ model facturas_tabuladas {
   cantidad                   Decimal? @db.Decimal(12, 2)
   valor_unitario             Decimal? @db.Decimal(18, 2)
   valor_total                Decimal? @db.Decimal(18, 2)
-  consistent_line            Boolean? @default(false)
+  consistent_line            Int?     @db.SmallInt
   observacion_inconsistencia String?  @db.VarChar(500)
-  verificado_nuevamente      Boolean? @default(false)
+  verificado_nuevamente      Int?     @db.SmallInt
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -509,23 +509,23 @@ model furips2_detalle {
   Valor_total_reclamado                         Decimal?  @db.Decimal(15, 2)
   numero_lote                                   Int?
   usuario                                       String?   @db.VarChar(40)
-  verificado2108                                Boolean?  
+  verificado2108                                Boolean?
   id_pdf                                        String?   @db.VarChar(255)
   observaciones_pdf                             String?   @db.VarChar(1000)
   date_order                                    DateTime? @db.Date
   date_service                                  DateTime? @db.Date
-  order_status                                  Int?      
-  order_text                                    String?   @db.Text
+  order_status                                  Int?
+  order_text                                    String?
   order_folio                                   String?   @db.VarChar(50)
   ordered_quantity                              Decimal?  @db.Decimal(10, 2)
-  justification_status                          Int?      
-  justification_text                            String?   @db.Text
+  justification_status                          Int?
+  justification_text                            String?
   justification_folio                           String?   @db.VarChar(50)
-  evidence_status                               Int?      
-  evidence_text                                 String?   @db.Text
+  evidence_status                               Int?
+  evidence_text                                 String?
   evidence_folio                                String?   @db.VarChar(50)
   executed_quantity                             Decimal?  @db.Decimal(10, 2)
-  audit_observation                             String?   @db.Text
+  audit_observation                             String?
 
   @@ignore
 }
@@ -542,14 +542,14 @@ model glosas_adres {
   SALDO_FACTURA       Decimal?  @db.Decimal(12, 2)
   VR_OBJECION         Decimal?  @db.Decimal(12, 2)
   COD_PROD            String?   @db.VarChar(255)
-  SERVICIO            String?   @db.Text
+  SERVICIO            String?
   CODIGO_RECEPCION    String?   @db.VarChar(10)
   CONCEPTO_RECEPCION  String?   @db.VarChar(255)
-  OBSERVACION         String?   @db.Text
+  OBSERVACION         String?
   Id                  Int       @id
-  respuesta           String?   @db.Text
-  soporte_requerido   Int?      
-  soportes_requeridos String?   @db.Text
+  respuesta           String?
+  soporte_requerido   Int?
+  soportes_requeridos String?
 }
 
 model glosas_adres_ccostos {
@@ -557,13 +557,13 @@ model glosas_adres_ccostos {
   Numero_Factura        String?  @db.VarChar(30)
   Tipo_Elemento         String?  @db.VarChar(40)
   Cod_Elemento          String?  @db.VarChar(100)
-  Descripcion_Elemento  String?  @db.Text
+  Descripcion_Elemento  String?
   Cantidad_Reclamado    Decimal? @db.Decimal(12, 2)
   Valor_Reclamado       Decimal? @db.Decimal(12, 2)
   Consecutivo_Item      String?  @db.VarChar(10)
   Cantidad_Aprobada     Decimal? @db.Decimal(12, 2)
   Valor_Glosado         Decimal? @db.Decimal(12, 2)
-  Descripcion_Anotacion String?  @db.Text
+  Descripcion_Anotacion String?
   id                    Int      @id
   codigo_extraido       String?  @db.VarChar(100)
   centro_costos         String?  @db.VarChar(15)
@@ -585,7 +585,8 @@ model par_validaciones {
   tipo_validacion String? @db.VarChar(255)
   Recomendaci_n   String? @map("Recomendación") @db.VarChar(255)
   Tipo_robot      String? @db.VarChar(255)
-  mostrar_reporte Int?    
+  mostrar_reporte Int?    @db.SmallInt
+  TipoOrigen      String? @db.VarChar(255)
 
   @@ignore
 }
@@ -608,7 +609,7 @@ model posibles_inconsistencias_robot {
   lote_de_carga                                 String?   @db.VarChar(50)
   id_factura_furips1                            String?   @db.VarChar(1000)
   usuario                                       String?   @db.VarChar(20)
-  aplica_inconsistencia                         Boolean?  
+  aplica_inconsistencia                         Boolean?
   observaci_on_auditor                          String?   @map("observacióon_auditor") @db.VarChar(1000)
 }
 
@@ -643,15 +644,15 @@ model servicios_facturados {
   nombre_victima          String?   @db.VarChar(255)
   tipo_documento          String?   @db.VarChar(10)
   numero_documento        String?   @db.VarChar(50)
-  Fecha_ingreso1          DateTime? 
-  Fecha_egreso            DateTime? 
-  Fecha_ocurrencia_evento DateTime? 
+  Fecha_ingreso1          DateTime?
+  Fecha_egreso            DateTime?
+  Fecha_ocurrencia_evento DateTime?
   Descripcion_evento      String?   @db.VarChar(1000)
-  SERVICIOS_FACTURADOS    String?   @db.Text
+  SERVICIOS_FACTURADOS    String?
   usuario                 String?   @db.VarChar(50)
   numero_lote             Int?
-  verificado_2103         Boolean?  
-  preauditado             Boolean?  
+  verificado_2103         Boolean?
+  preauditado             Boolean?
 
   @@ignore
 }
@@ -667,12 +668,12 @@ model servicios_facturados_1 {
   Fecha_egreso                             DateTime? @db.Date
   Fecha_ocurrencia_evento                  DateTime? @db.Date
   Descripcion_evento                       String?   @db.VarChar(1000)
-  SERVICIOS_FACTURADOS                     String?   @db.Text
+  SERVICIOS_FACTURADOS                     String?
   numero_lote                              Int?
   usuario                                  String?   @db.VarChar(20)
-  se_evidencia_correo                      Boolean?  
+  se_evidencia_correo                      Int?      @db.SmallInt
   destinatarios_correo                     String?   @db.VarChar(1000)
-  correo_gubernamental                     Boolean?  
+  correo_gubernamental                     Int?      @db.SmallInt
   fecha_AT_correo                          DateTime? @db.Date
   tipo_documento_victima_correo            String?   @db.VarChar(20)
   nro_documento_victima_correo             String?   @db.VarChar(20)
@@ -684,7 +685,7 @@ model servicios_facturados_1 {
   condicion_victima_informe_accidente      String?   @db.VarChar(20)
   placa_informe_accidente                  String?   @db.VarChar(10)
   estado_aseguramiento_informe_accidente   String?   @db.VarChar(50)
-  verificado_infopol                       Boolean?  
+  verificado_infopol                       Int?      @db.SmallInt
   nombre_victima_correo                    String?   @db.VarChar(60)
   fecha_envio_correo                       DateTime? @db.Date
 
@@ -701,18 +702,18 @@ model servicios_soportados {
   created_at           DateTime? @default(now()) @db.Timestamp(0)
   date_order           DateTime? @db.Date
   date_service         DateTime? @db.Date
-  order_status         Int?      
-  order_text           String?   @db.Text
+  order_status         Int?
+  order_text           String?
   order_folio          String?   @db.VarChar(50)
   ordered_quantity     Decimal?  @db.Decimal(10, 2)
-  justification_status Int?      
-  justification_text   String?   @db.Text
+  justification_status Int?
+  justification_text   String?
   justification_folio  String?   @db.VarChar(50)
-  evidence_status      Int?      
-  evidence_text        String?   @db.Text
+  evidence_status      Int?
+  evidence_text        String?
   evidence_folio       String?   @db.VarChar(50)
   executed_quantity    Decimal?  @db.Decimal(10, 2)
-  audit_observation    String?   @db.Text
+  audit_observation    String?
   id_facturado         Int?
 
   @@index([process_id], map: "idx_process")
@@ -776,7 +777,7 @@ model FURTRAN_backup {
   Numero_radicado_SIRAS                         String?   @db.VarChar(20)
   Valor_facturado                               Decimal?  @db.Decimal(15, 2)
   Valor_reclamado                               Decimal?  @db.Decimal(15, 2)
-  Manifestacion_servicios_habilitados           Int?      
+  Manifestacion_servicios_habilitados           Int?
 
   @@ignore
 }
@@ -797,14 +798,14 @@ model furips1_backup {
   Fecha_nacimiento_victima                                    DateTime? @db.Date
   Fecha_fallecimiento                                         DateTime? @db.Date
   Sexo_victima                                                String?   @db.Char(1)
-  Direccion_residencia_victima                                String?   @db.Text
+  Direccion_residencia_victima                                String?
   Codigo_departamento_de_residencia_victima                   String?   @db.Char(2)
   Codigo_municipio_residencia_victima                         String?   @db.Char(3)
   Telefono_victima                                            String?   @db.VarChar(20)
   Condicion_victima                                           String?   @db.VarChar(50)
   Naturaleza_evento                                           String?   @db.VarChar(50)
-  Descripcion_otro_evento                                     String?   @db.Text
-  Direccion_ocurrencia_evento                                 String?   @db.Text
+  Descripcion_otro_evento                                     String?
+  Direccion_ocurrencia_evento                                 String?
   Fecha_ocurrencia_evento                                     DateTime? @db.Date
   Hora_ocurrencia_evento                                      DateTime? @db.Time(0)
   Codigo_departamento_ocurrencia_evento                       String?   @db.Char(2)
@@ -832,7 +833,7 @@ model furips1_backup {
   Segundo_apellido_propietario                                String?   @db.VarChar(50)
   Primer_nombre_propietario                                   String?   @db.VarChar(50)
   Segundo_nombre_propietario                                  String?   @db.VarChar(50)
-  Direccion_residencia_propietario                            String?   @db.Text
+  Direccion_residencia_propietario                            String?
   Telefono_residencia_propietario                             String?   @db.VarChar(20)
   Codigo_departamento_residencia_propietario                  String?   @db.Char(2)
   Codigo_municipio_residencia_propietario                     String?   @db.Char(3)
@@ -842,7 +843,7 @@ model furips1_backup {
   Segundo_nombre_conductor                                    String?   @db.VarChar(50)
   Tipo_documento_identidad_conductor                          String?   @db.VarChar(10)
   Numero_documento_identidad_conductor                        String?   @db.VarChar(20)
-  Direccion_residencia_conductor                              String?   @db.Text
+  Direccion_residencia_conductor                              String?
   Codigo_departamento_residencia_conductor                    String?   @db.Char(2)
   Codigo_municipio_residencia_conductor                       String?   @db.Char(3)
   Telefono_residencia_conductor                               String?   @db.VarChar(20)
@@ -883,8 +884,8 @@ model furips1_backup {
   Total_reclamado_por_amparo_gastos_medicos_quirurgicos       Decimal?  @db.Decimal(18, 2)
   Total_facturado_por_amparo_gastos_transporte                Decimal?  @db.Decimal(18, 2)
   Total_reclamado_por_amparo_gastos_transporte                Decimal?  @db.Decimal(18, 2)
-  Manifestacion_servicios_habilitados                         String?   @db.Text
-  Descripcion_evento                                          String?   @db.Text
+  Manifestacion_servicios_habilitados                         String?
+  Descripcion_evento                                          String?
   numero_lote                                                 Int?
   usuario                                                     String?   @db.VarChar(20)
 }
@@ -895,13 +896,1127 @@ model furips2_backup {
   Numero_consecutivo_de_la_reclamacion          String?  @db.VarChar(50)
   Tipo_de_servicio                              String?  @db.VarChar(50)
   Codigo_del_servicio                           String?  @db.VarChar(50)
-  Descripcion_del_servicio_o_elemento_reclamado String?  @db.Text
+  Descripcion_del_servicio_o_elemento_reclamado String?
   Cantidad_de_servicios                         Int?
   Valor_unitario                                Decimal? @db.Decimal(18, 2)
   Valor_total_facturado                         Decimal? @db.Decimal(18, 2)
   Valor_total_reclamado                         Decimal? @db.Decimal(18, 2)
   numero_lote                                   Int?
   usuario                                       String?  @db.VarChar(20)
+}
+
+model AIPrompt {
+  id          Int      @id @default(autoincrement())
+  prompt_text String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  updated_by  String?  @db.VarChar(100)
+
+  @@map("ai_prompts")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model CIE10 {
+  Codigo      String? @db.VarChar(255)
+  Descripcion String? @db.VarChar(255)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model CUMS {
+  CODIGO      String? @db.VarChar(255)
+  DESCRIPCION String? @db.VarChar(500)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model CoincidenciasPalabras {
+  Tipo_coincidencia String? @db.VarChar(50)
+  Coincidencia      String? @db.VarChar(100)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Departamentos {
+  departamento String? @db.VarChar(255)
+  nombre       String? @db.VarChar(255)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Estados_Aseguramientos {
+  Codigo                 String @db.VarChar(1)
+  Descripcion            String @db.VarChar(100)
+  estado_AseguramientoID Int
+
+  @@ignore
+}
+
+model IPS {
+  Codigo_habilitacion String @id(map: "PK_IPS") @db.VarChar(50)
+  IPS                 String @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Municipios {
+  codigo String? @db.VarChar(255)
+  nombre String? @db.VarChar(255)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Municipios_Zona_Especial {
+  C_digo_Deapartamento String? @map("Código Deapartamento") @db.VarChar(255)
+  Nombre_Departamento  String? @map("Nombre Departamento") @db.VarChar(255)
+  C_digo_Municipio     String? @map("Código Municipio") @db.VarChar(255)
+  Nombre_Municipio     String? @map("Nombre Municipio") @db.VarChar(255)
+  Codigo               String? @db.VarChar(255)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Nombres_servicios {
+  serv_codigo Int?
+  serv_nombre String? @db.VarChar(200)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Precio_Medicamentos {
+  Codigo       String?   @db.VarChar(15)
+  descripcion  String    @db.VarChar(350)
+  CIRCULAR     String?   @db.VarChar(100)
+  FECHA_INICIO DateTime? @db.Date
+  FECHA_FINAL  DateTime? @db.Date
+  VUF          Decimal?  @db.Decimal(15, 2)
+  VUFI         Decimal?  @db.Decimal(15, 2)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ReporteReclamacionesPersonasJuridicas {
+  Nit                        String?   @db.VarChar(15)
+  NombreEntidad              String?   @db.VarChar(150)
+  CodigoHabilitacion         String?   @db.VarChar(12)
+  FechaRadicacion            DateTime? @db.Date
+  NumeroConsolidado          String?   @db.VarChar(40)
+  NumeroRadicacion           String?   @db.VarChar(12)
+  DescripcionTipoRadicacion  String?   @db.VarChar(20)
+  NumeroFactura              String?   @db.VarChar(25)
+  TipoDocVictima             String?   @db.VarChar(60)
+  NumeroDocVictima           String?   @db.VarChar(20)
+  ApellidosVictima           String?   @db.VarChar(50)
+  NombresVictima             String?   @db.VarChar(50)
+  NaturalezaEvento           String?   @db.VarChar(50)
+  FechaEvento                DateTime? @db.Date
+  ValorReclamado             Decimal?  @db.Decimal(18, 2)
+  ValorAprobado              Decimal?  @db.Decimal(18, 2)
+  ValorGlosado               Decimal?  @db.Decimal(18, 2)
+  Paquete                    String?   @db.VarChar(5)
+  EstadoReclamacion          String?   @db.VarChar(30)
+  FechaDevolucion            DateTime? @db.Date
+  TipoExtempo                String?   @db.VarChar(30)
+  FechaRadicacionConsolidado DateTime? @db.Date
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Reporte_Glosas_Adres {
+  C_digo_Habilitaci_n   String?  @map("Código Habilitación") @db.VarChar(15)
+  N_mero_Radicaci_n     String?  @map("Número Radicación") @db.VarChar(15)
+  N_mero_Factura        String?  @map("Número Factura") @db.VarChar(25)
+  N_mero_Paquete        String?  @map("Número Paquete") @db.VarChar(8)
+  Cantidad_Reclamado    Decimal? @map("Cantidad Reclamado") @db.Decimal(18, 2)
+  Valor_Reclamado       Decimal? @map("Valor Reclamado") @db.Decimal(18, 2)
+  Cantidad_Aprobada     Decimal? @map("Cantidad Aprobada") @db.Decimal(18, 2)
+  Valor_Aprobado        Decimal? @map("Valor Aprobado") @db.Decimal(18, 2)
+  Valor_Glosado         Decimal? @map("Valor Glosado") @db.Decimal(18, 2)
+  Tip__Num_Doc_Victima  String?  @map("Tip- Num Doc Victima") @db.VarChar(40)
+  Consecutivo_Item      Decimal? @map("Consecutivo Item") @db.Decimal(18, 2)
+  Tipo_Elemento         String?  @map("Tipo Elemento") @db.VarChar(50)
+  Cod_Elemento          String?  @map("Cod Elemento") @db.VarChar(50)
+  Descripci_n_Elemento  String?  @map("Descripción Elemento") @db.VarChar(1000)
+  Descripci_n_Glosa     String?  @map("Descripción Glosa") @db.VarChar(1000)
+  Descripci_n_Anotaci_n String?  @map("Descripción Anotación") @db.VarChar(4000)
+  id                    Int
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ResumenServiciosFacturados {
+  codigo_habilitacion     String?   @db.VarChar(50)
+  NUMERO_FACTURA          String?   @db.VarChar(50)
+  nombre_victima          String    @db.VarChar(101)
+  tipo_documento          String?   @db.VarChar(10)
+  numero_documento        String?   @db.VarChar(20)
+  Fecha_ingreso1          DateTime? @db.Date
+  Fecha_egreso            DateTime? @db.Date
+  Fecha_ocurrencia_evento DateTime? @db.Date
+  Descripcion_evento      String?   @db.VarChar(1000)
+  SERVICIOS_FACTURADOS    String?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Sedes_reps {
+  departamento        String? @db.VarChar(100)
+  municipio           String? @db.VarChar(150)
+  codigo_prestador    String? @db.VarChar(15)
+  nombre_prestador    String? @db.VarChar(500)
+  codigo_habilitacion String? @db.VarChar(15)
+  numero_sede         String? @db.VarChar(4)
+  nombre              String? @db.VarChar(500)
+  gerente             String? @db.VarChar(150)
+  tipo_zona           String? @db.VarChar(25)
+  direccion           String? @db.VarChar(600)
+  barrio              String? @db.VarChar(500)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Servicios_Soat {
+  Codigo   String? @db.VarChar(255)
+  Servicio String? @db.VarChar(255)
+
+  @@map("Servicios Soat")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Soat_Parametros {
+  Descripcion   String? @db.VarChar(255)
+  Codigo        Float?
+  Segmento      String? @db.VarChar(255)
+  Sub           String? @db.VarChar(255)
+  Glosa_Valores Float?
+  Nota          String? @db.VarChar(255)
+  F7            String? @db.VarChar(255)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Tabla_Equivalencias_Condicion {
+  Condicion_Victima String? @db.VarChar(50)
+  Sinonimo          String? @db.VarChar(100)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Tarifas_Soat {
+  Codigo               Float?
+  Nombre               String?  @db.VarChar(255)
+  UVR_UVT              Float?   @map("UVR/UVT")
+  A_o                  Float?   @map("Año")
+  Con                  String?  @db.VarChar(255)
+  Salario              Float?
+  Salario_Diario       Float?   @map("Salario Diario")
+  Tarifa_sin_redondear Decimal? @map("Tarifa sin redondear") @db.Decimal(19, 4)
+  Tarifa               Decimal? @db.Decimal(19, 4)
+  Especial             Float?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Topes {
+  FECHA          Float?
+  SALARIO_MINIMO Float?   @map("SALARIO MINIMO")
+  SMDLV          Decimal? @db.Decimal(19, 4)
+  ASEGURADORA    Float?
+  EXCEDENTE      Float?
+  TOTAL          Decimal? @db.Decimal(19, 4)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cirugiasFacturadas {
+  Numero_factura        String? @db.VarChar(50)
+  padre                 String? @db.VarChar(50)
+  Descripcion           String?
+  nro_cirugia           Int?
+  grupo_final           String? @db.VarChar(50)
+  SOPORTADA             Int?
+  JUSTIFICADA           Int?
+  TIPO_LIQUIDACION      String? @db.VarChar(50)
+  ESPECIALISTA          String? @db.Char(1)
+  JUSTIFICACION_CIRUGIA String? @db.VarChar(150)
+  numero_lote           Int?
+  usuario               String? @db.VarChar(20)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model condicion_victima {
+  Codigo                  Int
+  Descripcion             String @db.Char(12)
+  condicion_AccidentadoID Int
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cruce_estancia_procedimientos_uci_zona {
+  Numero_factura                                  String? @db.VarChar(50)
+  Codigo_CUPS_servicio_principal_hospitalizacion  String? @db.VarChar(50)
+  Complejidad_procedimiento_quirurgico            String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_principal  String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_secundario String? @db.VarChar(50)
+  Se_presto_servicio_UCI                          String? @db.VarChar(50)
+  Dias_UCI_reclamados                             Int?
+  dias                                            Int?
+  Numero_estancias                                Int?
+  observacion_estancia                            String? @db.VarChar(54)
+  Numero_procedimientos                           Int?
+  observacion_procedimientos                      String? @db.VarChar(76)
+  observacion_complejidad                         String? @db.VarChar(78)
+  observacion_uci                                 String? @db.VarChar(123)
+  observacion_cups_hospitalizacion                String? @db.VarChar(57)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cruce_estancia_zona {
+  Numero_factura                                  String? @db.VarChar(50)
+  Codigo_CUPS_servicio_principal_hospitalizacion  String? @db.VarChar(50)
+  Complejidad_procedimiento_quirurgico            String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_principal  String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_secundario String? @db.VarChar(50)
+  Se_presto_servicio_UCI                          String? @db.VarChar(50)
+  Dias_UCI_reclamados                             Int?
+  dias                                            Int?
+  estancia                                        Int?
+  observacion                                     String  @db.VarChar(54)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cruce_procedimientos_zona {
+  Numero_factura                                  String? @db.VarChar(50)
+  Codigo_CUPS_servicio_principal_hospitalizacion  String? @db.VarChar(50)
+  Complejidad_procedimiento_quirurgico            String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_principal  String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_secundario String? @db.VarChar(50)
+  Se_presto_servicio_UCI                          String? @db.VarChar(50)
+  Dias_UCI_reclamados                             Int?
+  dias                                            Int?
+  procedimientos                                  Int?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cruce_procedimientos_zona_1 {
+  Numero_factura                                  String? @db.VarChar(50)
+  Codigo_CUPS_servicio_principal_hospitalizacion  String? @db.VarChar(50)
+  Complejidad_procedimiento_quirurgico            String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_principal  String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_secundario String? @db.VarChar(50)
+  Se_presto_servicio_UCI                          String? @db.VarChar(50)
+  Dias_UCI_reclamados                             Int?
+  dias                                            Int?
+  procedimientos                                  Int?
+  observacion_cups_procedimientos                 String? @db.VarChar(76)
+  observacion_complejidad                         String  @db.VarChar(78)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cruce_uci_zona {
+  Numero_factura                                  String? @db.VarChar(50)
+  Codigo_CUPS_servicio_principal_hospitalizacion  String? @db.VarChar(50)
+  Complejidad_procedimiento_quirurgico            String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_principal  String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_secundario String? @db.VarChar(50)
+  Se_presto_servicio_UCI                          String? @db.VarChar(50)
+  Dias_UCI_reclamados                             Int?
+  dias                                            Int?
+  estancia                                        Int?
+  observacion_servicio_uci                        String  @db.VarChar(123)
+  observacion_cups_hospitalizacion                String  @db.VarChar(57)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cruce_zona {
+  Numero_factura                                  String? @db.VarChar(50)
+  Codigo_CUPS_servicio_principal_hospitalizacion  String? @db.VarChar(50)
+  Complejidad_procedimiento_quirurgico            String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_principal  String? @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_secundario String? @db.VarChar(50)
+  Se_presto_servicio_UCI                          String? @db.VarChar(50)
+  Dias_UCI_reclamados                             Int?
+  dias                                            Int?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model especialidades_qx {
+  Codigo       String? @db.VarChar(5)
+  Nombre       String? @db.VarChar(150)
+  Grupo_qx     String? @map("Grupo qx") @db.VarChar(2)
+  especialidad String? @db.VarChar(50)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model estancia {
+  Codigo      String? @db.VarChar(255)
+  Descripcion String? @db.VarChar(255)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model facturas_generadas_ctf {
+  SFANUMFAC      String?   @db.VarChar(25)
+  SFANUMFAC1     String?   @db.VarChar(25)
+  INGRESO        String?   @db.VarChar(20)
+  FECHAFAC       DateTime? @db.Date
+  FECHAING       DateTime? @db.Date
+  FECHAEGRESO    DateTime? @db.Date
+  ENTIDAD        String?   @db.VarChar(150)
+  CODIGO_PLAN    String?   @db.VarChar(60)
+  NOMBRE_PLAN    String?   @db.VarChar(255)
+  AREA_FUNCIONAL String?   @db.VarChar(255)
+  VR_FACTURA     Decimal?  @db.Decimal(18, 2)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model furips1_consolidado {
+  id                                                          Int
+  Numero_radicado_anterior                                    String?   @db.VarChar(50)
+  RGO_Respuesta_a_Glosa_u_objecion                            String?   @db.VarChar(50)
+  Numero_factura                                              String?   @db.VarChar(50)
+  Numero_consecutivo_reclamacion                              String?   @db.VarChar(50)
+  Codigo_habilitacion_prestador_servicios_salud               String?   @db.VarChar(50)
+  Primer_apellido_victima                                     String?   @db.VarChar(50)
+  Segundo_apellido_victima                                    String?   @db.VarChar(50)
+  Primer_nombre_victima                                       String?   @db.VarChar(50)
+  Segundo_nombre_victima                                      String?   @db.VarChar(50)
+  Tipo_documento_de_identidad_victima                         String?   @db.VarChar(10)
+  Numero_documento_de_identidad_victima                       String?   @db.VarChar(20)
+  Fecha_nacimiento_victima                                    DateTime? @db.Date
+  Fecha_fallecimiento                                         DateTime? @db.Date
+  Sexo_victima                                                String?   @db.Char(1)
+  Direccion_residencia_victima                                String?   @db.VarChar(300)
+  Codigo_departamento_de_residencia_victima                   String?   @db.Char(2)
+  Codigo_municipio_residencia_victima                         String?   @db.Char(3)
+  Telefono_victima                                            String?   @db.VarChar(20)
+  Condicion_victima                                           String?   @db.VarChar(50)
+  Naturaleza_evento                                           String?   @db.VarChar(50)
+  Descripcion_otro_evento                                     String?   @db.VarChar(300)
+  Direccion_ocurrencia_evento                                 String?   @db.VarChar(300)
+  Fecha_ocurrencia_evento                                     DateTime? @db.Date
+  Hora_ocurrencia_evento                                      DateTime? @db.Time(6)
+  Codigo_departamento_ocurrencia_evento                       String?   @db.Char(2)
+  Codigo_municipio_ocurrencia_evento                          String?   @db.Char(3)
+  Zona_ocurrencia_evento                                      String?   @db.VarChar(50)
+  Estado_aseguramiento                                        String?   @db.VarChar(50)
+  Marca                                                       String?   @db.VarChar(50)
+  Placa                                                       String?   @db.VarChar(50)
+  Tipo_Vehiculo                                               String?   @db.VarChar(50)
+  Codigo_aseguradora                                          String?   @db.VarChar(50)
+  Numero_poliza_SOAT                                          String?   @db.VarChar(50)
+  Fecha_inicio_vigencia_de_poliza                             DateTime? @db.Date
+  Fecha_final_vigencia_poliza                                 DateTime? @db.Date
+  Numero_radicado_SIRAS                                       String?   @db.VarChar(50)
+  Cobro_por_agotamiento_tope_Aseguradora                      String?   @db.VarChar(50)
+  Codigo_CUPS_servicio_principal_hospitalizacion              String?   @db.VarChar(50)
+  Complejidad_procedimiento_quirurgico                        String?   @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_principal              String?   @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_secundario             String?   @db.VarChar(50)
+  Se_presto_servicio_UCI                                      String?   @db.VarChar(50)
+  Dias_UCI_reclamados                                         Int?
+  Tipo_documento_de_identidad_propietario                     String?   @db.VarChar(10)
+  Numero_documento_identidad_propietario                      String?   @db.VarChar(20)
+  Primer_apellido_propietario                                 String?   @db.VarChar(50)
+  Segundo_apellido_propietario                                String?   @db.VarChar(50)
+  Primer_nombre_propietario                                   String?   @db.VarChar(50)
+  Segundo_nombre_propietario                                  String?   @db.VarChar(50)
+  Direccion_residencia_propietario                            String?   @db.VarChar(300)
+  Telefono_residencia_propietario                             String?   @db.VarChar(20)
+  Codigo_departamento_residencia_propietario                  String?   @db.Char(2)
+  Codigo_municipio_residencia_propietario                     String?   @db.Char(3)
+  Primer_apellido_conductor                                   String?   @db.VarChar(50)
+  Segundo_apellido_conductor                                  String?   @db.VarChar(50)
+  Primer_nombre_conductor                                     String?   @db.VarChar(50)
+  Segundo_nombre_conductor                                    String?   @db.VarChar(50)
+  Tipo_documento_identidad_conductor                          String?   @db.VarChar(10)
+  Numero_documento_identidad_conductor                        String?   @db.VarChar(20)
+  Direccion_residencia_conductor                              String?   @db.VarChar(300)
+  Codigo_departamento_residencia_conductor                    String?   @db.Char(2)
+  Codigo_municipio_residencia_conductor                       String?   @db.Char(3)
+  Telefono_residencia_conductor                               String?   @db.VarChar(20)
+  Tipo_referencia                                             String?   @db.VarChar(50)
+  Fecha_remision                                              DateTime? @db.Date
+  Hora_salida                                                 DateTime? @db.Time(6)
+  Codigo_habilitacion_prestador_servicios_de_salud_remitente  String?   @db.VarChar(50)
+  Profesional_que_remite                                      String?   @db.VarChar(50)
+  Cargo_persona_que_remite                                    String?   @db.VarChar(50)
+  Fecha_ingreso                                               DateTime? @db.Date
+  Hora_ingreso                                                DateTime? @db.Time(6)
+  Codigo_habilitacion_prestador_servicios_salud_que_recibe    String?   @db.VarChar(50)
+  Profesional_que_recibe                                      String?   @db.VarChar(50)
+  Placa_ambulancia_que_realiza_el_traslado_interinstitucional String?   @db.VarChar(50)
+  Placa_ambulancia_traslado_primario                          String?   @db.VarChar(50)
+  Transporte_victima_desde_el_sitio_evento                    String?   @db.VarChar(60)
+  Transporte_victima_hasta_el_fin_recorrido                   String?   @db.VarChar(50)
+  Tipo_servicio_transporte                                    String?   @db.VarChar(50)
+  Zona_donde_recoge_victima                                   String?   @db.VarChar(50)
+  Fecha_ingreso1                                              DateTime? @db.Date
+  Hora_ingreso1                                               DateTime? @db.Time(6)
+  Fecha_egreso                                                DateTime? @db.Date
+  Hora_egreso                                                 DateTime? @db.Time(6)
+  Codigo_diagnostico_principal_ingreso                        String?   @db.VarChar(50)
+  Codigo_diagnostico_ingreso_asociado_1                       String?   @db.VarChar(50)
+  Codigo_diagnostico_ingreso_asociado_2                       String?   @db.VarChar(50)
+  Codigo_diagnostico_principal_egreso                         String?   @db.VarChar(50)
+  Codigo_diagnostico_egreso_asociado_1                        String?   @db.VarChar(50)
+  Codigo_diagnostico_egreso_asociado_2                        String?   @db.VarChar(50)
+  Primer_apellido_medico                                      String?   @db.VarChar(50)
+  Segundo_apellido_medico                                     String?   @db.VarChar(50)
+  Primer_nombre_medico                                        String?   @db.VarChar(50)
+  Segundo_nombre_medico                                       String?   @db.VarChar(50)
+  Tipo_documento_identidad_medico                             String?   @db.VarChar(10)
+  Numero_documento_de_identidad_medico                        String?   @db.VarChar(20)
+  Numero_registro_medico                                      String?   @db.VarChar(50)
+  Total_facturado_por_amparo_gastos_medicos_quirurgicos       Decimal?  @db.Decimal(18, 2)
+  Total_reclamado_por_amparo_gastos_medicos_quirurgicos       Decimal?  @db.Decimal(18, 2)
+  Total_facturado_por_amparo_gastos_transporte                Decimal?  @db.Decimal(18, 2)
+  Total_reclamado_por_amparo_gastos_transporte                Decimal?  @db.Decimal(18, 2)
+  Manifestacion_servicios_habilitados                         String?   @db.VarChar(300)
+  Descripcion_evento                                          String?   @db.VarChar(1000)
+  numero_lote                                                 Int?
+  usuario                                                     String?   @db.VarChar(20)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model furips1_resultados_n8n {
+  id                                     Int
+  nro_factura                            String?   @db.VarChar(50)
+  nombre_completo_paciente_detectado     String?   @db.VarChar(255)
+  veces_nombre_completo_encontrado       Int?
+  tipo_documento_detectado               String?   @db.VarChar(50)
+  numero_documento_detectado             String?   @db.VarChar(100)
+  veces_documento_completo_encontrado    Int?
+  existe_acreditacion_TA                 Int?      @db.SmallInt
+  profesional_indica_fecha_accidente     Int?      @db.SmallInt
+  fecha_accidente_primera_fecha          DateTime? @db.Date
+  placa_vehiculo_mencionada              Int?      @db.SmallInt
+  placa_vehiculo_detectada               String?   @db.VarChar(20)
+  condicion_victima_mencionada           Int?      @db.SmallInt
+  condicion_victima_detectada            String?   @db.VarChar(100)
+  direccion_ocurrencia_evento_mencionada Int?      @db.SmallInt
+  direccion_ocurrencia_evento_detectada  String?   @db.VarChar(255)
+  texto_acreditacion                     String?   @db.VarChar(2000)
+  texto_indica_fecha_accidente           String?   @db.VarChar(1000)
+  fecha_accidente_ultima_fecha           DateTime? @db.Date
+  usuario                                String?   @db.VarChar(20)
+  numero_lote                            Int?
+  evidencia_firma_responsable            Int?      @db.SmallInt
+  nombre_paramedico                      String?   @db.VarChar(80)
+  furtran                                Int?      @db.SmallInt
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model furips1_staging {
+  Numero_radicado_anterior                                    String?   @db.VarChar(50)
+  RGO_Respuesta_a_Glosa_u_objecion                            String?   @db.VarChar(50)
+  Numero_factura                                              String?   @db.VarChar(50)
+  Numero_consecutivo_reclamacion                              String?   @db.VarChar(50)
+  Codigo_habilitacion_prestador_servicios_salud               String?   @db.VarChar(50)
+  Primer_apellido_victima                                     String?   @db.VarChar(50)
+  Segundo_apellido_victima                                    String?   @db.VarChar(50)
+  Primer_nombre_victima                                       String?   @db.VarChar(50)
+  Segundo_nombre_victima                                      String?   @db.VarChar(50)
+  Tipo_documento_de_identidad_victima                         String?   @db.VarChar(10)
+  Numero_documento_de_identidad_victima                       String?   @db.VarChar(20)
+  Fecha_nacimiento_victima                                    DateTime? @db.Date
+  Fecha_fallecimiento                                         DateTime? @db.Date
+  Sexo_victima                                                String?   @db.Char(1)
+  Direccion_residencia_victima                                String?   @db.VarChar(300)
+  Codigo_departamento_de_residencia_victima                   String?   @db.Char(2)
+  Codigo_municipio_residencia_victima                         String?   @db.Char(3)
+  Telefono_victima                                            String?   @db.VarChar(20)
+  Condicion_victima                                           String?   @db.VarChar(50)
+  Naturaleza_evento                                           String?   @db.VarChar(50)
+  Descripcion_otro_evento                                     String?   @db.VarChar(300)
+  Direccion_ocurrencia_evento                                 String?   @db.VarChar(300)
+  Fecha_ocurrencia_evento                                     DateTime? @db.Date
+  Hora_ocurrencia_evento                                      DateTime? @db.Time(6)
+  Codigo_departamento_ocurrencia_evento                       String?   @db.Char(2)
+  Codigo_municipio_ocurrencia_evento                          String?   @db.Char(3)
+  Zona_ocurrencia_evento                                      String?   @db.VarChar(50)
+  Estado_aseguramiento                                        String?   @db.VarChar(50)
+  Marca                                                       String?   @db.VarChar(50)
+  Placa                                                       String?   @db.VarChar(50)
+  Tipo_Vehiculo                                               String?   @db.VarChar(50)
+  Codigo_aseguradora                                          String?   @db.VarChar(50)
+  Numero_poliza_SOAT                                          String?   @db.VarChar(50)
+  Fecha_inicio_vigencia_de_poliza                             DateTime? @db.Date
+  Fecha_final_vigencia_poliza                                 DateTime? @db.Date
+  Numero_radicado_SIRAS                                       String?   @db.VarChar(50)
+  Cobro_por_agotamiento_tope_Aseguradora                      String?   @db.VarChar(50)
+  Codigo_CUPS_servicio_principal_hospitalizacion              String?   @db.VarChar(50)
+  Complejidad_procedimiento_quirurgico                        String?   @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_principal              String?   @db.VarChar(50)
+  Codigo_CUPS_procedimiento_quirurgico_secundario             String?   @db.VarChar(50)
+  Se_presto_servicio_UCI                                      String?   @db.VarChar(50)
+  Dias_UCI_reclamados                                         Int?
+  Tipo_documento_de_identidad_propietario                     String?   @db.VarChar(10)
+  Numero_documento_identidad_propietario                      String?   @db.VarChar(20)
+  Primer_apellido_propietario                                 String?   @db.VarChar(50)
+  Segundo_apellido_propietario                                String?   @db.VarChar(50)
+  Primer_nombre_propietario                                   String?   @db.VarChar(50)
+  Segundo_nombre_propietario                                  String?   @db.VarChar(50)
+  Direccion_residencia_propietario                            String?   @db.VarChar(300)
+  Telefono_residencia_propietario                             String?   @db.VarChar(20)
+  Codigo_departamento_residencia_propietario                  String?   @db.Char(2)
+  Codigo_municipio_residencia_propietario                     String?   @db.Char(3)
+  Primer_apellido_conductor                                   String?   @db.VarChar(50)
+  Segundo_apellido_conductor                                  String?   @db.VarChar(50)
+  Primer_nombre_conductor                                     String?   @db.VarChar(50)
+  Segundo_nombre_conductor                                    String?   @db.VarChar(50)
+  Tipo_documento_identidad_conductor                          String?   @db.VarChar(10)
+  Numero_documento_identidad_conductor                        String?   @db.VarChar(20)
+  Direccion_residencia_conductor                              String?   @db.VarChar(300)
+  Codigo_departamento_residencia_conductor                    String?   @db.Char(2)
+  Codigo_municipio_residencia_conductor                       String?   @db.Char(3)
+  Telefono_residencia_conductor                               String?   @db.VarChar(20)
+  Tipo_referencia                                             String?   @db.VarChar(50)
+  Fecha_remision                                              DateTime? @db.Date
+  Hora_salida                                                 DateTime? @db.Time(6)
+  Codigo_habilitacion_prestador_servicios_de_salud_remitente  String?   @db.VarChar(50)
+  Profesional_que_remite                                      String?   @db.VarChar(50)
+  Cargo_persona_que_remite                                    String?   @db.VarChar(50)
+  Fecha_ingreso                                               DateTime? @db.Date
+  Hora_ingreso                                                DateTime? @db.Time(6)
+  Codigo_habilitacion_prestador_servicios_salud_que_recibe    String?   @db.VarChar(50)
+  Profesional_que_recibe                                      String?   @db.VarChar(50)
+  Placa_ambulancia_que_realiza_el_traslado_interinstitucional String?   @db.VarChar(50)
+  Placa_ambulancia_traslado_primario                          String?   @db.VarChar(50)
+  Transporte_victima_desde_el_sitio_evento                    String?   @db.VarChar(60)
+  Transporte_victima_hasta_el_fin_recorrido                   String?   @db.VarChar(50)
+  Tipo_servicio_transporte                                    String?   @db.VarChar(50)
+  Zona_donde_recoge_victima                                   String?   @db.VarChar(50)
+  Fecha_ingreso1                                              DateTime? @db.Date
+  Hora_ingreso1                                               DateTime? @db.Time(6)
+  Fecha_egreso                                                DateTime? @db.Date
+  Hora_egreso                                                 DateTime? @db.Time(6)
+  Codigo_diagnostico_principal_ingreso                        String?   @db.VarChar(50)
+  Codigo_diagnostico_ingreso_asociado_1                       String?   @db.VarChar(50)
+  Codigo_diagnostico_ingreso_asociado_2                       String?   @db.VarChar(50)
+  Codigo_diagnostico_principal_egreso                         String?   @db.VarChar(50)
+  Codigo_diagnostico_egreso_asociado_1                        String?   @db.VarChar(50)
+  Codigo_diagnostico_egreso_asociado_2                        String?   @db.VarChar(50)
+  Primer_apellido_medico                                      String?   @db.VarChar(50)
+  Segundo_apellido_medico                                     String?   @db.VarChar(50)
+  Primer_nombre_medico                                        String?   @db.VarChar(50)
+  Segundo_nombre_medico                                       String?   @db.VarChar(50)
+  Tipo_documento_identidad_medico                             String?   @db.VarChar(10)
+  Numero_documento_de_identidad_medico                        String?   @db.VarChar(20)
+  Numero_registro_medico                                      String?   @db.VarChar(50)
+  Total_facturado_por_amparo_gastos_medicos_quirurgicos       Decimal?  @db.Decimal(18, 2)
+  Total_reclamado_por_amparo_gastos_medicos_quirurgicos       Decimal?  @db.Decimal(18, 2)
+  Total_facturado_por_amparo_gastos_transporte                Decimal?  @db.Decimal(18, 2)
+  Total_reclamado_por_amparo_gastos_transporte                Decimal?  @db.Decimal(18, 2)
+  Manifestacion_servicios_habilitados                         String?   @db.VarChar(300)
+  Descripcion_evento                                          String?   @db.VarChar(1000)
+  usuario                                                     String?   @db.VarChar(20)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model furips2_consolidado {
+  id                                            Int
+  Numero_factura                                String?  @db.VarChar(50)
+  Numero_consecutivo_de_la_reclamacion          String?  @db.VarChar(50)
+  Tipo_de_servicio                              String?  @db.VarChar(50)
+  Codigo_del_servicio                           String?  @db.VarChar(50)
+  Descripcion_del_servicio_o_elemento_reclamado String?  @db.VarChar(300)
+  Cantidad_de_servicios                         Int?
+  Valor_unitario                                Decimal? @db.Decimal(18, 2)
+  Valor_total_facturado                         Decimal? @db.Decimal(18, 2)
+  Valor_total_reclamado                         Decimal? @db.Decimal(18, 2)
+  numero_lote                                   Int?
+  usuario                                       String?  @db.VarChar(20)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model furips2_fechas_n8n {
+  id                     Int
+  numero_factura         String   @db.VarChar(50)
+  fecha_encontrada       DateTime @db.Date
+  tipo_soporte           String   @db.VarChar(500)
+  se_encuentra_facturado Int      @db.SmallInt
+  usuario                String?  @db.VarChar(20)
+  numero_lote            Int?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model furips2_hab {
+  id                                            Int
+  Numero_factura                                String?  @db.VarChar(50)
+  Numero_consecutivo_de_la_reclamacion          String?  @db.VarChar(50)
+  Tipo_de_servicio                              String?  @db.VarChar(50)
+  Codigo_del_servicio                           String?  @db.VarChar(50)
+  Descripcion_del_servicio_o_elemento_reclamado String?  @db.VarChar(300)
+  Cantidad_de_servicios                         Int?
+  Valor_unitario                                Decimal? @db.Decimal(18, 2)
+  Valor_total_facturado                         Decimal? @db.Decimal(18, 2)
+  Valor_total_reclamado                         Decimal? @db.Decimal(18, 2)
+  numero_lote                                   Int?
+  codigo_parametro                              String?  @db.VarChar(50)
+  usuario                                       String?  @db.VarChar(20)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model furips2_staging {
+  Numero_factura                                String?  @db.VarChar(50)
+  Numero_consecutivo_de_la_reclamacion          String?  @db.VarChar(50)
+  Tipo_de_servicio                              String?  @db.VarChar(50)
+  Codigo_del_servicio                           String?  @db.VarChar(50)
+  Descripcion_del_servicio_o_elemento_reclamado String?  @db.VarChar(300)
+  Cantidad_de_servicios                         Int?
+  Valor_unitario                                Decimal? @db.Decimal(18, 2)
+  Valor_total_facturado                         Decimal? @db.Decimal(18, 2)
+  Valor_total_reclamado                         Decimal? @db.Decimal(18, 2)
+  usuario                                       String?  @db.VarChar(20)
+
+  @@ignore
+}
+
+model glosas_aseguradora {
+  OID                 String?   @db.VarChar(15)
+  CONSECUTIVO         String?   @db.VarChar(15)
+  ENTIDAD             String?   @db.VarChar(100)
+  N_FACTURA           String?   @db.VarChar(30)
+  N_FACTURA1          String?   @db.VarChar(30)
+  FECHA_FACTURA       DateTime? @db.Date
+  VR_FACTURA          Decimal?  @db.Decimal(12, 2)
+  ABONOS_FACTURA      Decimal?  @db.Decimal(12, 0)
+  SALDO_FACTURA       Decimal?  @db.Decimal(12, 2)
+  VR_OBJECION         Decimal?  @db.Decimal(12, 2)
+  COD_PROD            String?   @db.VarChar(255)
+  SERVICIO            String?   @db.VarChar(1000)
+  CODIGO_RECEPCION    String?   @db.VarChar(10)
+  CONCEPTO_RECEPCION  String?   @db.VarChar(255)
+  OBSERVACION         String?   @db.VarChar(7000)
+  Id                  Int       @id
+  respuesta           String?   @db.VarChar(6000)
+  soporte_requerido   Int?      @db.SmallInt
+  soportes_requeridos String?   @db.VarChar(500)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model glosas_aseguradora_consolidado {
+  OID                String?   @db.VarChar(15)
+  CONSECUTIVO        String?   @db.VarChar(15)
+  ENTIDAD            String?   @db.VarChar(100)
+  N_FACTURA          String?   @db.VarChar(30)
+  N_FACTURA1         String?   @db.VarChar(30)
+  FECHA_FACTURA      DateTime? @db.Date
+  VR_FACTURA         Decimal?  @db.Decimal(12, 2)
+  ABONOS_FACTURA     Decimal?  @db.Decimal(12, 0)
+  SALDO_FACTURA      Decimal?  @db.Decimal(12, 2)
+  VR_OBJECION        Decimal?  @db.Decimal(12, 2)
+  COD_PROD           String?   @db.VarChar(255)
+  SERVICIO           String?   @db.VarChar(1000)
+  CODIGO_RECEPCION   String?   @db.VarChar(10)
+  CONCEPTO_RECEPCION String?   @db.VarChar(255)
+  OBSERVACION        String?   @db.VarChar(7000)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model glosas_trabar_drive {
+  Direcci_n_correo_electr_nico String? @map("Dirección_correo_electrónico") @db.VarChar(150)
+  Numero_factura               String? @db.VarChar(15)
+  Entidad                      String? @db.VarChar(100)
+  link                         String? @db.VarChar(600)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model homologacion_Adres_2284 {
+  tipo_cliente      String? @db.VarChar(30)
+  codigo_adres      String? @db.VarChar(6)
+  Descripcion_Adres String? @db.VarChar(1000)
+  Homologo2284      String? @db.VarChar(10)
+  Descripcion_2284  String? @db.VarChar(1000)
+  homologo3047      String? @db.VarChar(30)
+  Descripcion3047   String? @db.VarChar(1000)
+  f13               String? @db.VarChar(255)
+  f14               String? @db.VarChar(255)
+  f15               String? @db.VarChar(255)
+  f16               String? @db.VarChar(255)
+  f17               String? @db.VarChar(255)
+  f18               String? @db.VarChar(255)
+  f19               String? @db.VarChar(255)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model inconsistencias_2103 {
+  Numero_factura                                String?   @db.VarChar(50)
+  Codigo_habilitacion_prestador_servicios_salud String?   @db.VarChar(100)
+  IPS                                           String?   @db.VarChar(200)
+  origen                                        String?   @db.VarChar(10)
+  tipo_validacion                               String?   @db.VarChar(100)
+  observacion                                   String?
+  tipo_servicio                                 String?   @db.VarChar(100)
+  codigo_del_servicio                           String?   @db.VarChar(100)
+  descripcion_servicio                          String?
+  cantidad                                      Int?
+  valor_unitario                                Decimal?  @db.Decimal(18, 2)
+  valor_total                                   Decimal?  @db.Decimal(18, 2)
+  fecha                                         DateTime? @db.Date
+  fecha_encontrada                              DateTime? @db.Date
+  Fecha_ingreso1                                DateTime? @db.Date
+  Fecha_egreso                                  DateTime? @db.Date
+  Tipo_soporte                                  String?   @db.VarChar(1000)
+  se_encuentra_facturado                        Int?      @db.SmallInt
+  servicios_facturados                          String?   @db.VarChar(8000)
+  condicion_victima_encontrada                  String?   @db.VarChar(100)
+  condicion_victima                             String?   @db.VarChar(100)
+  fecha_siniestro_encontrada                    DateTime? @db.Date
+  fecha_siniestro                               DateTime? @db.Date
+  existe_acreditacion                           Int?      @db.SmallInt
+  nombre_paciente_encontrado_                   String?   @db.VarChar(200)
+  nombres_paciente                              String?   @db.VarChar(200)
+  numero_documento_detectado                    String?   @db.VarChar(50)
+  tipo_documento_detectado                      String?   @db.VarChar(50)
+  tipo_documentof1                              String?   @db.VarChar(50)
+  numero_documentof1                            String?   @db.VarChar(50)
+  veces_documento_completo_encontrado           Int?
+  placa_vehiculo_encontrada                     String?   @db.VarChar(20)
+  lote_de_carga                                 String?   @db.VarChar(100)
+  usuario                                       String?   @db.VarChar(20)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model inconsistencias_CONSOLIDADO {
+  inconsistencia_id                             Int
+  Numero_factura                                String?
+  Codigo_habilitacion_prestador_servicios_salud String    @db.VarChar(50)
+  IPS                                           String?   @db.VarChar(100)
+  origen                                        String?   @db.VarChar(50)
+  tipo_validacion                               String?   @db.VarChar(100)
+  observacion                                   String?   @db.VarChar(1000)
+  tipo_servicio                                 String?   @db.VarChar(100)
+  codigo_del_servicio                           String?   @db.VarChar(5000)
+  descripcion_servicio                          String?   @db.VarChar(300)
+  cantidad                                      Int?
+  valor_unitario                                Decimal?  @db.Decimal(18, 2)
+  valor_total                                   Decimal?  @db.Decimal(18, 2)
+  fecha                                         DateTime? @db.Date
+  lote_de_carga                                 String?   @db.VarChar(50)
+  id_factura_furips1                            String?   @db.VarChar(1000)
+  id_inconsistencia_inicial                     Int?
+  usuario                                       String?   @db.VarChar(20)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model inconsistencias_d2497 {
+  Numero_factura                        String    @db.VarChar(20)
+  Fecha_ocurrencia_evento               DateTime? @db.Date
+  Numero_documento_de_identidad_victima String?   @db.VarChar(20)
+  nombre_victima                        String?   @db.VarChar(200)
+  Numero_poliza_SOAT                    String?   @db.VarChar(20)
+  placa                                 String?   @db.VarChar(10)
+  valor_pagar                           Decimal?  @db.Decimal(18, 2)
+  fecha_evento_detectada                DateTime? @db.Date
+  documento_victima_detectada           String?   @db.VarChar(20)
+  nombre_victima_detectado              String?   @db.VarChar(200)
+  Numero_poliza_detectado               String?   @db.VarChar(20)
+  placa_detectada                       String?   @db.VarChar(10)
+  valor_detectado                       Decimal?  @db.Decimal(18, 2)
+  cobertura_agotada                     Int?      @db.SmallInt
+  fecha_expedicion                      DateTime? @db.Date
+  fecha_incio_poliza                    DateTime? @db.Date
+  fecha_fin_poliza                      DateTime? @db.Date
+  fecha_emision_certificado             DateTime? @db.Date
+  saldo_detectado                       Decimal?  @db.Decimal(18, 2)
+  tipo_documento_victima_detectado      String?   @db.VarChar(30)
+  tipo_inconsistencia                   String?   @db.VarChar(100)
+  observacion_inconsistencia            String?   @db.VarChar(500)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model inconsistencias_finales_infopol {
+  codigo_habilitacion                      String?   @db.VarChar(50)
+  Numero_factura                           String?   @db.VarChar(50)
+  nombre_victima                           String?   @db.VarChar(101)
+  tipo_documento                           String?   @db.VarChar(10)
+  numero_documento                         String?   @db.VarChar(20)
+  Fecha_ingreso1                           DateTime? @db.Date
+  Fecha_egreso                             DateTime? @db.Date
+  Fecha_ocurrencia_evento                  DateTime? @db.Date
+  Descripcion_evento                       String?   @db.VarChar(1000)
+  SERVICIOS_FACTURADOS                     String?
+  numero_lote                              Int?
+  usuario                                  String?   @db.VarChar(20)
+  se_evidencia_correo                      Int?      @db.SmallInt
+  destinatarios_correo                     String?   @db.VarChar(500)
+  correo_gubernamental                     Int?      @db.SmallInt
+  fecha_AT_correo                          DateTime? @db.Date
+  tipo_documento_victima_correo            String?   @db.VarChar(20)
+  nro_documento_victima_correo             String?   @db.VarChar(20)
+  condicion_victima_correo                 String?   @db.VarChar(20)
+  placa_correo                             String?   @db.VarChar(20)
+  fecha_AT_informe_accidente               DateTime? @db.Date
+  tipo_documento_victima_informe_accidente String?   @db.VarChar(10)
+  nro_documento_victima_informe_accidente  String?   @db.VarChar(20)
+  condicion_victima_informe_accidente      String?   @db.VarChar(20)
+  placa_informe_accidente                  String?   @db.VarChar(10)
+  estado_aseguramiento_informe_accidente   String?   @db.VarChar(20)
+  verificado_infopol                       Int?      @db.SmallInt
+  tipo_inconsistencia                      String?   @db.VarChar(100)
+  inconsistencia                           String?   @db.VarChar(1000)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model inconsistencias_infopol {
+  numero_factura             String? @db.VarChar(50)
+  tipo_inconsistencia        String? @db.VarChar(100)
+  observacion_inconsistencia String? @db.VarChar(3000)
+
+  @@ignore
+}
+
+model liquidacion_cirugias {
+  cirujano      Int?
+  anestesiologo Int?
+  ayudante      Int?
+  sala          Int?
+  materiales    Int?
+  especialidad  String? @db.VarChar(50)
+  facturada     String? @db.VarChar(50)
+  id            Int     @id(map: "PK_liquidacion_cirugias_id")
+}
+
+model medicamentos_principios {
+  id          Int    @id(map: "PK__medicame__3213E83F2CD44322")
+  Descripcion String @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model naturalezas_eventos {
+  Codigo              String?  @db.VarChar(2)
+  Descripcion         String?  @db.VarChar(100)
+  Estado              Decimal? @db.Decimal(18, 0)
+  naturaleza_EventoID String?  @db.VarChar(2)
+  tipo_ConceptoID     Decimal? @db.Decimal(18, 0)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model parametros_inclusiones {
+  string1                   String?  @db.VarChar(75)
+  string2                   String?  @db.VarChar(75)
+  tipo_servicio             Decimal? @db.Decimal(1, 0)
+  codigo1                   String?  @db.VarChar(15)
+  codigo2                   String?  @db.VarChar(15)
+  codigo_inclusion          String?  @db.VarChar(15)
+  tipo_validacion           String?  @db.VarChar(50)
+  excepto_grupos_especiales String?  @db.VarChar(10)
+  no_contiene               String?  @db.VarChar(50)
+  recomendacion             String?  @db.VarChar(1500)
+  tiempo_dias               Int?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model parametros_respuesta_glosa {
+  CODIGO_GLOSA   String? @db.VarChar(50)
+  RESPUESTA1     String? @db.VarChar(500)
+  RESPUESTA2     String? @db.VarChar(500)
+  CRITERIO_ADRES String? @db.VarChar(500)
+  ESTADO         String? @db.VarChar(50)
+  recomendacion  String? @db.VarChar(500)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model prefijos {
+  Pa_s    String? @map("País") @db.VarChar(255)
+  Prefijo String? @db.VarChar(4)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model procedimientos_qx {
+  Codigo      String?  @db.VarChar(255)
+  Descripcion String?  @db.VarChar(255)
+  largo       Float?
+  grupo_qx    Decimal? @db.Decimal(18, 0)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model recomendaciones_validacion {
+  tipo_validacion String? @db.VarChar(200)
+  recomendacion   String? @db.VarChar(1500)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model servicios_reps_pagina {
+  depa_nombre                                                   String?   @db.VarChar(100)
+  muni_nombre                                                   String?   @db.VarChar(100)
+  codigo_habilitacion                                           String?   @db.VarChar(50)
+  sede_nombre                                                   String?   @db.VarChar(255)
+  direccion                                                     String?   @db.VarChar(255)
+  telefono                                                      String?   @db.VarChar(255)
+  email                                                         String?   @db.VarChar(255)
+  nits_nit                                                      String?   @db.VarChar(20)
+  dv                                                            Int?
+  clase_persona                                                 String?   @db.VarChar(50)
+  naju_codigo                                                   Int?
+  naju_nombre                                                   String?   @db.VarChar(100)
+  clpr_codigo                                                   Int?
+  clpr_nombre                                                   String?   @db.VarChar(150)
+  ese                                                           String?   @db.VarChar(5)
+  nivel                                                         String?   @db.VarChar(50)
+  caracter                                                      String?   @db.VarChar(50)
+  habilitado                                                    String?   @db.VarChar(5)
+  grse_codigo                                                   Int?
+  grse_nombre                                                   String?   @db.VarChar(150)
+  serv_nombre                                                   String?   @db.VarChar(255)
+  ambulatorio                                                   String?   @db.VarChar(5)
+  hospitalario                                                  String?   @db.VarChar(5)
+  unidad_movil                                                  String?   @db.VarChar(5)
+  domiciliario                                                  String?   @db.VarChar(5)
+  otras_extramural                                              String?   @db.VarChar(5)
+  centro_referencia                                             String?   @db.VarChar(5)
+  institucion_remisora                                          String?   @db.VarChar(5)
+  complejidad_baja                                              String?   @db.VarChar(5)
+  complejidad_media                                             String?   @db.VarChar(5)
+  complejidad_alta                                              String?   @db.VarChar(5)
+  fecha_apertura                                                String?   @db.VarChar(255)
+  fecha_cierre                                                  String?   @db.VarChar(255)
+  numero_distintivo                                             String?   @db.VarChar(50)
+  numero_sede_principal                                         Int?
+  observaciones_serv_Res3100_2019                               String?
+  fecha_corte_REPS                                              String?   @db.VarChar(255)
+  nombre                                                        String?   @db.VarChar(255)
+  horario_lunes                                                 String?   @db.VarChar(255)
+  horario_martes                                                String?   @db.VarChar(255)
+  horario_miercoles                                             String?   @db.VarChar(255)
+  horario_jueves                                                String?   @db.VarChar(255)
+  horario_viernes                                               String?   @db.VarChar(255)
+  horario_sabado                                                String?   @db.VarChar(255)
+  horario_domingo                                               String?   @db.VarChar(255)
+  modalidad_intramural                                          String?   @db.VarChar(100)
+  modalidad_extramural                                          String?   @db.VarChar(100)
+  modalidad_unidad_movil                                        String?   @db.VarChar(100)
+  modalidad_domiciliario                                        String?   @db.VarChar(100)
+  modalidad_jornada_salud                                       String?   @db.VarChar(100)
+  modalidad_telemedicina                                        String?   @db.VarChar(100)
+  modalidad_prestador_referencia                                String?   @db.VarChar(5)
+  modalidad_prestador_referencia_telemedicina_interactiva       String?   @db.VarChar(5)
+  modalidad_prestador_referencia_telemedicina_no_interactiva    String?   @db.VarChar(5)
+  modalidad_prestador_referencia_tele_experticia                String?   @db.VarChar(5)
+  modalidad_prestador_referencia_tele_monitoreo                 String?   @db.VarChar(5)
+  modalidad_prestador_remisor                                   String?   @db.VarChar(5)
+  modalidad_prestador_remisor_tele_experticia                   String?   @db.VarChar(5)
+  modalidad_prestador_remisor_tele_monitoreo                    String?   @db.VarChar(5)
+  complejidades                                                 String?   @db.VarChar(50)
+  especificidad_oncologico                                      String?   @db.VarChar(5)
+  especificidad_trasplante_osteomuscular                        String?   @db.VarChar(5)
+  especificidad_trasplante_piel                                 String?   @db.VarChar(5)
+  especificidad_trasplante_cardiovascular                       String?   @db.VarChar(5)
+  especificidad_trasplante_tejido_ocular                        String?   @db.VarChar(5)
+  especificidad_atencion_paciente_quemado                       String?   @db.VarChar(5)
+  especificidad_salud_mental                                    String?   @db.VarChar(5)
+  especificidad_spa                                             String?   @db.VarChar(5)
+  especificidad_otras_patologias                                String?   @db.VarChar(5)
+  especificidad_trasplante_celulas_progenitoras_hematopoyeticas String?   @db.VarChar(5)
+  especificidad_procedimientos_quirurgicos_ambulatorios         String?   @db.VarChar(5)
+  especificidad_organo_rinon                                    String?   @db.VarChar(5)
+  especificidad_organo_higado                                   String?   @db.VarChar(5)
+  especificidad_organo_pancreas                                 String?   @db.VarChar(5)
+  especificidad_organo_intestino                                String?   @db.VarChar(5)
+  especificidad_organo_multivisceral                            String?   @db.VarChar(5)
+  especificidad_organo_corazon                                  String?   @db.VarChar(5)
+  especificidad_organo_pulmon                                   String?   @db.VarChar(5)
+  especificidad_sustancias_psicoactivas                         String?   @db.VarChar(5)
+  especificidad_trasplante_renal                                String?   @db.VarChar(5)
+  version_norma                                                 String?   @db.VarChar(500)
+  email_adicional                                               String?   @db.VarChar(255)
+  telefono_adicional                                            String?   @db.VarChar(255)
+  gerente                                                       String?   @db.VarChar(255)
+  fecha_apertura_convertida                                     DateTime? @db.Date
+  habi_codigo_habilitacion                                      String?   @db.VarChar(50)
+  numero_sede                                                   String?   @db.VarChar(50)
+  serv_codigo                                                   String?   @db.VarChar(50)
+
+  @@ignore
+}
+
+model servicios_soat {
+  id              Int    @id(map: "PK__servicio__3213E83F90E0076B")
+  nombre_servicio String @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model string_direcciones {
+  STRING String? @db.VarChar(50)
+  DATO   String? @db.VarChar(50)
+
+  @@ignore
 }
 
 enum Role {
@@ -914,14 +2029,4 @@ enum Role {
 enum EstadoEnvio {
   EN_PROCESO
   FINALIZADO
-}
-
-model AIPrompt {
-  id          Int      @id @default(autoincrement())
-  prompt_text String   @db.Text
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  updated_by  String?  @db.VarChar(100)
-
-  @@map("ai_prompts")
 }
