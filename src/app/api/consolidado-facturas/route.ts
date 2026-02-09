@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ensureViewsExist, createConsolidadoFacturasView } from "@/lib/db-views";
 
 // Helper to convert BigInt and Decimal values to Numbers
 function serializeResults(data: any[]): any[] {
@@ -100,95 +101,63 @@ export async function GET(request: NextRequest) {
 
     console.log("📊 consolidado_facturas WHERE:", whereClause);
 
-    // Intentar diferentes nombres posibles de la vista
-    const possibleViewNames = [
-      "vista_consolidado_facturas_lote",
-      "vista_consolidado_facturas",
-      "consolidado_facturas_lote",
-      "consolidado_facturas",
-      "vista_consolidado_facturas_l",
-      "vista_consolidado_facturas_lotes"
-    ];
+    // Ensure views exist (auto-creates if missing)
+    await ensureViewsExist();
 
-    let dataResult: any[] = [];
-    let viewName = "";
-    let lastError: any = null;
-    let columnNames: string[] = [];
+    // Query the vista_consolidado_facturas_lote view directly
+    const viewName = "vista_consolidado_facturas_lote";
     
-    for (const view of possibleViewNames) {
-      try {
-        const testQuery = `SELECT * FROM "${view}" LIMIT 1`;
-        const testResult = await prisma.$queryRawUnsafe<any[]>(testQuery);
-        if (testResult && testResult.length >= 0) {
-          columnNames = testResult.length > 0 ? Object.keys(testResult[0]) : [];
-          viewName = view;
-          console.log(`✅ Vista ${view} encontrada. Columnas:`, columnNames);
-          break;
-        }
-      } catch (error: any) {
-        lastError = error;
-        if (error.message?.includes("does not exist")) {
-          continue;
-        }
-      }
-    }
+    const query = `
+      SELECT 
+        numero_lote,
+        conteo_factura AS "Conteo_Factura",
+        total_suma_reclamado AS "Total_Suma_Reclamado",
+        con_hallazgos AS "Facturas_con_Hallazgos",
+        sin_hallazgos AS "Facturas_sin_Hallazgos",
+        conteo_hallazgos_criticos AS "Conteo_Hallazgos_Criticos",
+        valor_total_hallazgos_criticos AS "Valor_Total_Hallazgos_Criticos"
+      FROM ${viewName}
+      WHERE ${whereClause}
+      ORDER BY numero_lote DESC
+    `;
 
-    if (viewName && columnNames.length > 0) {
-      const findColumn = (patterns: string[]) => {
-        return columnNames.find(col => {
-          const colLower = col.toLowerCase();
-          return patterns.some(pattern => colLower.includes(pattern.toLowerCase()));
-        }) || null;
-      };
-
-      const conteoFactura = findColumn(['conteo_factura', 'conteo']);
-      const totalReclamado = findColumn(['total_suma_reclamado', 'suma_reclamado']);
-      const conHallazgos = findColumn(['con_hallazgos', 'facturas_con']);
-      const sinHallazgos = findColumn(['sin_hallazgos', 'facturas_sin']);
-      const hallazgosCriticos = findColumn(['hallazgos_criticos', 'conteo_hallazgos']);
-      const valorCriticos = findColumn(['valor_total_hallazgos', 'valor_hallazgos']);
-
-      console.log(`📊 Columnas mapeadas:`, {
-        conteoFactura,
-        totalReclamado,
-        conHallazgos,
-        sinHallazgos,
-        hallazgosCriticos,
-        valorCriticos
-      });
-
-      // Usar comillas dobles (PostgreSQL) en lugar de backticks (MySQL)
-      const selectParts: string[] = ['numero_lote'];
-      if (conteoFactura) selectParts.push(`"${conteoFactura}" as "Conteo_Factura"`);
-      if (totalReclamado) selectParts.push(`"${totalReclamado}" as "Total_Suma_Reclamado"`);
-      if (conHallazgos) selectParts.push(`"${conHallazgos}" as "Facturas_con_Hallazgos"`);
-      if (sinHallazgos) selectParts.push(`"${sinHallazgos}" as "Facturas_sin_Hallazgos"`);
-      if (hallazgosCriticos) selectParts.push(`"${hallazgosCriticos}" as "Conteo_Hallazgos_Criticos"`);
-      if (valorCriticos) selectParts.push(`"${valorCriticos}" as "Valor_Total_Hallazgos_Criticos"`);
-
-      const query = `
-        SELECT ${selectParts.join(', ')}
-        FROM "${viewName}"
-        WHERE ${whereClause}
-        ORDER BY numero_lote DESC
-      `;
-
-      console.log(`📝 Query ejecutada:`, query.substring(0, 300) + "...");
-      
+    console.log(`📝 Query ejecutada:`, query.substring(0, 300) + "...");
+    
+    let dataResult: any[] = [];
+    try {
       const result = await prisma.$queryRawUnsafe<any[]>(query);
       console.log(`✅ Resultados obtenidos:`, result.length);
       dataResult = result;
-    }
-
-    if (!viewName) {
-      console.error("❌ No se encontró la vista consolidado. Último error:", lastError?.message);
-      return NextResponse.json(
-        { 
-          error: "No se encontró la vista consolidado_facturas.",
-          details: lastError?.message 
-        },
-        { status: 404 }
-      );
+    } catch (viewError: any) {
+      console.error(`❌ Error consultando vista ${viewName}:`, viewError.message);
+      
+      // If view doesn't exist, try to create it
+      if (viewError.message?.includes("does not exist")) {
+        console.log("🔧 Vista no encontrada, intentando crearla...");
+        try {
+          await createConsolidadoFacturasView();
+          console.log("✅ Vista creada exitosamente, reintentando consulta...");
+          const retryResult = await prisma.$queryRawUnsafe<any[]>(query);
+          dataResult = retryResult;
+        } catch (createError: any) {
+          console.error("❌ Error creando vista:", createError.message);
+          return NextResponse.json(
+            { 
+              error: "No se encontró la vista consolidado_facturas y no se pudo crear.",
+              details: createError.message 
+            },
+            { status: 404 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          { 
+            error: "Error al consultar vista consolidado_facturas",
+            details: viewError.message 
+          },
+          { status: 500 }
+        );
+      }
     }
 
     // Serialize results

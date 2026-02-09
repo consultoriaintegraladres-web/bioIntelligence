@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ensureViewsExist } from "@/lib/db-views";
 
 // Helper to convert BigInt and Decimal values to Numbers in query results
 function serializeResults(data: any[]): any[] {
@@ -98,6 +99,9 @@ export async function GET(request: NextRequest) {
     const whereClause = whereConditions.join(" AND ");
 
     console.log("📋 revision_facturas WHERE:", whereClause);
+
+    // Ensure views exist (auto-creates if missing)
+    await ensureViewsExist();
 
     // Count query
     const countQuery = `
