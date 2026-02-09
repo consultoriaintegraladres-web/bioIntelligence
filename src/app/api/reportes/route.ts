@@ -65,8 +65,9 @@ export async function GET(request: NextRequest) {
 
     // ============================================================
     // SUBCONSULTA: SELECT numero_lote FROM control_lotes WHERE [filtros]
+    // CAST a VARCHAR porque lote_de_carga es VARCHAR y numero_lote es INTEGER
     // ============================================================
-    const lotesSubquery = `SELECT numero_lote FROM control_lotes WHERE ${lotesWhere}`;
+    const lotesSubquery = `SELECT CAST(numero_lote AS VARCHAR) as numero_lote FROM control_lotes WHERE ${lotesWhere}`;
 
     // ============================================================
     // FILTROS DE inconsistencias
@@ -135,11 +136,11 @@ export async function GET(request: NextRequest) {
           SELECT 
             COALESCE(SUM(sub.valor_total), 0) as valorTotalInconsistencias
           FROM (
-            SELECT i.Numero_factura, i.codigo_del_servicio, MAX(i.valor_total) as valor_total
+            SELECT i."Numero_factura", i.codigo_del_servicio, MAX(i.valor_total) as valor_total
             FROM inconsistencias i
             INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
             WHERE ${incWhere}
-            GROUP BY i.Numero_factura, i.codigo_del_servicio
+            GROUP BY i."Numero_factura", i.codigo_del_servicio
           ) sub
         `;
 
@@ -173,14 +174,14 @@ export async function GET(request: NextRequest) {
           FROM (
             SELECT 
               i.tipo_validacion,
-              i.Numero_factura,
+              i."Numero_factura",
               i.codigo_del_servicio,
               COUNT(*) as cnt,
               MAX(i.valor_total) as valor_dedup
             FROM inconsistencias i
             INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
             WHERE ${incWhere}
-            GROUP BY i.tipo_validacion, i.Numero_factura, i.codigo_del_servicio
+            GROUP BY i.tipo_validacion, i."Numero_factura", i.codigo_del_servicio
           ) sub
           INNER JOIN par_validaciones p ON sub.tipo_validacion = p.tipo_validacion
           GROUP BY sub.tipo_validacion, p.Recomendación, p.Tipo_robot
@@ -212,14 +213,14 @@ export async function GET(request: NextRequest) {
           FROM (
             SELECT 
               COALESCE(i.origen, 'Sin origen') as origen,
-              i.Numero_factura,
+              i."Numero_factura",
               i.codigo_del_servicio,
               COUNT(*) as cnt,
               MAX(i.valor_total) as valor_dedup
             FROM inconsistencias i
             INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
             WHERE ${incWhere}
-            GROUP BY i.origen, i.Numero_factura, i.codigo_del_servicio
+            GROUP BY i.origen, i."Numero_factura", i.codigo_del_servicio
           ) sub
           GROUP BY sub.origen
           ORDER BY cantidad_hallazgos DESC
