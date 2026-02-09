@@ -22,33 +22,33 @@ export async function createRevisionFacturasView(): Promise<void> {
   await prisma.$executeRawUnsafe(`
     CREATE OR REPLACE VIEW revision_facturas AS
     WITH cte_errores AS (
-      SELECT DISTINCT "Numero_factura"
-      FROM inconsistencias
+      SELECT DISTINCT i."Numero_factura"
+      FROM inconsistencias i
+      LEFT JOIN par_validaciones p ON p.tipo_validacion::text = i.tipo_validacion::text
+      WHERE p.mostrar_reporte = 1
     ),
     facturas_primera AS (
-      SELECT DISTINCT f."Numero_factura"
-      FROM furips1_consolidado f
-      JOIN control_lotes cl ON f.numero_lote = cl.numero_lote
-      WHERE cl.tipo_envio = 'Primera vez'
+      SELECT DISTINCT f_1."Numero_factura"
+      FROM furips1_consolidado f_1
+      JOIN control_lotes cl ON f_1.numero_lote = cl.numero_lote
+      WHERE cl.tipo_envio::text = 'Primera vez'::text
     ),
     facturas_revalidacion AS (
-      SELECT DISTINCT f."Numero_factura"
-      FROM furips1_consolidado f
-      JOIN control_lotes cl ON f.numero_lote = cl.numero_lote
-      WHERE cl.tipo_envio = 'Revalidacion'
+      SELECT DISTINCT f_1."Numero_factura"
+      FROM furips1_consolidado f_1
+      JOIN control_lotes cl ON f_1.numero_lote = cl.numero_lote
+      WHERE cl.tipo_envio::text = 'Revalidacion'::text
     )
     SELECT
       CASE
-        WHEN fp."Numero_factura" IS NOT NULL AND err."Numero_factura" IS NOT NULL THEN 'Ver hallazgos'
-        ELSE 'Ok Sin hallazgos'
+        WHEN fp."Numero_factura" IS NOT NULL AND err."Numero_factura" IS NOT NULL THEN 'Ver hallazgos'::text
+        ELSE 'Ok Sin hallazgos'::text
       END AS "Primera_revision",
       CASE
-        WHEN fp."Numero_factura" IS NULL OR err."Numero_factura" IS NULL THEN 'No requiere segunda revisión'
-        WHEN fp."Numero_factura" IS NOT NULL AND err."Numero_factura" IS NOT NULL 
-             AND fr."Numero_factura" IS NOT NULL AND err."Numero_factura" IS NOT NULL THEN 'Ver hallazgos'
-        WHEN fp."Numero_factura" IS NOT NULL AND err."Numero_factura" IS NOT NULL 
-             AND fr."Numero_factura" IS NOT NULL AND err."Numero_factura" IS NULL THEN 'Ok sin hallazgos'
-        ELSE 'No fue reenviada'
+        WHEN fp."Numero_factura" IS NULL OR err."Numero_factura" IS NULL THEN 'No requiere segunda revisión'::text
+        WHEN fp."Numero_factura" IS NOT NULL AND err."Numero_factura" IS NOT NULL AND fr."Numero_factura" IS NOT NULL AND err."Numero_factura" IS NOT NULL THEN 'Ver hallazgos'::text
+        WHEN fp."Numero_factura" IS NOT NULL AND err."Numero_factura" IS NOT NULL AND fr."Numero_factura" IS NOT NULL AND err."Numero_factura" IS NULL THEN 'Ok sin hallazgos'::text
+        ELSE 'No fue reenviada'::text
       END AS segunda_revision,
       f.id,
       f."Numero_radicado_anterior",
@@ -121,9 +121,10 @@ export async function createRevisionFacturasView(): Promise<void> {
       f.numero_lote,
       f.usuario
     FROM furips1_consolidado f
-    LEFT JOIN cte_errores err ON f."Numero_factura" = err."Numero_factura"
-    LEFT JOIN facturas_primera fp ON f."Numero_factura" = fp."Numero_factura"
-    LEFT JOIN facturas_revalidacion fr ON f."Numero_factura" = fr."Numero_factura"
+    LEFT JOIN cte_errores err ON f."Numero_factura"::text = err."Numero_factura"
+    LEFT JOIN facturas_primera fp ON f."Numero_factura"::text = fp."Numero_factura"::text
+    LEFT JOIN facturas_revalidacion fr ON f."Numero_factura"::text = fr."Numero_factura"::text
+    ORDER BY numero_lote
   `);
   console.log("✅ Vista revision_facturas creada");
 }
