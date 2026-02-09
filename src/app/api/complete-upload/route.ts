@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       valorTotal,
       furtranCantidad,
       furtranValor,
-      folderPath,
+      folderPath: initialFolderPath,
       uploadedFiles, // Array de keys que ya se subieron a R2
       // Contenido de archivos FURIPS (son pequeños, ~50KB cada uno)
       furips1Content,
@@ -43,6 +43,9 @@ export async function POST(request: NextRequest) {
       furtranContent,
       furtranName,
     } = body;
+
+    // folderPath puede venir del body o ser actualizado después de subir archivos FURIPS
+    let folderPath = initialFolderPath || "";
 
     if (!idEnvio || idEnvio.trim() === "") {
       return NextResponse.json(
