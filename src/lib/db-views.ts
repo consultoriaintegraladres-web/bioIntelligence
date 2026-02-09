@@ -7,25 +7,12 @@ import { prisma } from "@/lib/prisma";
  */
 export async function ensureViewsExist(): Promise<void> {
   try {
-    // Check if revision_facturas view exists
-    const viewCheck = await prisma.$queryRawUnsafe<any[]>(`
-      SELECT table_name FROM information_schema.views 
-      WHERE table_schema = 'public' AND table_name IN ('revision_facturas', 'vista_consolidado_facturas_lote')
-    `);
-    const existingViews = viewCheck.map((v: any) => v.table_name);
+    console.log("🔧 Asegurando que las vistas estén actualizadas en PostgreSQL...");
     
-    if (existingViews.includes('revision_facturas') && existingViews.includes('vista_consolidado_facturas_lote')) {
-      return; // Both views exist, nothing to do
-    }
-
-    console.log("🔧 Creando vistas faltantes en PostgreSQL...");
-
-    if (!existingViews.includes('revision_facturas')) {
-      await createRevisionFacturasView();
-    }
-    if (!existingViews.includes('vista_consolidado_facturas_lote')) {
-      await createConsolidadoFacturasView();
-    }
+    // Always recreate views to ensure they have the latest definition
+    // CREATE OR REPLACE is safe and will update existing views
+    await createRevisionFacturasView();
+    await createConsolidadoFacturasView();
   } catch (error: any) {
     console.error("⚠️ Error verificando/creando vistas:", error.message);
   }
@@ -144,19 +131,33 @@ export async function createRevisionFacturasView(): Promise<void> {
 export async function createConsolidadoFacturasView(): Promise<void> {
   await prisma.$executeRawUnsafe(`
     CREATE OR REPLACE VIEW vista_consolidado_facturas_lote AS
-    SELECT
+    SELECT 
       f.numero_lote,
       COUNT(DISTINCT f."Numero_factura") AS conteo_factura,
-      COALESCE(SUM(f."Total_reclamado_por_amparo_gastos_medicos_quirurgicos"), 0) AS total_suma_reclamado,
-      COUNT(DISTINCT CASE WHEN err."Numero_factura" IS NOT NULL THEN f."Numero_factura" END) AS con_hallazgos,
-      COUNT(DISTINCT CASE WHEN err."Numero_factura" IS NULL THEN f."Numero_factura" END) AS sin_hallazgos,
+      COALESCE(SUM(f."Total_reclamado_por_amparo_gastos_medicos_quirurgicos"), 0::numeric) AS total_suma_reclamado,
+      COUNT(DISTINCT
+        CASE
+          WHEN err."Numero_factura" IS NOT NULL THEN f."Numero_factura"
+          ELSE NULL::character varying
+        END) AS con_hallazgos,
+      COUNT(DISTINCT
+        CASE
+          WHEN err."Numero_factura" IS NULL THEN f."Numero_factura"
+          ELSE NULL::character varying
+        END) AS sin_hallazgos,
       COUNT(err."Numero_factura") AS conteo_hallazgos_criticos,
-      COALESCE(SUM(CASE WHEN err."Numero_factura" IS NOT NULL THEN f."Total_reclamado_por_amparo_gastos_medicos_quirurgicos" ELSE 0 END), 0) AS valor_total_hallazgos_criticos
+      COALESCE(SUM(
+        CASE
+          WHEN err."Numero_factura" IS NOT NULL THEN f."Total_reclamado_por_amparo_gastos_medicos_quirurgicos"
+          ELSE 0::numeric
+        END), 0::numeric) AS valor_total_hallazgos_criticos
     FROM furips1_consolidado f
     LEFT JOIN (
-      SELECT DISTINCT "Numero_factura"
-      FROM inconsistencias
-    ) err ON f."Numero_factura" = err."Numero_factura"
+      SELECT DISTINCT i."Numero_factura"
+      FROM inconsistencias i
+      LEFT JOIN par_validaciones p ON p.tipo_validacion::text = i.tipo_validacion::text
+      WHERE p.mostrar_reporte = 1 AND i.origen IN ('FURIPS 1', 'INFOPOL', 'Certificado de agotamiento', 'FURTRAN')
+    ) err ON f."Numero_factura"::text = err."Numero_factura"
     GROUP BY f.numero_lote
   `);
   console.log("✅ Vista vista_consolidado_facturas_lote creada");
