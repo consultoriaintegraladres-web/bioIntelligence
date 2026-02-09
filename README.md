@@ -143,3 +143,5 @@ npm run start        # Servidor de producción
 npm run db:generate  # Generar cliente Prisma
 npm run db:seed      # Seed de usuarios
 ```
+
+---
