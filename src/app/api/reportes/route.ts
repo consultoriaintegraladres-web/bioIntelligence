@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// Helper to safely convert BigInt/Decimal to Number
+function safeNumber(val: any): number {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === "bigint") return Number(val);
+  if (typeof val === "object" && typeof val.toNumber === "function") return val.toNumber();
+  return Number(val) || 0;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -24,21 +32,23 @@ export async function GET(request: NextRequest) {
 
     // ============================================================
     // FILTROS DE control_lotes (para WHERE directo)
+    // Nota: control_lotes tiene columnas en minúsculas excepto
+    // "codigo_habilitación" (con tilde)
     // ============================================================
     const lotesFilters: string[] = [];
     
     // Excluir RG
     lotesFilters.push("nombre_envio NOT ILIKE '%RG%'");
     
-    // Codigo habilitacion
+    // Codigo habilitacion (columna con tilde)
     const canViewAllIPS = session.user.role === "ADMIN" || session.user.role === "COORDINADOR";
     if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
-        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%'`);
+        lotesFilters.push(`"codigo_habilitación" LIKE '${userCodigo}%'`);
       }
     } else if (codigo_habilitacion && codigo_habilitacion.trim() !== "") {
-      lotesFilters.push(`codigo_habilitación ILIKE '%${codigo_habilitacion}%'`);
+      lotesFilters.push(`"codigo_habilitación" ILIKE '%${codigo_habilitacion}%'`);
     }
 
     // Nombre IPS
@@ -65,31 +75,32 @@ export async function GET(request: NextRequest) {
 
     // ============================================================
     // SUBCONSULTA: SELECT numero_lote FROM control_lotes WHERE [filtros]
-    // CAST a VARCHAR porque lote_de_carga es VARCHAR y numero_lote es INTEGER
+    // CAST a VARCHAR porque lote_de_carga en inconsistencias es VARCHAR
+    // y numero_lote en control_lotes es INTEGER
     // ============================================================
-    const lotesSubquery = `SELECT CAST(numero_lote AS VARCHAR) as numero_lote FROM control_lotes WHERE ${lotesWhere}`;
+    const lotesSubquery = `SELECT CAST(numero_lote AS VARCHAR) FROM control_lotes WHERE ${lotesWhere}`;
 
     // ============================================================
     // FILTROS DE inconsistencias
+    // IMPORTANTE: Columnas con mayúsculas llevan comillas dobles
     // ============================================================
     const incFilters: string[] = [];
     
     // FILTRO PRINCIPAL: Solo mostrar donde mostrar_reporte = 1
     incFilters.push("p.mostrar_reporte = 1");
     
-    // RELACIÓN: lote_de_carga IN (SELECT numero_lote FROM control_lotes WHERE ...)
-    // Este filtro ya incluye: IPS, fecha, codigo_habilitacion, tipo_envio, nombre_envio
+    // RELACIÓN con control_lotes
     incFilters.push(`i.lote_de_carga IN (${lotesSubquery})`);
     
-    // Codigo habilitacion en inconsistencias (solo para usuarios no-admin/coordinador, como seguridad extra)
+    // Codigo habilitacion en inconsistencias (seguridad extra para no-admin)
     if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
-        incFilters.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '${userCodigo}%'`);
+        incFilters.push(`i."Codigo_habilitacion_prestador_servicios_salud" LIKE '${userCodigo}%'`);
       }
     }
 
-    // Lote de carga directo (filtro adicional si se especifica un lote específico)
+    // Lote de carga directo
     if (lote_de_carga && lote_de_carga.trim() !== "") {
       incFilters.push(`i.lote_de_carga = '${lote_de_carga}'`);
     }
@@ -104,19 +115,16 @@ export async function GET(request: NextRequest) {
       incFilters.push(`i.origen = '${origen}'`);
     }
 
-    // NOTA: No aplicamos filtro de IPS, fecha ni codigo_habilitacion (admin) aquí 
-    // porque ya están filtrados a través de la subconsulta de control_lotes
-
     const incWhere = incFilters.join(" AND ");
 
     switch (tipo) {
       case "kpis": {
-        // KPIs de control_lotes (filtrado directo)
+        // KPIs de control_lotes - aliases con comillas dobles para preservar case
         const lotesQuery = `
           SELECT 
-            COUNT(*) as totalLotes,
-            COALESCE(SUM(cantidad_facturas), 0) as totalFacturas,
-            COALESCE(SUM(valor_reclamado), 0) as valorTotalReclamado
+            COUNT(*) as "totalLotes",
+            COALESCE(SUM(cantidad_facturas), 0) as "totalFacturas",
+            COALESCE(SUM(valor_reclamado), 0) as "valorTotalReclamado"
           FROM control_lotes
           WHERE ${lotesWhere}
         `;
@@ -124,17 +132,16 @@ export async function GET(request: NextRequest) {
         // KPIs de inconsistencias - cantidad total
         const inconsistenciasCountQuery = `
           SELECT 
-            COUNT(*) as totalInconsistencias
+            COUNT(*) as "totalInconsistencias"
           FROM inconsistencias i
           INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
           WHERE ${incWhere}
         `;
 
-        // KPIs de inconsistencias - valor deduplicado por (Numero_factura, codigo_del_servicio)
-        // Para evitar duplicar el valor cuando la misma factura+item tiene múltiples orígenes
+        // KPIs de inconsistencias - valor deduplicado
         const inconsistenciasValorQuery = `
           SELECT 
-            COALESCE(SUM(sub.valor_total), 0) as valorTotalInconsistencias
+            COALESCE(SUM(sub.valor_total), 0) as "valorTotalInconsistencias"
           FROM (
             SELECT i."Numero_factura", i.codigo_del_servicio, MAX(i.valor_total) as valor_total
             FROM inconsistencias i
@@ -144,33 +151,38 @@ export async function GET(request: NextRequest) {
           ) sub
         `;
 
+        console.log("[REPORTES] KPIs lotesQuery:", lotesQuery.substring(0, 200));
+
         const [lotesResult, inconsistenciasCountResult, inconsistenciasValorResult] = await Promise.all([
           prisma.$queryRawUnsafe<any[]>(lotesQuery),
           prisma.$queryRawUnsafe<any[]>(inconsistenciasCountQuery),
           prisma.$queryRawUnsafe<any[]>(inconsistenciasValorQuery),
         ]);
 
+        console.log("[REPORTES] KPIs lotesResult:", lotesResult[0]);
+        console.log("[REPORTES] KPIs incCount:", inconsistenciasCountResult[0]);
+        console.log("[REPORTES] KPIs incValor:", inconsistenciasValorResult[0]);
+
         return NextResponse.json({
           success: true,
           data: {
-            totalLotes: Number(lotesResult[0]?.totalLotes || 0),
-            totalFacturas: Number(lotesResult[0]?.totalFacturas || 0),
-            valorTotalReclamado: Number(lotesResult[0]?.valorTotalReclamado || 0),
-            totalInconsistencias: Number(inconsistenciasCountResult[0]?.totalInconsistencias || 0),
-            valorTotalInconsistencias: Number(inconsistenciasValorResult[0]?.valorTotalInconsistencias || 0),
+            totalLotes: safeNumber(lotesResult[0]?.totalLotes),
+            totalFacturas: safeNumber(lotesResult[0]?.totalFacturas),
+            valorTotalReclamado: safeNumber(lotesResult[0]?.valorTotalReclamado),
+            totalInconsistencias: safeNumber(inconsistenciasCountResult[0]?.totalInconsistencias),
+            valorTotalInconsistencias: safeNumber(inconsistenciasValorResult[0]?.valorTotalInconsistencias),
           },
         });
       }
 
       case "resumen_validacion": {
-        // Valor deduplicado: para cada tipo_validacion, sumamos solo un valor por (Numero_factura, codigo_del_servicio)
         const query = `
           SELECT 
             sub.tipo_validacion,
-            SUM(sub.cnt) as cantidad_registros,
-            COALESCE(SUM(sub.valor_dedup), 0) as valor_total,
-            p.Recomendación as Recomendacion,
-            p.Tipo_robot
+            SUM(sub.cnt) as "cantidad_registros",
+            COALESCE(SUM(sub.valor_dedup), 0) as "valor_total",
+            p."Recomendación" as "Recomendacion",
+            p."Tipo_robot"
           FROM (
             SELECT 
               i.tipo_validacion,
@@ -184,8 +196,8 @@ export async function GET(request: NextRequest) {
             GROUP BY i.tipo_validacion, i."Numero_factura", i.codigo_del_servicio
           ) sub
           INNER JOIN par_validaciones p ON sub.tipo_validacion = p.tipo_validacion
-          GROUP BY sub.tipo_validacion, p.Recomendación, p.Tipo_robot
-          ORDER BY cantidad_registros DESC
+          GROUP BY sub.tipo_validacion, p."Recomendación", p."Tipo_robot"
+          ORDER BY "cantidad_registros" DESC
           LIMIT 20
         `;
 
@@ -195,8 +207,8 @@ export async function GET(request: NextRequest) {
           success: true,
           data: result.map((item) => ({
             tipo_validacion: item.tipo_validacion || "Sin clasificar",
-            cantidad_registros: Number(item.cantidad_registros),
-            valor_total: Number(item.valor_total),
+            cantidad_registros: safeNumber(item.cantidad_registros),
+            valor_total: safeNumber(item.valor_total),
             Recomendacion: item.Recomendacion,
             Tipo_robot: item.Tipo_robot,
           })),
@@ -204,12 +216,11 @@ export async function GET(request: NextRequest) {
       }
 
       case "resumen_origen": {
-        // Valor deduplicado por (Numero_factura, codigo_del_servicio) dentro de cada origen
         const query = `
           SELECT 
             sub.origen,
-            SUM(sub.cnt) as cantidad_hallazgos,
-            COALESCE(SUM(sub.valor_dedup), 0) as valor_total
+            SUM(sub.cnt) as "cantidad_hallazgos",
+            COALESCE(SUM(sub.valor_dedup), 0) as "valor_total"
           FROM (
             SELECT 
               COALESCE(i.origen, 'Sin origen') as origen,
@@ -223,7 +234,7 @@ export async function GET(request: NextRequest) {
             GROUP BY i.origen, i."Numero_factura", i.codigo_del_servicio
           ) sub
           GROUP BY sub.origen
-          ORDER BY cantidad_hallazgos DESC
+          ORDER BY "cantidad_hallazgos" DESC
         `;
 
         const result = await prisma.$queryRawUnsafe<any[]>(query);
@@ -232,8 +243,8 @@ export async function GET(request: NextRequest) {
           success: true,
           data: result.map((item) => ({
             origen: item.origen,
-            cantidad_hallazgos: Number(item.cantidad_hallazgos),
-            valor_total: Number(item.valor_total),
+            cantidad_hallazgos: safeNumber(item.cantidad_hallazgos),
+            valor_total: safeNumber(item.valor_total),
           })),
         });
       }
@@ -242,7 +253,7 @@ export async function GET(request: NextRequest) {
         const baseConditions = ["p.mostrar_reporte = 1"];
         
         if (session.user.role !== "ADMIN" && session.user.codigoHabilitacion) {
-          baseConditions.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '${session.user.codigoHabilitacion.substring(0, 10)}%'`);
+          baseConditions.push(`i."Codigo_habilitacion_prestador_servicios_salud" LIKE '${session.user.codigoHabilitacion.substring(0, 10)}%'`);
         }
 
         const query = `
@@ -266,7 +277,7 @@ export async function GET(request: NextRequest) {
         const baseConditions = ["p.mostrar_reporte = 1"];
         
         if (session.user.role !== "ADMIN" && session.user.codigoHabilitacion) {
-          baseConditions.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '${session.user.codigoHabilitacion.substring(0, 10)}%'`);
+          baseConditions.push(`i."Codigo_habilitacion_prestador_servicios_salud" LIKE '${session.user.codigoHabilitacion.substring(0, 10)}%'`);
         }
 
         const query = `
@@ -289,7 +300,7 @@ export async function GET(request: NextRequest) {
         const baseConditions = ["p.mostrar_reporte = 1"];
         
         if (session.user.role !== "ADMIN" && session.user.codigoHabilitacion) {
-          baseConditions.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '${session.user.codigoHabilitacion.substring(0, 10)}%'`);
+          baseConditions.push(`i."Codigo_habilitacion_prestador_servicios_salud" LIKE '${session.user.codigoHabilitacion.substring(0, 10)}%'`);
         }
 
         const query = `

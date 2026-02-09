@@ -28,28 +28,23 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const tipo_envio = searchParams.get("tipo_envio"); // 'Primera vez' o 'Revalidacion'
+    const tipo_envio = searchParams.get("tipo_envio");
     const numero_lote = searchParams.get("numero_lote");
     const numero_factura = searchParams.get("numero_factura");
     const limit = searchParams.get("limit") || "5000";
     const page = searchParams.get("page") || "1";
 
-    // ============================================================
-    // LÓGICA SIMPLE: filtrar inconsistencias por Numero_factura
-    // y lote_de_carga (numero_lote de la vista revision_facturas)
-    // ============================================================
     const conditions: string[] = [];
 
     // Filtro principal: solo hallazgos con mostrar_reporte = 1
     conditions.push("p.mostrar_reporte = 1");
 
-    // Filtrar por Numero_factura (obligatorio para este endpoint)
-    // Usar TRIM porque Numero_factura en inconsistencias es LongText y puede tener espacios
+    // Filtrar por Numero_factura - comillas dobles por mayúscula
     if (numero_factura && numero_factura.trim() !== "") {
-      conditions.push(`TRIM(i.Numero_factura) = TRIM('${numero_factura.trim()}')`);
+      conditions.push(`TRIM(i."Numero_factura") = TRIM('${numero_factura.trim()}')`);
     }
 
-    // Filtrar por numero_lote (que mapea a lote_de_carga en inconsistencias)
+    // Filtrar por numero_lote (que mapea a lote_de_carga)
     if (numero_lote && numero_lote.trim() !== "") {
       conditions.push(`TRIM(i.lote_de_carga) = TRIM('${numero_lote.trim()}')`);
     }
@@ -58,7 +53,7 @@ export async function GET(request: NextRequest) {
     if (session.user.role !== "ADMIN") {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
-        conditions.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '${userCodigo}%'`);
+        conditions.push(`i."Codigo_habilitacion_prestador_servicios_salud" LIKE '${userCodigo}%'`);
       }
     }
 
@@ -68,19 +63,19 @@ export async function GET(request: NextRequest) {
 
     // Count query
     const countQuery = `
-      SELECT CAST(COUNT(*) AS INTEGER) as total
+      SELECT CAST(COUNT(*) AS INTEGER) as "total"
       FROM inconsistencias i
       INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
       WHERE ${whereClause}
     `;
 
-    // Data query
+    // Data query - columnas con mayúsculas van con comillas dobles
     const dataQuery = `
       SELECT 
         i.inconsistencia_id,
-        i.Numero_factura,
-        i.Codigo_habilitacion_prestador_servicios_salud,
-        i.IPS,
+        i."Numero_factura",
+        i."Codigo_habilitacion_prestador_servicios_salud",
+        i."IPS",
         i.origen,
         i.tipo_validacion,
         i.observacion,

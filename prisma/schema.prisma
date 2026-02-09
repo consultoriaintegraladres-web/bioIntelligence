@@ -51,6 +51,7 @@ model Inconsistencia {
   fecha                                         DateTime? @db.Date
   lote_de_carga                                 String?   @db.VarChar(50)
   id_factura_furips1                            String?   @db.VarChar(1000)
+  id_inconsistencia_inicial                     Int?
   usuario                                       String?   @db.VarChar(20)
 
   @@map("inconsistencias")

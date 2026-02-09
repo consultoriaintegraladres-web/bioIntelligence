@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// Helper to safely convert BigInt/Decimal to Number
+function safeNumber(val: any): number {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === "bigint") return Number(val);
+  if (typeof val === "object" && typeof val.toNumber === "function") return val.toNumber();
+  return Number(val) || 0;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -32,106 +40,100 @@ export async function GET(request: NextRequest) {
     // ============================================================
     const lotesFilters: string[] = [];
     
-    // Excluir RG
     lotesFilters.push("nombre_envio NOT ILIKE '%RG%'");
     
-    // Codigo habilitacion
     const canViewAllIPS = session.user.role === "ADMIN" || session.user.role === "COORDINADOR";
     if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
-        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%'`);
+        lotesFilters.push(`"codigo_habilitación" LIKE '${userCodigo}%'`);
       }
     } else if (codigo_habilitacion && codigo_habilitacion.trim() !== "") {
-      lotesFilters.push(`codigo_habilitación ILIKE '%${codigo_habilitacion}%'`);
+      lotesFilters.push(`"codigo_habilitación" ILIKE '%${codigo_habilitacion}%'`);
     }
 
-    // Nombre IPS
     if (nombre_ips && nombre_ips.trim() !== "") {
       lotesFilters.push(`nombre_ips ILIKE '%${nombre_ips}%'`);
     }
 
-    // Fecha creacion
     if (fecha_inicio && fecha_fin) {
       lotesFilters.push(`fecha_creacion >= '${fecha_inicio}' AND fecha_creacion <= '${fecha_fin}'`);
     }
 
-    // Nombre envio
     if (nombre_envio && nombre_envio.trim() !== "") {
       lotesFilters.push(`nombre_envio ILIKE '%${nombre_envio}%'`);
     }
 
-    // Tipo envio
     if (tipo_envio && tipo_envio.trim() !== "") {
       lotesFilters.push(`tipo_envio = '${tipo_envio}'`);
     }
 
     const lotesWhere = lotesFilters.join(" AND ");
 
-    // SUBCONSULTA: SELECT numero_lote FROM control_lotes WHERE [filtros]
-    const lotesSubquery = `SELECT numero_lote FROM control_lotes WHERE ${lotesWhere}`;
+    // SUBCONSULTA con CAST por tipo VARCHAR vs INTEGER
+    const lotesSubquery = `SELECT CAST(numero_lote AS VARCHAR) FROM control_lotes WHERE ${lotesWhere}`;
 
     // ============================================================
     // FILTROS DE inconsistencias
+    // IMPORTANTE: Columnas con mayúsculas requieren comillas dobles en PostgreSQL
     // ============================================================
     const conditions: string[] = [];
     
-    // Filtro principal: mostrar_reporte = 1
     conditions.push("p.mostrar_reporte = 1");
-    
-    // RELACIÓN: lote_de_carga IN (SELECT numero_lote FROM control_lotes WHERE ...)
     conditions.push(`i.lote_de_carga IN (${lotesSubquery})`);
 
-    // Codigo habilitacion (solo para usuarios no admin/coordinador, para seguridad)
     if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
-        conditions.push(`i.Codigo_habilitacion_prestador_servicios_salud LIKE '${userCodigo}%'`);
+        conditions.push(`i."Codigo_habilitacion_prestador_servicios_salud" LIKE '${userCodigo}%'`);
       }
     }
-
-    // NOTA: No aplicamos filtro de IPS ni fecha aquí porque ya están filtrados 
-    // a través de la subconsulta de control_lotes (lote_de_carga IN ...)
 
     if (tipo_validacion && tipo_validacion !== "all" && tipo_validacion !== "") {
       conditions.push(`i.tipo_validacion LIKE '%${tipo_validacion}%'`);
     }
 
     if (numero_factura) {
-      conditions.push(`i.Numero_factura LIKE '%${numero_factura}%'`);
+      conditions.push(`i."Numero_factura" LIKE '%${numero_factura}%'`);
     }
 
     if (origen && origen !== "all" && origen !== "") {
       conditions.push(`i.origen = '${origen}'`);
     }
 
-    // Lote de carga directo (filtro adicional si se especifica un lote específico)
     if (lote_de_carga && lote_de_carga.trim() !== "") {
       conditions.push(`i.lote_de_carga = '${lote_de_carga}'`);
     }
 
-    // Search filter - busca por factura, origen, tipo_validacion, descripcion_servicio
+    // Search filter - columnas con mayúsculas van con comillas dobles
     if (search) {
-      conditions.push(`(i.Numero_factura LIKE '%${search}%' OR i.IPS LIKE '%${search}%' OR i.origen LIKE '%${search}%' OR i.tipo_validacion LIKE '%${search}%' OR i.descripcion_servicio LIKE '%${search}%' OR i.observacion LIKE '%${search}%')`);
+      conditions.push(`(
+        i."Numero_factura" ILIKE '%${search}%' 
+        OR i."IPS" ILIKE '%${search}%' 
+        OR i.origen ILIKE '%${search}%' 
+        OR i.tipo_validacion ILIKE '%${search}%' 
+        OR i.descripcion_servicio ILIKE '%${search}%' 
+        OR i.observacion ILIKE '%${search}%'
+      )`);
     }
 
     const whereClause = conditions.join(" AND ");
 
     // Count query
     const countQuery = `
-      SELECT COUNT(*) as total
+      SELECT COUNT(*) as "total"
       FROM inconsistencias i
       INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
       WHERE ${whereClause}
     `;
 
-    // Data query
+    // Data query - columnas con mayúsculas van con comillas dobles
     const dataQuery = `
       SELECT 
         i.inconsistencia_id,
-        i.Numero_factura,
-        i.Codigo_habilitacion_prestador_servicios_salud,
-        i.IPS,
+        i."Numero_factura",
+        i."Codigo_habilitacion_prestador_servicios_salud",
+        i."IPS",
         i.origen,
         i.tipo_validacion,
         i.observacion,
@@ -157,14 +159,16 @@ export async function GET(request: NextRequest) {
       prisma.$queryRawUnsafe<any[]>(dataQuery),
     ]);
 
-    const total = Number(countResult[0]?.total || 0);
+    const total = safeNumber(countResult[0]?.total);
 
     // Serialize data
     const serializedData = data.map((item) => ({
       ...item,
+      inconsistencia_id: safeNumber(item.inconsistencia_id),
       Numero_factura: item.Numero_factura?.substring(0, 12) || null,
       valor_unitario: item.valor_unitario?.toString() || null,
       valor_total: item.valor_total?.toString() || null,
+      cantidad: safeNumber(item.cantidad),
     }));
 
     return NextResponse.json({

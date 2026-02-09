@@ -10,10 +10,8 @@ function serializeResults(data: any[]): any[] {
       if (typeof value === "bigint") {
         serialized[key] = Number(value);
       } else if (value !== null && value !== undefined && typeof value === "object" && "toNumber" in value && typeof (value as any).toNumber === "function") {
-        // Handle Prisma Decimal
         serialized[key] = (value as any).toNumber();
       } else if (value !== null && value !== undefined && typeof value === "object" && !(value instanceof Date) && typeof value.toString === "function") {
-        // Handle other numeric-like objects
         const str = value.toString();
         const num = Number(str);
         serialized[key] = isNaN(num) ? str : num;
@@ -48,40 +46,34 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // ============================================================
-    // FILTROS DE control_lotes (para subquery cuando no hay lote directo)
+    // FILTROS DE control_lotes
     // ============================================================
     const lotesFilters: string[] = [];
     
-    // Excluir RG
     lotesFilters.push("nombre_envio NOT ILIKE '%RG%'");
     
-    // Codigo habilitacion
     const canViewAllIPS = session.user.role === "ADMIN" || session.user.role === "COORDINADOR";
     if (!canViewAllIPS) {
       const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
       if (userCodigo) {
-        lotesFilters.push(`codigo_habilitación LIKE '${userCodigo}%'`);
+        lotesFilters.push(`"codigo_habilitación" LIKE '${userCodigo}%'`);
       }
     } else if (codigo_habilitacion && codigo_habilitacion.trim() !== "") {
-      lotesFilters.push(`codigo_habilitación ILIKE '%${codigo_habilitacion}%'`);
+      lotesFilters.push(`"codigo_habilitación" ILIKE '%${codigo_habilitacion}%'`);
     }
 
-    // Nombre IPS
     if (nombre_ips && nombre_ips.trim() !== "") {
       lotesFilters.push(`nombre_ips ILIKE '%${nombre_ips}%'`);
     }
 
-    // Fecha creacion
     if (fecha_inicio && fecha_fin) {
       lotesFilters.push(`fecha_creacion >= '${fecha_inicio}' AND fecha_creacion <= '${fecha_fin}'`);
     }
 
-    // Nombre envio
     if (nombre_envio && nombre_envio.trim() !== "") {
       lotesFilters.push(`nombre_envio ILIKE '%${nombre_envio}%'`);
     }
 
-    // Tipo envio
     if (tipo_envio && tipo_envio.trim() !== "") {
       lotesFilters.push(`tipo_envio = '${tipo_envio}'`);
     }
@@ -91,55 +83,50 @@ export async function GET(request: NextRequest) {
     // ============================================================
     const whereConditions: string[] = [];
     
-    // Si hay un numero_lote específico, filtrar directamente
     if (numero_lote && numero_lote.trim() !== "") {
       whereConditions.push(`numero_lote = ${parseInt(numero_lote)}`);
     } else {
-      // Usar filtros de control_lotes para obtener lotes válidos
       const lotesWhere = lotesFilters.join(" AND ");
       whereConditions.push(`numero_lote IN (SELECT numero_lote FROM control_lotes WHERE ${lotesWhere})`);
     }
 
-    // Search filter
+    // Search filter - columnas con mayúsculas van con comillas dobles
     if (search) {
-      whereConditions.push(`(Numero_factura ILIKE '%${search}%' OR CAST(numero_lote AS TEXT) ILIKE '%${search}%')`);
+      whereConditions.push(`("Numero_factura" ILIKE '%${search}%' OR CAST(numero_lote AS TEXT) ILIKE '%${search}%')`);
     }
 
     const whereClause = whereConditions.join(" AND ");
 
     console.log("📋 revision_facturas WHERE:", whereClause);
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'revision-facturas/route.ts:109',message:'WHERE clause built',data:{whereClause,lotesFilters},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
 
-    // Count query - CAST to INTEGER to avoid BigInt serialization issues
+    // Count query
     const countQuery = `
-      SELECT CAST(COUNT(*) AS INTEGER) as total
+      SELECT CAST(COUNT(*) AS INTEGER) as "total"
       FROM revision_facturas
       WHERE ${whereClause}
     `;
 
-    // Data query - use exact column names as defined in the view
+    // Data query - columnas con mayúsculas van con comillas dobles
     const dataQuery = `
       SELECT 
         numero_lote,
-        Numero_factura,
-        Primera_revision,
+        "Numero_factura",
+        "Primera_revision",
         segunda_revision,
-        Total_reclamado_por_amparo_gastos_medicos_quirurgicos
+        "Total_reclamado_por_amparo_gastos_medicos_quirurgicos"
       FROM revision_facturas
       WHERE ${whereClause}
-      ORDER BY numero_lote DESC, Numero_factura ASC
+      ORDER BY numero_lote DESC, "Numero_factura" ASC
       LIMIT ${limit} OFFSET ${skip}
     `;
 
-    // Summary query - KPIs solo de Primera Revisión (usar INTEGER para evitar Decimal/BigInt)
+    // Summary query - columnas con mayúsculas van con comillas dobles
     const summaryQuery = `
       SELECT
-        CAST(SUM(CASE WHEN Primera_revision ILIKE '%Ver hallazgos%' OR Primera_revision ILIKE '%Ver Hallazgos%' THEN 1 ELSE 0 END) AS INTEGER) as facturas_con_hallazgos,
-        CAST(COALESCE(SUM(CASE WHEN Primera_revision ILIKE '%Ver hallazgos%' OR Primera_revision ILIKE '%Ver Hallazgos%' THEN Total_reclamado_por_amparo_gastos_medicos_quirurgicos ELSE 0 END), 0) AS INTEGER) as valor_facturas_con_hallazgos,
-        CAST(SUM(CASE WHEN Primera_revision ILIKE '%Ok%hallazgos%' THEN 1 ELSE 0 END) AS INTEGER) as facturas_ok,
-        CAST(COUNT(*) AS INTEGER) as total_facturas
+        CAST(SUM(CASE WHEN "Primera_revision" ILIKE '%Ver hallazgos%' OR "Primera_revision" ILIKE '%Ver Hallazgos%' THEN 1 ELSE 0 END) AS INTEGER) as "facturas_con_hallazgos",
+        CAST(COALESCE(SUM(CASE WHEN "Primera_revision" ILIKE '%Ver hallazgos%' OR "Primera_revision" ILIKE '%Ver Hallazgos%' THEN "Total_reclamado_por_amparo_gastos_medicos_quirurgicos" ELSE 0 END), 0) AS INTEGER) as "valor_facturas_con_hallazgos",
+        CAST(SUM(CASE WHEN "Primera_revision" ILIKE '%Ok%hallazgos%' THEN 1 ELSE 0 END) AS INTEGER) as "facturas_ok",
+        CAST(COUNT(*) AS INTEGER) as "total_facturas"
       FROM revision_facturas
       WHERE ${whereClause}
     `;
@@ -150,14 +137,9 @@ export async function GET(request: NextRequest) {
       prisma.$queryRawUnsafe<any[]>(summaryQuery),
     ]);
 
-    // Serialize to handle any BigInt values
     const dataResult = serializeResults(rawDataResult);
     const serializedSummary = serializeResults(summaryResult);
     const total = Number(countResult[0]?.total || 0);
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'revision-facturas/route.ts:153',message:'Query success',data:{total,dataCount:dataResult.length,summary:serializedSummary[0]},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
 
     return NextResponse.json({
       data: dataResult,
@@ -176,7 +158,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error("❌ Error fetching revision_facturas:", error.message);
-    console.error("❌ Stack:", error.stack);
     return NextResponse.json(
       { error: "Error al obtener datos de revisión de facturas", details: error.message },
       { status: 500 }

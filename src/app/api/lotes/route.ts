@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
       NOT: {
         nombre_envio: {
           contains: "RG",
+          mode: "insensitive",
         },
       },
     };
@@ -72,6 +73,7 @@ export async function GET(request: NextRequest) {
     if (nombre_ips) {
       where.nombre_ips = {
         contains: nombre_ips,
+        mode: "insensitive",
       };
     }
 
