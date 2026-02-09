@@ -57,7 +57,12 @@ tmp/
 temp/
 *.tmp
 test-*.js
+test-*.ts
 verify-*.js
+verify-*.ts
+
+# Scripts de configuración con credenciales
+setup-env*
 
 # IDE
 .idea/
