@@ -352,6 +352,9 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
     );
   }
 
+  // Top 3 items
+  const top3 = useMemo(() => sortedData.slice(0, 3), [sortedData]);
+
   return (
     <div className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full" />
@@ -390,6 +393,77 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
             <div style={{ fontSize: "22px", fontWeight: 700, color: textColor, fontFamily: "'Inter',system-ui", lineHeight: 1.2 }}>
               {fmt(totalValue)}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Top 3 Ranking ── */}
+      {top3.length > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            left: 16,
+            bottom: 16,
+            zIndex: 15,
+            fontFamily: "'Inter',system-ui,sans-serif",
+          }}
+        >
+          <div
+            style={{
+              background: isLight
+                ? "rgba(255,255,255,0.5)"
+                : "rgba(20,20,55,0.5)",
+              borderRadius: "14px",
+              padding: "12px 16px",
+              border: `1px solid ${isLight ? "rgba(139,92,246,0.15)" : "rgba(139,92,246,0.25)"}`,
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              boxShadow: isLight
+                ? "0 4px 20px rgba(0,0,0,0.06)"
+                : "0 4px 20px rgba(0,0,0,0.2)",
+              minWidth: 200,
+            }}
+          >
+            <div style={{ fontSize: "10px", color: textColor, opacity: 0.45, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontWeight: 600 }}>
+              Top 3 Hallazgos
+            </div>
+            {top3.map((item, i) => {
+              const g = PIE_GRADIENTS[i % PIE_GRADIENTS.length];
+              const medals = ["🥇", "🥈", "🥉"];
+              const truncName = item.name.length > 30 ? item.name.substring(0, 28) + "..." : item.name;
+              return (
+                <div
+                  key={i}
+                  onClick={() => onClickRef.current?.(item.name)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "6px 0",
+                    borderTop: i > 0 ? `1px solid ${isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.06)"}` : "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <span style={{ fontSize: "16px", lineHeight: 1 }}>{medals[i]}</span>
+                  <div style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: g.hex,
+                    flexShrink: 0,
+                    boxShadow: `0 0 6px ${g.base}`,
+                  }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: "11px", fontWeight: 500, color: textColor, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1.3 }}>
+                      {truncName}
+                    </div>
+                    <div style={{ fontSize: "10px", color: textColor, opacity: 0.5 }}>
+                      {fmt(item.value)} · {(item.cantidad || 0).toLocaleString()} hallazgos
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
