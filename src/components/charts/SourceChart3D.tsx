@@ -15,12 +15,39 @@ interface SourceChart3DProps {
   onItemClick?: (origen: string) => void;
 }
 
+// Premium bubble colors matching the bar/pie palette
+const BUBBLE_COLORS = [
+  "rgba(139, 92, 246, 0.88)",
+  "rgba(6, 182, 212, 0.88)",
+  "rgba(244, 63, 94, 0.88)",
+  "rgba(16, 185, 129, 0.88)",
+  "rgba(245, 158, 11, 0.88)",
+  "rgba(59, 130, 246, 0.88)",
+  "rgba(236, 72, 153, 0.88)",
+  "rgba(20, 184, 166, 0.88)",
+  "rgba(99, 102, 241, 0.88)",
+  "rgba(217, 70, 239, 0.88)",
+];
+
+// Lighter border for glossy 3D sphere effect
+const BUBBLE_BORDERS = [
+  "rgba(192, 168, 255, 0.6)",
+  "rgba(127, 234, 252, 0.6)",
+  "rgba(255, 153, 170, 0.6)",
+  "rgba(128, 236, 199, 0.6)",
+  "rgba(253, 212, 112, 0.6)",
+  "rgba(155, 194, 255, 0.6)",
+  "rgba(252, 162, 210, 0.6)",
+  "rgba(118, 232, 218, 0.6)",
+  "rgba(176, 178, 255, 0.6)",
+  "rgba(242, 168, 255, 0.6)",
+];
+
 export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", themeMode = "dark", onItemClick }: SourceChart3DProps) {
   const isLight = themeMode === "light";
-  const textColor = isLight ? "#1a1a1a" : "#ffffff";
-  const gridColor = isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.15)";
+  const textColor = isLight ? "#1e293b" : "#f1f5f9";
+  const gridColor = isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.06)";
 
-  // Store sorted data for click handler
   const sortedDataRef = useMemo(() => {
     if (!data || data.length === 0) return [];
     return [...data].sort((a, b) => b.valor_total - a.valor_total);
@@ -29,7 +56,6 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return null;
 
-    // Sort by valor_total (descending)
     const sortedData = sortedDataRef;
 
     const origenes = sortedData.map((d) => d.origen || "Sin origen");
@@ -37,16 +63,19 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
     const valores = sortedData.map((d) => d.valor_total);
     const valoresMillones = sortedData.map((d) => d.valor_total / 1000000);
 
-    // Format value for display
     const formatValue = (v: number) => {
       if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
       if (v >= 1000) return `$${(v / 1000).toFixed(0)}K`;
       return `$${v.toFixed(0)}`;
     };
 
-    // Bubble sizes based on value
+    // Bubble sizes scaled proportionally
     const maxVal = Math.max(...valoresMillones, 1);
-    const sizes = valoresMillones.map((v) => 40 + (v / maxVal) * 80);
+    const sizes = valoresMillones.map((v) => 35 + (v / maxVal) * 85);
+
+    // Per-bubble colors from the premium palette
+    const colors = sortedData.map((_, i) => BUBBLE_COLORS[i % BUBBLE_COLORS.length]);
+    const borders = sortedData.map((_, i) => BUBBLE_BORDERS[i % BUBBLE_BORDERS.length]);
 
     return [
       {
@@ -54,26 +83,23 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
         y: valoresMillones,
         mode: "text+markers" as const,
         type: "scatter" as const,
-        text: sortedData.map((d, i) => `${formatValue(valores[i])}<br>(${cantidades[i].toLocaleString()})`),
+        text: sortedData.map((_, i) => `${formatValue(valores[i])}<br>(${cantidades[i].toLocaleString()})`),
         textposition: "top center" as const,
-        textfont: { color: textColor, size: 12, family: "system-ui" },
+        textfont: {
+          color: textColor,
+          size: 11,
+          family: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+        },
         marker: {
           size: sizes,
-          color: valoresMillones,
-          colorscale: "Viridis" as const,
-          showscale: true,
-          colorbar: {
-            title: { text: "Valor (M)", font: { color: textColor, size: 14 } },
-            tickfont: { color: textColor, size: 13 },
-            bordercolor: "transparent",
-            bgcolor: "transparent",
-          },
+          color: colors,
           line: {
-            color: isLight ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.3)",
+            color: borders,
             width: 2,
           },
+          opacity: 0.92,
         },
-        hovertemplate: sortedData.map((d, i) => 
+        hovertemplate: sortedData.map((_, i) =>
           `<b>${origenes[i]}</b><br>` +
           `Valor: ${formatValue(valores[i])}<br>` +
           `Cantidad: ${cantidades[i].toLocaleString()}<extra></extra>`
@@ -100,38 +126,81 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
   }
 
   return (
-    <div className="relative w-full h-full">
-    <Plot
-      data={chartData}
-      onPlotClick={handlePlotClick}
-      layout={{
-        autosize: true,
-        paper_bgcolor: "transparent",
-        plot_bgcolor: "transparent",
-        font: { color: textColor, family: "system-ui, -apple-system, sans-serif", size: 14 },
-        xaxis: {
-          title: { text: "Origen / Fuente", font: { size: 16, color: textColor } },
-          tickfont: { size: 14, color: textColor },
-          gridcolor: gridColor,
-          tickangle: -30,
-        },
-        yaxis: {
-          title: { text: "Valor (Millones $)", font: { size: 16, color: textColor } },
-          tickfont: { size: 14, color: textColor },
-          gridcolor: gridColor,
-          tickformat: ",.1f",
-          ticksuffix: "M",
-        },
-        margin: { l: 90, r: 130, t: 60, b: 120 },
-        hoverlabel: {
-          bgcolor: isLight ? "#ffffff" : "#1e1e2e",
-          bordercolor: "#9333EA",
-          font: { color: isLight ? "#1a1a1a" : "#fff", size: 14 },
-        },
+    <div
+      className="relative w-full h-full"
+      style={{
+        transform: "perspective(1200px) rotateX(2deg) rotateY(-1deg)",
+        transformOrigin: "center center",
       }}
-      config={{ displayModeBar: false, responsive: true }}
-      style={{ width: "100%", height: "100%" }}
-    />
+    >
+      <Plot
+        data={chartData}
+        onPlotClick={handlePlotClick}
+        layout={{
+          autosize: true,
+          paper_bgcolor: "transparent",
+          plot_bgcolor: "transparent",
+          font: {
+            color: textColor,
+            family: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+            size: 13,
+          },
+          xaxis: {
+            title: {
+              text: "Origen / Fuente",
+              font: { size: 14, color: textColor, family: "'Inter', system-ui" },
+              standoff: 12,
+            },
+            tickfont: { size: 12, color: textColor },
+            gridcolor: gridColor,
+            showgrid: false,
+            tickangle: -30,
+            zeroline: false,
+            linecolor: isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)",
+            linewidth: 1,
+          },
+          yaxis: {
+            title: {
+              text: "Valor (Millones $)",
+              font: { size: 14, color: textColor, family: "'Inter', system-ui" },
+              standoff: 12,
+            },
+            tickfont: { size: 12, color: textColor },
+            gridcolor: gridColor,
+            gridwidth: 1,
+            showgrid: true,
+            griddash: "dot",
+            tickformat: ",.1f",
+            ticksuffix: "M",
+            zeroline: false,
+            linecolor: isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)",
+            linewidth: 1,
+          },
+          margin: { l: 80, r: 50, t: 50, b: 120 },
+          hoverlabel: {
+            bgcolor: isLight ? "rgba(255,255,255,0.96)" : "rgba(15,15,40,0.96)",
+            bordercolor: isLight ? "rgba(139,92,246,0.5)" : "rgba(139,92,246,0.7)",
+            borderwidth: 2,
+            font: {
+              color: isLight ? "#1e293b" : "#f1f5f9",
+              size: 13,
+              family: "'Inter', system-ui",
+            },
+          },
+        }}
+        config={{
+          displayModeBar: false,
+          responsive: true,
+          doubleClick: "reset",
+        }}
+        style={{
+          width: "100%",
+          height: "100%",
+          filter: isLight
+            ? "drop-shadow(0 10px 25px rgba(0,0,0,0.12))"
+            : "drop-shadow(0 10px 35px rgba(139,92,246,0.2)) drop-shadow(0 4px 12px rgba(0,0,0,0.25))",
+        }}
+      />
     </div>
   );
 }
