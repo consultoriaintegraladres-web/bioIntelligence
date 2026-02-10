@@ -110,9 +110,9 @@ export async function GET(request: NextRequest) {
       incFilters.push(`i.tipo_validacion LIKE '%${tipo_validacion}%'`);
     }
 
-    // Origen
+    // Origen (case-insensitive para normalizar variantes como "furips 2" vs "Furips 2")
     if (origen && origen !== "all" && origen !== "") {
-      incFilters.push(`i.origen = '${origen}'`);
+      incFilters.push(`UPPER(TRIM(i.origen)) = UPPER(TRIM('${origen}'))`);
     }
 
     const incWhere = incFilters.join(" AND ");
@@ -217,13 +217,13 @@ export async function GET(request: NextRequest) {
 
       case "resumen_origen": {
         const query = `
-          SELECT 
-            sub.origen,
+          SELECT
+            sub.origen_norm as origen,
             SUM(sub.cnt) as "cantidad_hallazgos",
             COALESCE(SUM(sub.valor_dedup), 0) as "valor_total"
           FROM (
-            SELECT 
-              COALESCE(i.origen, 'Sin origen') as origen,
+            SELECT
+              INITCAP(TRIM(COALESCE(i.origen, 'Sin origen'))) as origen_norm,
               i."Numero_factura",
               i.codigo_del_servicio,
               COUNT(*) as cnt,
@@ -231,9 +231,9 @@ export async function GET(request: NextRequest) {
             FROM inconsistencias i
             INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
             WHERE ${incWhere}
-            GROUP BY i.origen, i."Numero_factura", i.codigo_del_servicio
+            GROUP BY INITCAP(TRIM(COALESCE(i.origen, 'Sin origen'))), i."Numero_factura", i.codigo_del_servicio
           ) sub
-          GROUP BY sub.origen
+          GROUP BY sub.origen_norm
           ORDER BY "cantidad_hallazgos" DESC
         `;
 
@@ -281,11 +281,11 @@ export async function GET(request: NextRequest) {
         }
 
         const query = `
-          SELECT DISTINCT i.origen
+          SELECT DISTINCT INITCAP(TRIM(i.origen)) as origen
           FROM inconsistencias i
           INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
           WHERE i.origen IS NOT NULL AND ${baseConditions.join(" AND ")}
-          ORDER BY i.origen
+          ORDER BY origen
         `;
 
         const result = await prisma.$queryRawUnsafe<any[]>(query);

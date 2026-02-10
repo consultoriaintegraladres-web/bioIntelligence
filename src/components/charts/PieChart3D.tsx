@@ -164,12 +164,13 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
 
   return (
     <div ref={containerRef} className="relative w-full h-full">
-      {/* CSS 3D perspective tilt for the pie chart */}
+      {/* CSS 3D perspective tilt - more aggressive for dome/convex effect */}
       <div
         className="w-full h-full"
         style={{
-          transform: "perspective(900px) rotateX(12deg)",
+          transform: "perspective(700px) rotateX(20deg)",
           transformOrigin: "center 55%",
+          transformStyle: "preserve-3d",
         }}
       >
         <Plot
@@ -231,24 +232,41 @@ export function PieChart3D({ data, title = "Distribución de Hallazgos", themeMo
             width: "100%",
             height: "100%",
             filter: isLight
-              ? "drop-shadow(0 12px 30px rgba(0,0,0,0.15)) drop-shadow(0 0 1px rgba(0,0,0,0.1))"
-              : "drop-shadow(0 16px 40px rgba(139,92,246,0.25)) drop-shadow(0 6px 16px rgba(0,0,0,0.3)) drop-shadow(0 0 2px rgba(139,92,246,0.15))",
+              ? "drop-shadow(0 14px 35px rgba(0,0,0,0.18)) drop-shadow(0 0 1px rgba(0,0,0,0.1))"
+              : "drop-shadow(0 18px 45px rgba(139,92,246,0.3)) drop-shadow(0 8px 20px rgba(0,0,0,0.35)) drop-shadow(0 0 3px rgba(139,92,246,0.15))",
+          }}
+        />
+
+        {/* Glossy dome highlight overlay - simulates convex surface reflection */}
+        <div
+          style={{
+            position: "absolute",
+            top: "8%",
+            left: "2%",
+            width: "58%",
+            height: "80%",
+            background: isLight
+              ? "radial-gradient(ellipse at 35% 30%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 35%, transparent 60%)"
+              : "radial-gradient(ellipse at 35% 30%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 35%, transparent 60%)",
+            pointerEvents: "none",
+            borderRadius: "50%",
+            zIndex: 10,
           }}
         />
       </div>
 
-      {/* Elliptical shadow underneath the tilted pie for 3D depth */}
+      {/* Elliptical shadow underneath the tilted pie - thicker for depth illusion */}
       <div
         style={{
           position: "absolute",
-          bottom: "4%",
-          left: "8%",
-          width: "50%",
-          height: "18px",
+          bottom: "2%",
+          left: "5%",
+          width: "55%",
+          height: "28px",
           background: isLight
-            ? "radial-gradient(ellipse, rgba(0,0,0,0.08) 0%, transparent 70%)"
-            : "radial-gradient(ellipse, rgba(139,92,246,0.15) 0%, transparent 70%)",
-          filter: "blur(8px)",
+            ? "radial-gradient(ellipse, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.04) 40%, transparent 70%)"
+            : "radial-gradient(ellipse, rgba(139,92,246,0.20) 0%, rgba(139,92,246,0.08) 40%, transparent 70%)",
+          filter: "blur(10px)",
           pointerEvents: "none",
           zIndex: 0,
         }}
