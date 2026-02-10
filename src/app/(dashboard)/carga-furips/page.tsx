@@ -77,9 +77,8 @@ export default function CargaFuripsPage() {
     setUploadComplete(false);
     setError(null);
     setIsUploading(false);
-    // Limpiar también el estado del navegador si hay algo almacenado
+    // Forzar recarga para limpiar completamente todos los componentes y estados
     if (typeof window !== 'undefined') {
-      // Forzar recarga para limpiar completamente todos los componentes
       window.location.reload();
     }
   };

@@ -112,16 +112,23 @@ export default function FuripsUploader({ onValidationComplete, onError, onReset,
     event: React.ChangeEvent<HTMLInputElement>,
     setFile: (file: File | null) => void
   ) => {
+    // Desactivar durante carga
+    if (isUploading) {
+      event.target.value = "";
+      return;
+    }
+    
     const file = event.target.files?.[0];
     if (file) {
       if (!file.name.toLowerCase().endsWith(".txt")) {
         onError("El archivo debe ser de formato .txt");
+        event.target.value = "";
         return;
       }
       setFile(file);
       setValidationResult(null);
     }
-  }, [onError]);
+  }, [onError, isUploading]);
 
   // Determinar si se puede validar
   // FURTRAN puede validarse solo, o FURIPS1+FURIPS2 juntos (con o sin FURTRAN)
@@ -255,11 +262,14 @@ export default function FuripsUploader({ onValidationComplete, onError, onReset,
         htmlFor={inputId}
         className={`
           flex flex-col items-center justify-center w-full h-36 
-          border-2 border-dashed rounded-xl cursor-pointer
-          transition-all duration-300
+          border-2 border-dashed rounded-xl transition-all duration-300
+          ${isUploading 
+            ? "opacity-50 cursor-not-allowed" 
+            : "cursor-pointer"
+          }
           ${file 
             ? `border-${colorAccent}-500/50 bg-${colorAccent}-500/10` 
-            : `${borderColor} ${bgUpload} ${bgUploadHover} hover:border-${colorAccent}-400`
+            : `${borderColor} ${bgUpload} ${!isUploading ? bgUploadHover : ""} ${!isUploading ? `hover:border-${colorAccent}-400` : ""}`
           }
         `}
       >
@@ -524,22 +534,33 @@ export default function FuripsUploader({ onValidationComplete, onError, onReset,
         )}
       </motion.button>
 
-      {/* Botón Realizar Nuevo Envío - Solo visible durante carga o después de validar */}
+      {/* Botón Realizar Nuevo Envío - Debajo del botón Validar Archivos */}
       {(isUploading || validationResult) && onReset && (
         <motion.button
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: isUploading ? 1 : 1.02 }}
+          whileTap={{ scale: isUploading ? 1 : 0.98 }}
           onClick={() => {
+            // Limpiar todo el estado local
             setIdEnvio("");
             setFurips1File(null);
             setFurips2File(null);
             setFurtranFile(null);
             setValidationResult(null);
+            // Llamar al reset del componente padre que recarga la página
             onReset();
           }}
-          className="w-full py-3 rounded-xl font-bold text-base bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
+          disabled={isUploading}
+          className={`
+            w-full py-3 rounded-xl font-bold text-base 
+            shadow-lg transition-all duration-300 
+            flex items-center justify-center gap-2 mt-3
+            ${isUploading
+              ? "bg-gradient-to-r from-gray-600 to-gray-700 text-white cursor-pointer"
+              : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white"
+            }
+          `}
         >
           <XCircle className="w-5 h-5" />
           Realizar Nuevo Envío

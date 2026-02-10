@@ -91,6 +91,9 @@ export default function ControlFacturasPage() {
   const [showHallazgosModal, setShowHallazgosModal] = useState(false);
   const [modalTipoEnvio, setModalTipoEnvio] = useState<"Primera vez" | "Revalidacion">("Primera vez");
   const [selectedFactura, setSelectedFactura] = useState<RevisionFactura | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => { setHasMounted(true); }, []);
 
   const isLight = themeMode === "light";
   const textColor = isLight ? "text-gray-900" : "text-white";
@@ -647,24 +650,29 @@ export default function ControlFacturasPage() {
             {/* Pagination Limit */}
             <div className="flex items-center gap-2 mt-4">
               <span className={subTextColor}>Registros por página:</span>
-              <Select
-                value={limit.toString()}
-                onValueChange={(value) => {
-                  setLimit(parseInt(value));
-                  setPage(1);
-                }}
-                key={`limit-select-${limit}`} // Force re-render to avoid hydration issues
-              >
-                <SelectTrigger className={`w-24 ${inputBg} ${inputText} border ${borderColor}`}>
-                  <SelectValue placeholder="20" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
+              {hasMounted ? (
+                <Select
+                  value={limit.toString()}
+                  onValueChange={(value) => {
+                    setLimit(parseInt(value));
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className={`w-24 ${inputBg} ${inputText} border ${borderColor}`}>
+                    <SelectValue placeholder="20" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className={`w-24 h-9 rounded-md border ${inputBg} ${inputText} ${borderColor} flex items-center justify-between px-3 py-2 text-sm`}>
+                  {limit}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

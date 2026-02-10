@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       console.log("⚠️ Cloudflare R2 no está configurado");
       return NextResponse.json({
         success: false,
-        error: "Cloudflare R2 no está configurado correctamente",
+        error: "Los servidores de seguridad Bio no están configurados correctamente",
         storageConfigured: false,
       }, { status: 500 });
     }
@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json({
         success: false,
-        error: `Error al subir a Cloudflare R2: ${errorMessage}`,
+        error: `Error al subir a servidores de seguridad Bio: ${errorMessage}`,
         storageConfigured: true,
       }, { status: 500 });
     }

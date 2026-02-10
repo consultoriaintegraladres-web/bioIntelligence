@@ -81,6 +81,13 @@ export default function DetallePage() {
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<Inconsistencia | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => { setHasMounted(true); }, []);
+
+  // #region agent log
+  if (typeof window !== 'undefined') { fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'detalle/page.tsx:render',message:'DetallePage render',data:{hasMounted,filtersKeys:Object.keys(filters).filter(k=>(filters as any)[k]),activeCount:[filters.lote_de_carga,filters.tipo_validacion,filters.origen,filters.codigo_habilitacion,filters.nombre_ips,filters.fecha_inicio,filters.fecha_fin,filters.nombre_envio].filter(Boolean).length,themeMode,isWindow:typeof window!=='undefined'},timestamp:Date.now(),hypothesisId:'A-B-C-D'})}).catch(()=>{}); }
+  // #endregion
 
   const isLight = themeMode === "light";
   const textColor = isLight ? "text-gray-900" : "text-white";
@@ -328,20 +335,26 @@ export default function DetallePage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className={`text-sm ${subTextColor} whitespace-nowrap`}>Registros:</span>
-                <Select
-                  value={limit.toString()}
-                  onValueChange={(val) => setLimit(parseInt(val, 10))}
-                >
-                  <SelectTrigger className={`w-[80px] ${inputBg} ${inputText} h-12`}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className={isLight ? "bg-white border-gray-200" : "bg-[#1a1a2e] border-[#2a2a3e]"}>
-                    <SelectItem value="10" className={`${textColor}`}>10</SelectItem>
-                    <SelectItem value="20" className={`${textColor}`}>20</SelectItem>
-                    <SelectItem value="50" className={`${textColor}`}>50</SelectItem>
-                    <SelectItem value="100" className={`${textColor}`}>100</SelectItem>
-                  </SelectContent>
-                </Select>
+                {hasMounted ? (
+                  <Select
+                    value={limit.toString()}
+                    onValueChange={(val) => setLimit(parseInt(val, 10))}
+                  >
+                    <SelectTrigger className={`w-[80px] ${inputBg} ${inputText} h-12`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={isLight ? "bg-white border-gray-200" : "bg-[#1a1a2e] border-[#2a2a3e]"}>
+                      <SelectItem value="10" className={`${textColor}`}>10</SelectItem>
+                      <SelectItem value="20" className={`${textColor}`}>20</SelectItem>
+                      <SelectItem value="50" className={`${textColor}`}>50</SelectItem>
+                      <SelectItem value="100" className={`${textColor}`}>100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className={`w-[80px] h-12 rounded-md border ${inputBg} ${inputText} flex items-center px-3 text-base`}>
+                    {limit}
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>

@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     if (!isR2Configured()) {
       return NextResponse.json({
         success: false,
-        error: "Cloudflare R2 no está configurado",
+        error: "Los servidores de seguridad Bio no están configurados",
       }, { status: 500 });
     }
 

@@ -57,6 +57,18 @@ export default function ZipUploader({ furipsData, onUploadComplete, onError, onU
   const [uploadMessage, setUploadMessage] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
   
+  // Limpiar estado cuando furipsData se resetea
+  useEffect(() => {
+    if (!furipsData) {
+      setZipFile(null);
+      setUploadResult(null);
+      setUploadError(null);
+      setUploadProgress(0);
+      setUploadStage("");
+      setUploadMessage("");
+    }
+  }, [furipsData]);
+
   // Prevenir desmontaje durante carga
   useEffect(() => {
     if (isUploading) {
@@ -145,7 +157,7 @@ export default function ZipUploader({ furipsData, onUploadComplete, onError, onU
         const chunkProgress = ((chunkIndex + 1) / totalChunks) * 70;
         setUploadProgress(Math.round(chunkProgress));
         setUploadStage(`Subiendo archivo`);
-        setUploadMessage(`Chunk ${chunkIndex + 1}/${totalChunks} - ${((chunkIndex + 1) / totalChunks * 100).toFixed(0)}% (${(end / (1024 * 1024)).toFixed(1)} / ${fileSizeMB.toFixed(1)} MB)`);
+        setUploadMessage(`Subiendo a servidores de seguridad Bio - Chunk ${chunkIndex + 1}/${totalChunks} - ${((chunkIndex + 1) / totalChunks * 100).toFixed(0)}% (${(end / (1024 * 1024)).toFixed(1)} / ${fileSizeMB.toFixed(1)} MB)`);
 
         const formData = new FormData();
         formData.append("chunk", chunk);
@@ -470,7 +482,7 @@ export default function ZipUploader({ furipsData, onUploadComplete, onError, onU
               <div className="mt-3 p-2 bg-blue-500/10 rounded-lg">
                 <p className="text-blue-300 text-xs flex items-center gap-1">
                   <Cloud className="w-3 h-3" />
-                  {uploadResult.data.uploadedFiles.length} archivos en servidores de seguridad Bio
+                  {uploadResult.data.uploadedFiles.length} archivos almacenados en servidores de seguridad Bio
                 </p>
               </div>
             )}
