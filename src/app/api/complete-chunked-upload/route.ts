@@ -203,10 +203,13 @@ export async function POST(request: NextRequest) {
 
     // Procesar e insertar datos en FURIPS1, FURIPS2, FURTRAN
     console.log("📊 Iniciando procesamiento de datos...");
-    
+    console.log(`📄 furips1Content presente: ${!!furips1Content} (${furips1Content ? furips1Content.length + ' chars' : 'vacío'})`);
+    console.log(`📄 furips2Content presente: ${!!furips2Content} (${furips2Content ? furips2Content.length + ' chars' : 'vacío'})`);
+    console.log(`📄 furtranContent presente: ${!!furtranContent} (${furtranContent ? furtranContent.length + ' chars' : 'vacío'})`);
+
     let processResult = null;
     let dataInsertSuccess = false;
-    
+
     try {
       processResult = await processFuripsData(
         furips1Content || "",
@@ -220,9 +223,13 @@ export async function POST(request: NextRequest) {
         valorTotal,
         idEnvio
       );
-      
+
       dataInsertSuccess = processResult.success;
-      console.log("✅ Datos insertados exitosamente en la BD");
+      if (dataInsertSuccess) {
+        console.log("✅ Datos insertados exitosamente en la BD");
+      } else {
+        console.error("❌ processFuripsData retornó success=false:", processResult.error);
+      }
       console.log(`📊 FURIPS1: ${processResult.recordsProcessed.furips1} registros`);
       console.log(`📊 FURIPS2: ${processResult.recordsProcessed.furips2} registros`);
       console.log(`📊 FURTRAN: ${processResult.recordsProcessed.furtran} registros`);
@@ -238,10 +245,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
-      message: dataInsertSuccess 
+      success: dataInsertSuccess,
+      message: dataInsertSuccess
         ? "Archivos cargados e insertados exitosamente en la base de datos"
-        : "Archivos cargados exitosamente, pero hubo un problema al insertar los datos",
+        : `Error al insertar datos: ${processResult?.error || 'Los archivos se subieron pero no se insertaron en la BD'}`,
       data: {
         id: envio.id,
         idEnvio: envio.nombre_archivo,

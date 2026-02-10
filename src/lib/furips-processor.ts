@@ -589,16 +589,23 @@ export async function processFuripsData(
     const usuario = "admin";
     console.log(`👤 Usuario: ${usuario}`);
 
-    // ==================== ASEGURAR COLUMNAS NUEVAS EXISTAN ====================
+    // ==================== VERIFICAR AUTO-INCREMENT EN TABLAS ====================
     try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado2103 BOOLEAN DEFAULT false`);
-      await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS preauditoria BOOLEAN DEFAULT false`);
-      await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado2108 BOOLEAN DEFAULT false`);
-      await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado_soat BOOLEAN DEFAULT false`);
-      await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado_infopol BOOLEAN DEFAULT false`);
-      console.log("✅ Columnas booleanas verificadas en furips1");
-    } catch (colErr: any) {
-      console.warn("⚠️ No se pudieron verificar columnas nuevas:", colErr.message);
+      // Asegurar que furips1 y furips2 tengan secuencias de auto-increment
+      await prisma.$executeRawUnsafe(`CREATE SEQUENCE IF NOT EXISTS furips1_id_seq`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ALTER COLUMN id SET DEFAULT nextval('furips1_id_seq')`);
+      await prisma.$executeRawUnsafe(`ALTER SEQUENCE furips1_id_seq OWNED BY furips1.id`);
+      // Sincronizar secuencia con max id existente
+      await prisma.$executeRawUnsafe(`SELECT setval('furips1_id_seq', COALESCE((SELECT MAX(id) FROM furips1), 0) + 1, false)`);
+
+      await prisma.$executeRawUnsafe(`CREATE SEQUENCE IF NOT EXISTS furips2_id_seq`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE furips2 ALTER COLUMN id SET DEFAULT nextval('furips2_id_seq')`);
+      await prisma.$executeRawUnsafe(`ALTER SEQUENCE furips2_id_seq OWNED BY furips2.id`);
+      await prisma.$executeRawUnsafe(`SELECT setval('furips2_id_seq', COALESCE((SELECT MAX(id) FROM furips2), 0) + 1, false)`);
+
+      console.log("✅ Secuencias auto-increment verificadas en furips1 y furips2");
+    } catch (seqErr: any) {
+      console.warn("⚠️ Error verificando secuencias auto-increment:", seqErr.message);
     }
 
     // ==================== NO SE BORRA NADA - INSERCIONES ACUMULATIVAS ====================

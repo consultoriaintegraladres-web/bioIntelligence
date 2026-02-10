@@ -10,10 +10,6 @@ import path from "path";
 export const maxDuration = 1800;
 
 export async function POST(request: NextRequest) {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'upload-zip/route.ts:18',message:'BACKEND - Request recibido',data:{contentLength:request.headers.get('content-length'),contentType:request.headers.get('content-type')},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'BACKEND-A'})}).catch(()=>{});
-  // #endregion
-  
   try {
     const session = await auth();
 
@@ -30,14 +26,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'upload-zip/route.ts:29',message:'BACKEND - Parseando formData',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'BACKEND-B'})}).catch(()=>{});
-    // #endregion
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'upload-zip/route.ts:30',message:'API - Parseando formData',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'API-PARSE-START'})}).catch(()=>{});
-    // #endregion
-    
     let formData: FormData;
     try {
       console.log("📥 Parseando FormData del request...");
@@ -51,14 +39,6 @@ export async function POST(request: NextRequest) {
         details: parseError?.stack?.substring(0, 200),
       }, { status: 400 });
     }
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'upload-zip/route.ts:36',message:'API - FormData parseado exitosamente',data:{entriesCount:Array.from(formData.entries()).length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'API-PARSE-END'})}).catch(()=>{});
-    // #endregion
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/660cc560-af41-44a9-be17-cf7d8435b0ac',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'upload-zip/route.ts:36',message:'BACKEND - FormData parseado exitosamente',data:{entriesCount:Array.from(formData.entries()).length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'BACKEND-C'})}).catch(()=>{});
-    // #endregion
     
     // Archivos
     const zipFile = formData.get("zipFile") as File | null;
@@ -313,10 +293,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
-      message: dataInsertSuccess 
+      success: dataInsertSuccess,
+      message: dataInsertSuccess
         ? "Archivos cargados e insertados exitosamente en la base de datos"
-        : "Archivos cargados exitosamente, pero hubo un problema al insertar los datos",
+        : `Error al insertar datos: ${processResult?.error || 'Los archivos se subieron pero no se insertaron en la BD'}`,
       data: {
         id: envio.id,
         idEnvio: envio.nombre_archivo,
