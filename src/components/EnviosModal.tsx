@@ -19,12 +19,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Package } from "lucide-react";
 import type { ThemeMode } from "@/contexts/app-context";
+import { SqlDebugger } from "@/components/SqlDebugger";
 
 interface EnviosModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   filters: Record<string, string>;
   themeMode?: ThemeMode;
+  isAdmin?: boolean;
 }
 
 interface EnvioRow {
@@ -37,7 +39,7 @@ interface EnvioRow {
   valor_reclamado: number;
 }
 
-export function EnviosModal({ open, onOpenChange, filters, themeMode = "dark" }: EnviosModalProps) {
+export function EnviosModal({ open, onOpenChange, filters, themeMode = "dark", isAdmin }: EnviosModalProps) {
   const isLight = themeMode === "light";
 
   const queryString = useMemo(() => {
@@ -62,6 +64,7 @@ export function EnviosModal({ open, onOpenChange, filters, themeMode = "dark" }:
   });
 
   const envios: EnvioRow[] = response?.data || [];
+  const enviosDebug = response?._debug;
 
   const totals = useMemo(() => {
     return envios.reduce(
@@ -101,9 +104,10 @@ export function EnviosModal({ open, onOpenChange, filters, themeMode = "dark" }:
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={`${bg} ${borderColor} border max-w-4xl w-[90vw]`}
+        className={`${bg} ${borderColor} border max-w-4xl w-[90vw] relative`}
         style={{ maxHeight: "80vh" }}
       >
+        {isAdmin && <SqlDebugger debug={enviosDebug} themeMode={themeMode} />}
         <DialogHeader>
           <DialogTitle className={`flex items-center gap-2 ${textColor}`}>
             <Package className="w-5 h-5 text-purple-500" />

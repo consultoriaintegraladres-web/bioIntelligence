@@ -11,12 +11,18 @@ function safeNumber(val: any): number {
 }
 
 export async function GET(request: NextRequest) {
+  // Debug tracking (populated per-case, only returned to ADMIN)
+  const _debugQueries: Array<{ label: string; sql: string }> = [];
+  let _isAdmin = false;
+
   try {
     const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ success: true, data: [] }, { status: 200 });
     }
+
+    _isAdmin = session.user.role === "ADMIN";
 
     const { searchParams } = new URL(request.url);
     const tipo = searchParams.get("tipo");
@@ -192,6 +198,13 @@ export async function GET(request: NextRequest) {
           WHERE ${criticosFilters.join(" AND ")}
         `;
 
+        _debugQueries.push(
+          { label: "Lotes (KPIs)", sql: lotesQuery },
+          { label: "Conteo Inconsistencias", sql: inconsistenciasCountQuery },
+          { label: "Valor Inconsistencias (capeado por factura)", sql: inconsistenciasValorQuery },
+          { label: "Hallazgos Críticos", sql: hallazgosCriticosQuery },
+        );
+
         console.log("[REPORTES] KPIs lotesQuery:", lotesQuery.substring(0, 200));
 
         const [lotesResult, inconsistenciasCountResult, inconsistenciasValorResult, hallazgosCriticosResult] = await Promise.all([
@@ -216,19 +229,20 @@ export async function GET(request: NextRequest) {
             valorTotalInconsistencias: safeNumber(inconsistenciasValorResult[0]?.valorTotalInconsistencias),
             hallazgosCriticos: safeNumber(hallazgosCriticosResult[0]?.hallazgosCriticos),
           },
+          ...(_isAdmin ? { _debug: { queries: _debugQueries } } : {}),
         });
       }
 
       case "resumen_validacion": {
         const query = `
-          SELECT 
+          SELECT
             sub.tipo_validacion,
             SUM(sub.cnt) as "cantidad_registros",
             COALESCE(SUM(sub.valor_dedup), 0) as "valor_total",
             p."Recomendación" as "Recomendacion",
             p."Tipo_robot"
           FROM (
-            SELECT 
+            SELECT
               i.tipo_validacion,
               i."Numero_factura",
               i.codigo_del_servicio,
@@ -245,6 +259,7 @@ export async function GET(request: NextRequest) {
           LIMIT 20
         `;
 
+        _debugQueries.push({ label: "Resumen por Tipo de Validación", sql: query });
         const result = await prisma.$queryRawUnsafe<any[]>(query);
 
         return NextResponse.json({
@@ -256,6 +271,7 @@ export async function GET(request: NextRequest) {
             Recomendacion: item.Recomendacion,
             Tipo_robot: item.Tipo_robot,
           })),
+          ...(_isAdmin ? { _debug: { queries: _debugQueries } } : {}),
         });
       }
 
@@ -281,6 +297,7 @@ export async function GET(request: NextRequest) {
           ORDER BY "cantidad_hallazgos" DESC
         `;
 
+        _debugQueries.push({ label: "Resumen por Origen", sql: query });
         const result = await prisma.$queryRawUnsafe<any[]>(query);
 
         return NextResponse.json({
@@ -290,6 +307,7 @@ export async function GET(request: NextRequest) {
             cantidad_hallazgos: safeNumber(item.cantidad_hallazgos),
             valor_total: safeNumber(item.valor_total),
           })),
+          ...(_isAdmin ? { _debug: { queries: _debugQueries } } : {}),
         });
       }
 
@@ -416,6 +434,7 @@ export async function GET(request: NextRequest) {
           ORDER BY fecha_creacion DESC, numero_lote DESC
         `;
 
+        _debugQueries.push({ label: "Envíos Detalle", sql: query });
         const result = await prisma.$queryRawUnsafe<any[]>(query);
 
         return NextResponse.json({
@@ -429,6 +448,7 @@ export async function GET(request: NextRequest) {
             cantidad_facturas: safeNumber(item.cantidad_facturas),
             valor_reclamado: safeNumber(item.valor_reclamado),
           })),
+          ...(_isAdmin ? { _debug: { queries: _debugQueries } } : {}),
         });
       }
 
@@ -438,12 +458,22 @@ export async function GET(request: NextRequest) {
           data: [],
         });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("[REPORTES] Error:", error);
     return NextResponse.json({
       success: false,
       data: [],
       error: String(error),
+      ...(_isAdmin ? {
+        _debug: {
+          queries: _debugQueries,
+          error: {
+            message: error?.message || String(error),
+            hint: error?.hint,
+            detail: error?.detail,
+          },
+        },
+      } : {}),
     });
   }
 }

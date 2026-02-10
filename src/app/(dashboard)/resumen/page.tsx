@@ -30,6 +30,7 @@ import { SourceChart3D } from "@/components/charts/SourceChart3D";
 import { ResumenTable } from "@/components/tables/ResumenTable";
 import { HallazgosModal } from "@/components/HallazgosModal";
 import { EnviosModal } from "@/components/EnviosModal";
+import { SqlDebugger } from "@/components/SqlDebugger";
 import { useAppContext } from "@/contexts/app-context";
 
 interface KPIsData {
@@ -63,6 +64,7 @@ export default function ResumenPage() {
   const [modalFilterType, setModalFilterType] = useState<"tipo_validacion" | "origen">("tipo_validacion");
   const [modalFilterValue, setModalFilterValue] = useState("");
 
+  const isAdmin = session?.user?.role === "ADMIN";
   const isLight = themeMode === "light";
   const textColor = isLight ? "text-gray-900" : "text-white";
   const subTextColor = isLight ? "text-gray-600" : "text-gray-400";
@@ -135,6 +137,11 @@ export default function ResumenPage() {
   });
 
   const resumenOrigen: ResumenOrigen[] = origenResponse?.data || [];
+
+  // Debug data (only populated for ADMIN)
+  const kpisDebug = kpisResponse?._debug;
+  const validacionDebug = validacionResponse?._debug;
+  const origenDebug = origenResponse?._debug;
 
   const formatCurrency = (value: number) => {
     if (value >= 1000000000) {
@@ -228,7 +235,8 @@ export default function ResumenPage() {
       <DynamicFilters onFiltersChange={handleFiltersChange} showLoteFilter={true} />
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        {isAdmin && <SqlDebugger debug={kpisDebug} themeMode={themeMode} />}
         {kpiCards.map((kpi, index) => (
           <motion.div
             key={kpi.title}
@@ -281,7 +289,8 @@ export default function ResumenPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className={`${cardBg} backdrop-blur-xl h-[550px]`}>
+          <Card className={`${cardBg} backdrop-blur-xl h-[550px] relative`}>
+            {isAdmin && <SqlDebugger debug={validacionDebug} themeMode={themeMode} />}
             <CardHeader className="pb-2">
               <CardTitle className={`text-lg font-semibold ${textColor}`}>
                 Distribución por Tipo de Validación
@@ -293,9 +302,9 @@ export default function ResumenPage() {
                   <Skeleton className={`h-64 w-64 rounded-full ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
                 </div>
               ) : (
-                <BarChart3D 
-                  data={barChartData} 
-                  themeMode={themeMode} 
+                <BarChart3D
+                  data={barChartData}
+                  themeMode={themeMode}
                   onItemClick={(tipoValidacion) => handleChartItemClick("tipo_validacion", tipoValidacion)}
                 />
               )}
@@ -309,7 +318,8 @@ export default function ResumenPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className={`${cardBg} backdrop-blur-xl`} style={{ height: "calc(30vh + 200px)", minHeight: "550px" }}>
+          <Card className={`${cardBg} backdrop-blur-xl relative`} style={{ height: "calc(30vh + 200px)", minHeight: "550px" }}>
+            {isAdmin && <SqlDebugger debug={validacionDebug} themeMode={themeMode} />}
             <CardHeader className="pb-2">
               <CardTitle className={`text-lg font-semibold ${textColor}`}>
                 Proporción de Hallazgos
@@ -321,9 +331,9 @@ export default function ResumenPage() {
                   <Skeleton className={`h-80 w-80 rounded-full ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
                 </div>
               ) : (
-                <PieChart3D 
-                  data={pieChartData} 
-                  themeMode={themeMode} 
+                <PieChart3D
+                  data={pieChartData}
+                  themeMode={themeMode}
                   onItemClick={(tipoValidacion) => handleChartItemClick("tipo_validacion", tipoValidacion)}
                 />
               )}
@@ -337,7 +347,8 @@ export default function ResumenPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <Card className={`${cardBg} backdrop-blur-xl h-[550px]`}>
+          <Card className={`${cardBg} backdrop-blur-xl h-[550px] relative`}>
+            {isAdmin && <SqlDebugger debug={origenDebug} themeMode={themeMode} />}
             <CardHeader className="pb-2">
               <CardTitle className={`text-lg font-semibold ${textColor}`}>
                 Análisis por Origen/Fuente
@@ -349,9 +360,9 @@ export default function ResumenPage() {
                   <Skeleton className={`h-64 w-64 rounded-full ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
                 </div>
               ) : (
-                <SourceChart3D 
-                  data={resumenOrigen} 
-                  themeMode={themeMode} 
+                <SourceChart3D
+                  data={resumenOrigen}
+                  themeMode={themeMode}
                   onItemClick={(origen) => handleChartItemClick("origen", origen)}
                 />
               )}
@@ -366,7 +377,8 @@ export default function ResumenPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
       >
-        <Card className={`${cardBg} backdrop-blur-xl`}>
+        <Card className={`${cardBg} backdrop-blur-xl relative`}>
+          {isAdmin && <SqlDebugger debug={validacionDebug} themeMode={themeMode} />}
           <CardHeader>
             <CardTitle className={`text-lg font-semibold ${textColor} flex items-center gap-2`}>
               <TrendingUp className="w-5 h-5 text-[#10B981]" />
@@ -395,6 +407,7 @@ export default function ResumenPage() {
         onOpenChange={setEnviosModalOpen}
         filters={filters}
         themeMode={themeMode}
+        isAdmin={isAdmin}
       />
     </div>
   );
