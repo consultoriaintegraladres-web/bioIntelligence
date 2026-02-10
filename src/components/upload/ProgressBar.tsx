@@ -64,7 +64,7 @@ export default function ProgressBar({ currentStep, isComplete = false }: Progres
       <div className="mt-6 grid grid-cols-5 gap-2">
         {[
           { name: "Validación", icon: FileText, threshold: 0 },
-          { name: "Cloudflare R2", icon: Cloud, threshold: 20 },
+          { name: "Servidores Bio", icon: Cloud, threshold: 20 },
           { name: "Backups", icon: Database, threshold: 40 },
           { name: "FURIPS1", icon: FileText, threshold: 60 },
           { name: "FURIPS2", icon: Database, threshold: 80 },

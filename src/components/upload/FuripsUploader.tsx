@@ -75,9 +75,11 @@ interface FuripsData {
 interface FuripsUploaderProps {
   onValidationComplete: (data: FuripsData) => void;
   onError: (error: string) => void;
+  onReset?: () => void;
+  isUploading?: boolean;
 }
 
-export default function FuripsUploader({ onValidationComplete, onError }: FuripsUploaderProps) {
+export default function FuripsUploader({ onValidationComplete, onError, onReset, isUploading = false }: FuripsUploaderProps) {
   const { themeMode } = useAppContext();
   const [idEnvio, setIdEnvio] = useState("");
   const [furips1File, setFurips1File] = useState<File | null>(null);
@@ -289,6 +291,7 @@ export default function FuripsUploader({ onValidationComplete, onError }: Furips
           className="hidden"
           accept=".txt"
           onChange={(e) => handleFileChange(e, setFile)}
+          disabled={isUploading}
         />
       </label>
       {file && (
@@ -427,9 +430,11 @@ export default function FuripsUploader({ onValidationComplete, onError }: Furips
           value={idEnvio}
           onChange={(e) => setIdEnvio(e.target.value)}
           placeholder="Ej: ENVIO_001, LOTE_ENERO_2026..."
+          disabled={isUploading}
           className={`w-full px-4 py-3 rounded-xl border ${inputBg} ${inputText} 
             focus:ring-2 focus:ring-cyan-500 focus:border-transparent
-            placeholder:text-gray-500 transition-all`}
+            placeholder:text-gray-500 transition-all
+            ${isUploading ? "opacity-50 cursor-not-allowed" : ""}`}
         />
         <p className={`mt-1 text-xs ${subTextColor}`}>
           Este nombre debe ser único por día. Se usará para crear la carpeta de archivos.
@@ -485,15 +490,15 @@ export default function FuripsUploader({ onValidationComplete, onError }: Furips
 
       {/* Botón de validación */}
       <motion.button
-        whileHover={{ scale: canValidate && !isValidating ? 1.02 : 1 }}
-        whileTap={{ scale: canValidate && !isValidating ? 0.98 : 1 }}
+        whileHover={{ scale: canValidate && !isValidating && !isUploading ? 1.02 : 1 }}
+        whileTap={{ scale: canValidate && !isValidating && !isUploading ? 0.98 : 1 }}
         onClick={handleValidate}
-        disabled={!canValidate || isValidating}
+        disabled={!canValidate || isValidating || isUploading}
         className={`
           w-full py-4 rounded-xl font-bold text-lg
           flex items-center justify-center gap-3
           transition-all duration-300
-          ${canValidate && !isValidating
+          ${canValidate && !isValidating && !isUploading
             ? canValidateFurtranOnly 
               ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white shadow-lg shadow-amber-500/25"
               : "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25"
@@ -518,6 +523,28 @@ export default function FuripsUploader({ onValidationComplete, onError }: Furips
           </>
         )}
       </motion.button>
+
+      {/* Botón Realizar Nuevo Envío - Solo visible durante carga o después de validar */}
+      {(isUploading || validationResult) && onReset && (
+        <motion.button
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            setIdEnvio("");
+            setFurips1File(null);
+            setFurips2File(null);
+            setFurtranFile(null);
+            setValidationResult(null);
+            onReset();
+          }}
+          className="w-full py-3 rounded-xl font-bold text-base bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
+        >
+          <XCircle className="w-5 h-5" />
+          Realizar Nuevo Envío
+        </motion.button>
+      )}
 
       {/* Resultados de validación */}
       <AnimatePresence>

@@ -42,9 +42,10 @@ interface ZipUploaderProps {
   furipsData: FuripsData | null;
   onUploadComplete: (result: any) => void;
   onError: (error: string) => void;
+  onUploadStateChange?: (isUploading: boolean) => void;
 }
 
-export default function ZipUploader({ furipsData, onUploadComplete, onError }: ZipUploaderProps) {
+export default function ZipUploader({ furipsData, onUploadComplete, onError, onUploadStateChange }: ZipUploaderProps) {
   const { themeMode } = useAppContext();
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -85,8 +86,11 @@ export default function ZipUploader({ furipsData, onUploadComplete, onError }: Z
   const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (!file.name.toLowerCase().endsWith(".zip")) {
-        onError("El archivo debe ser de formato .zip");
+      // Validar estrictamente que sea .ZIP
+      const fileName = file.name.toLowerCase();
+      if (!fileName.endsWith(".zip")) {
+        onError("El archivo debe ser de formato .ZIP. Por favor seleccione un archivo ZIP válido.");
+        event.target.value = ""; // Limpiar el input
         return;
       }
       
@@ -166,7 +170,7 @@ export default function ZipUploader({ furipsData, onUploadComplete, onError }: Z
       // ====== PASO 2: Completar el proceso ======
       setUploadProgress(75);
       setUploadStage("Procesando archivos");
-      setUploadMessage("Ensamblando archivo y subiendo a Cloudflare R2...");
+      setUploadMessage("Ensamblando archivo y subiendo a servidores de seguridad Bio...");
 
       console.log("📊 Completando upload y procesando datos...");
       
@@ -230,6 +234,11 @@ export default function ZipUploader({ furipsData, onUploadComplete, onError }: Z
   };
 
   const isDisabled = !furipsData || !zipFile || isUploading;
+  
+  // Notificar al componente padre sobre el estado de carga
+  useEffect(() => {
+    onUploadStateChange?.(isUploading);
+  }, [isUploading, onUploadStateChange]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-CO", {
@@ -271,10 +280,10 @@ export default function ZipUploader({ furipsData, onUploadComplete, onError }: Z
             flex flex-col items-center justify-center w-full h-28 
             border-2 border-dashed rounded-xl cursor-pointer
             transition-all duration-300
-            ${!furipsData ? "opacity-50 cursor-not-allowed" : ""}
+            ${!furipsData || isUploading ? "opacity-50 cursor-not-allowed" : ""}
             ${zipFile 
               ? "border-purple-500/50 bg-purple-500/10" 
-              : `${borderColor} ${bgUpload} ${bgUploadHover} hover:border-purple-400`
+              : `${borderColor} ${bgUpload} ${!isUploading ? bgUploadHover : ""} ${!isUploading ? "hover:border-purple-400" : ""}`
             }
           `}
         >
@@ -300,12 +309,12 @@ export default function ZipUploader({ furipsData, onUploadComplete, onError }: Z
             id="zip-input"
             type="file"
             className="hidden"
-            accept=".zip"
+            accept=".zip,.ZIP"
             onChange={handleFileChange}
-            disabled={!furipsData}
+            disabled={!furipsData || isUploading}
           />
         </label>
-        {zipFile && (
+        {zipFile && !isUploading && (
           <button
             onClick={() => {
               setZipFile(null);
@@ -395,7 +404,7 @@ export default function ZipUploader({ furipsData, onUploadComplete, onError }: Z
         ) : (
           <>
             <Cloud className="w-5 h-5" />
-            Enviar a R2
+            CARGAR .ZIP
           </>
         )}
       </motion.button>
@@ -461,7 +470,7 @@ export default function ZipUploader({ furipsData, onUploadComplete, onError }: Z
               <div className="mt-3 p-2 bg-blue-500/10 rounded-lg">
                 <p className="text-blue-300 text-xs flex items-center gap-1">
                   <Cloud className="w-3 h-3" />
-                  {uploadResult.data.uploadedFiles.length} archivos en Cloudflare R2
+                  {uploadResult.data.uploadedFiles.length} archivos en servidores de seguridad Bio
                 </p>
               </div>
             )}

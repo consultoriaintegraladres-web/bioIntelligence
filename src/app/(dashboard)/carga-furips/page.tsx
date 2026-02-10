@@ -43,6 +43,7 @@ export default function CargaFuripsPage() {
   const [furipsData, setFuripsData] = useState<FuripsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadComplete, setUploadComplete] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const userRole = (session?.user as any)?.role;
   const isAnalyst = userRole === "ANALYST";
@@ -71,9 +72,16 @@ export default function CargaFuripsPage() {
   };
 
   const handleReset = () => {
+    // Limpiar todo el estado completamente
     setFuripsData(null);
     setUploadComplete(false);
     setError(null);
+    setIsUploading(false);
+    // Limpiar también el estado del navegador si hay algo almacenado
+    if (typeof window !== 'undefined') {
+      // Forzar recarga para limpiar completamente todos los componentes
+      window.location.reload();
+    }
   };
 
   // Si es analista o coordinador, mostrar mensaje de solo lectura
@@ -177,6 +185,8 @@ export default function CargaFuripsPage() {
           <FuripsUploader
             onValidationComplete={handleValidationComplete}
             onError={handleError}
+            onReset={handleReset}
+            isUploading={isUploading}
           />
         </motion.div>
 
@@ -212,35 +222,11 @@ export default function CargaFuripsPage() {
             furipsData={furipsData}
             onUploadComplete={handleUploadComplete}
             onError={handleError}
+            onUploadStateChange={setIsUploading}
           />
         </motion.div>
       </div>
 
-      {/* Éxito final */}
-      {uploadComplete && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-8 p-8 bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-teal-500/10 border border-green-500/30 rounded-2xl text-center"
-        >
-          <Sparkles className="w-16 h-16 text-green-400 mx-auto mb-4" />
-          <h2 className="text-3xl font-bold text-green-300 mb-2">
-            ¡Proceso Completado!
-          </h2>
-          <p className="text-green-200/70 mb-6 max-w-lg mx-auto">
-            Su envío ha sido registrado exitosamente y se encuentra en proceso de validación.
-            Recibirá una notificación cuando el proceso finalice.
-          </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleReset}
-            className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/25"
-          >
-            Realizar Nuevo Envío
-          </motion.button>
-        </motion.div>
-      )}
 
       {/* Información adicional */}
       <motion.div
