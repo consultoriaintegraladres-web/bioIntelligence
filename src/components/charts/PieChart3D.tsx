@@ -155,7 +155,7 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
         type: "pie",
         options3d: {
           enabled: true,
-          alpha: 50,          // tilt angle - balanced for depth visibility
+          alpha: 50,
           beta: 0,
         },
         backgroundColor: "transparent",
@@ -168,26 +168,8 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
       title: { text: null },
       credits: { enabled: false },
 
-      // ── Legend ─────────────────────────────
-      legend: {
-        enabled: true,
-        align: "right",
-        verticalAlign: "middle",
-        layout: "vertical",
-        maxHeight: 420,
-        itemStyle: {
-          color: textColor,
-          fontSize: "11px",
-          fontWeight: "normal",
-          fontFamily: "'Inter',system-ui",
-        },
-        itemHoverStyle: { color: "#8B5CF6" },
-        backgroundColor: "transparent",
-        borderWidth: 0,
-        symbolRadius: 4,
-        itemMarginBottom: 4,
-        navigation: { activeColor: "#8B5CF6", style: { color: textColor } },
-      },
+      // ── Legend disabled (Top 3 panel replaces it) ──
+      legend: { enabled: false },
 
       // ── Tooltip (Glassmorphism) ────────────
       tooltip: {
@@ -222,9 +204,10 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
         pie: {
           allowPointSelect: true,
           cursor: "pointer",
-          depth: 55,                // 3D thickness
+          depth: 55,
           innerSize: "42%",
-          size: "72%",
+          center: ["58%", "48%"],
+          size: "78%",
           slicedOffset: 30,
           edgeColor: isLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.06)",
           edgeWidth: 1,
@@ -365,8 +348,8 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
           className="pointer-events-none"
           style={{
             position: "absolute",
-            left: "39%",
-            top: "58%",
+            left: "55%",
+            top: "55%",
             transform: "translate(-50%, -50%)",
             textAlign: "center",
             zIndex: 10,

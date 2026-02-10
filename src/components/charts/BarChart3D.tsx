@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { ThemeMode } from "@/contexts/app-context";
-import Plot from "./SafePlot";
 
 interface BarChart3DProps {
   data: Array<{
@@ -15,144 +14,98 @@ interface BarChart3DProps {
   onItemClick?: (tipoValidacion: string) => void;
 }
 
-// Premium 3D color palette: base (front face), top (lighter), side (darker), glow
-const COLORS_3D = [
-  { base: "rgba(139, 92, 246, 0.95)", top: "rgba(192, 168, 255, 0.88)", side: "rgba(91, 33, 182, 0.82)", glow: "rgba(139,92,246,0.35)" },
-  { base: "rgba(6, 182, 212, 0.95)",  top: "rgba(127, 234, 252, 0.88)", side: "rgba(8, 126, 164, 0.82)",  glow: "rgba(6,182,212,0.35)" },
-  { base: "rgba(244, 63, 94, 0.95)",  top: "rgba(255, 153, 170, 0.88)", side: "rgba(185, 28, 65, 0.82)",  glow: "rgba(244,63,94,0.35)" },
-  { base: "rgba(16, 185, 129, 0.95)", top: "rgba(128, 236, 199, 0.88)", side: "rgba(5, 122, 85, 0.82)",   glow: "rgba(16,185,129,0.35)" },
-  { base: "rgba(245, 158, 11, 0.95)", top: "rgba(253, 212, 112, 0.88)", side: "rgba(180, 98, 8, 0.82)",   glow: "rgba(245,158,11,0.35)" },
-  { base: "rgba(59, 130, 246, 0.95)", top: "rgba(155, 194, 255, 0.88)", side: "rgba(30, 80, 210, 0.82)",  glow: "rgba(59,130,246,0.35)" },
-  { base: "rgba(236, 72, 153, 0.95)", top: "rgba(252, 162, 210, 0.88)", side: "rgba(175, 25, 100, 0.82)", glow: "rgba(236,72,153,0.35)" },
-  { base: "rgba(20, 184, 166, 0.95)", top: "rgba(118, 232, 218, 0.88)", side: "rgba(13, 130, 118, 0.82)", glow: "rgba(20,184,166,0.35)" },
-  { base: "rgba(99, 102, 241, 0.95)", top: "rgba(176, 178, 255, 0.88)", side: "rgba(60, 54, 195, 0.82)",  glow: "rgba(99,102,241,0.35)" },
-  { base: "rgba(239, 68, 68, 0.95)",  top: "rgba(255, 158, 158, 0.88)", side: "rgba(175, 30, 30, 0.82)",  glow: "rgba(239,68,68,0.35)" },
-  { base: "rgba(217, 70, 239, 0.95)", top: "rgba(242, 168, 255, 0.88)", side: "rgba(150, 30, 170, 0.82)", glow: "rgba(217,70,239,0.35)" },
-  { base: "rgba(34, 197, 94, 0.95)",  top: "rgba(145, 240, 180, 0.88)", side: "rgba(18, 135, 60, 0.82)",  glow: "rgba(34,197,94,0.35)" },
+// 3D bar color palette with gradient stops
+const BAR_COLORS = [
+  { light: "#e0d4ff", mid: "#a78bfa", base: "#8B5CF6", dark: "#4c1d95", glow: "rgba(139,92,246,0.4)" },
+  { light: "#cffafe", mid: "#67e8f9", base: "#06B6D4", dark: "#164e63", glow: "rgba(6,182,212,0.4)" },
+  { light: "#ffe4e9", mid: "#fb7185", base: "#F43F5E", dark: "#881337", glow: "rgba(244,63,94,0.4)" },
+  { light: "#d1fae5", mid: "#6ee7b7", base: "#10B981", dark: "#064e3b", glow: "rgba(16,185,129,0.4)" },
+  { light: "#fef3c7", mid: "#fbbf24", base: "#F59E0B", dark: "#78350f", glow: "rgba(245,158,11,0.4)" },
+  { light: "#dbeafe", mid: "#93c5fd", base: "#3B82F6", dark: "#1e3a8a", glow: "rgba(59,130,246,0.4)" },
+  { light: "#fce7f3", mid: "#f9a8d4", base: "#EC4899", dark: "#831843", glow: "rgba(236,72,153,0.4)" },
+  { light: "#ccfbf1", mid: "#5eead4", base: "#14B8A6", dark: "#134e4a", glow: "rgba(20,184,166,0.4)" },
+  { light: "#e0e7ff", mid: "#a5b4fc", base: "#6366F1", dark: "#3730a3", glow: "rgba(99,102,241,0.4)" },
+  { light: "#ffe4e4", mid: "#fca5a5", base: "#EF4444", dark: "#7f1d1d", glow: "rgba(239,68,68,0.4)" },
+  { light: "#fae8ff", mid: "#e879f9", base: "#D946EF", dark: "#701a75", glow: "rgba(217,70,239,0.4)" },
+  { light: "#dcfce7", mid: "#86efac", base: "#22C55E", dark: "#14532d", glow: "rgba(34,197,94,0.4)" },
 ];
 
-export function BarChart3D({ data, title = "Distribución por Tipo de Validación", themeMode = "dark", onItemClick }: BarChart3DProps) {
+const formatValue = (v: number) => {
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `$${(v / 1_000).toFixed(0)}K`;
+  return `$${v.toFixed(0)}`;
+};
+
+// 3D depth offsets (in px)
+const DEPTH_X = 10;
+const DEPTH_Y = 6;
+
+export function BarChart3D({ data, themeMode = "dark", onItemClick }: BarChart3DProps) {
   const isLight = themeMode === "light";
   const textColor = isLight ? "#1e293b" : "#f1f5f9";
-  const gridColor = isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.06)";
+  const subtleColor = isLight ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.45)";
+  const gridColor = isLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)";
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [dims, setDims] = useState({ w: 0, h: 0 });
 
-  const sortedDataRef = useMemo(() => {
+  const sortedData = useMemo(() => {
     if (!data || data.length === 0) return [];
     return [...data].sort((a, b) => b.valor - a.valor).slice(0, 12);
   }, [data]);
 
-  const { chartData, shapes } = useMemo(() => {
-    if (!data || data.length === 0) return { chartData: null, shapes: [] };
-
-    const sortedData = sortedDataRef;
-
-    const labels = sortedData.map((d) => {
-      if (d.name.length <= 30) return d.name;
-      if (d.name.length <= 60) {
-        const mid = Math.ceil(d.name.length / 2);
-        const spaceIndex = d.name.lastIndexOf(' ', mid);
-        if (spaceIndex > 10) {
-          return d.name.substring(0, spaceIndex) + '<br>' + d.name.substring(spaceIndex + 1);
-        }
-        return d.name.substring(0, 30) + '<br>' + d.name.substring(30, 60);
-      }
-      return d.name.substring(0, 57) + "...";
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const r = entries[0]?.contentRect;
+      if (r) setDims({ w: r.width, h: r.height });
     });
-    const cantidades = sortedData.map((d) => d.cantidad);
-    const valores = sortedData.map((d) => d.valor);
-    const valoresMillones = sortedData.map((d) => d.valor / 1000000);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
-    const formatValue = (v: number) => {
-      if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
-      if (v >= 1000) return `$${(v / 1000).toFixed(0)}K`;
-      return `$${v.toFixed(0)}`;
-    };
+  const maxValue = useMemo(() => Math.max(...sortedData.map((d) => d.valor), 1), [sortedData]);
+  const maxMillions = maxValue / 1_000_000;
 
-    const baseColors = sortedData.map((_, i) => COLORS_3D[i % COLORS_3D.length].base);
-
-    // === 3D SHAPES: top face and side face for each bar ===
-    const maxVal = Math.max(...valoresMillones, 1);
-    const dx = 0.11;                // horizontal 3D depth
-    const dy = maxVal * 0.032;      // vertical 3D depth
-    const halfWidth = 0.30;         // bar half-width
-
-    const shapes3D: any[] = [];
-
-    sortedData.forEach((_, i) => {
-      const v = valoresMillones[i];
-      if (v <= 0) return;
-
-      const c = COLORS_3D[i % COLORS_3D.length];
-
-      // Right side face (parallelogram)
-      shapes3D.push({
-        type: "path",
-        path: `M ${i + halfWidth},0 L ${i + halfWidth},${v} L ${i + halfWidth + dx},${v + dy} L ${i + halfWidth + dx},${dy} Z`,
-        fillcolor: c.side,
-        line: { width: 0.5, color: "rgba(255,255,255,0.12)" },
-        xref: "x",
-        yref: "y",
-        layer: "above",
-      });
-
-      // Top face (parallelogram)
-      shapes3D.push({
-        type: "path",
-        path: `M ${i - halfWidth},${v} L ${i + halfWidth},${v} L ${i + halfWidth + dx},${v + dy} L ${i - halfWidth + dx},${v + dy} Z`,
-        fillcolor: c.top,
-        line: { width: 0.5, color: "rgba(255,255,255,0.22)" },
-        xref: "x",
-        yref: "y",
-        layer: "above",
-      });
-    });
-
-    const traces = [
-      {
-        x: labels,
-        y: valoresMillones,
-        type: "bar" as const,
-        name: "Valor",
-        marker: {
-          color: baseColors,
-          line: {
-            color: isLight ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.18)",
-            width: 1.5,
-          },
-        },
-        text: sortedData.map((_, i) => `${formatValue(valores[i])}`),
-        textposition: "outside" as const,
-        textfont: {
-          color: textColor,
-          size: 11,
-          family: "'Inter', 'SF Pro Display', system-ui, sans-serif",
-        },
-        hovertemplate: sortedData.map((d, i) => {
-          const c = COLORS_3D[i % COLORS_3D.length];
-          return (
-            `<b style="font-size:14px">${d.name}</b><br>` +
-            `<span style="color:${c.top}">●</span> Valor: <b>${formatValue(valores[i])}</b><br>` +
-            `<span style="color:${c.top}">●</span> Cantidad: <b>${cantidades[i].toLocaleString()}</b><extra></extra>`
-          );
-        }),
-        customdata: cantidades,
-        width: halfWidth * 2,
-      },
-    ];
-
-    return { chartData: traces, shapes: shapes3D };
-  }, [sortedDataRef, textColor, isLight]);
-
-  const handlePlotClick = (event: any) => {
-    if (!onItemClick || !event?.points?.[0]) return;
-    const pointIndex = event.points[0].pointNumber;
-    const clickedItem = sortedDataRef[pointIndex];
-    if (clickedItem) {
-      onItemClick(clickedItem.name);
+  // Y-axis ticks
+  const yTicks = useMemo(() => {
+    if (maxMillions <= 0) return [0];
+    const rawStep = maxMillions / 5;
+    const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const nice = [1, 2, 5, 10].find((n) => n * mag >= rawStep) || 10;
+    const step = nice * mag;
+    const ticks: number[] = [];
+    for (let v = 0; v <= maxMillions + step * 0.5; v += step) {
+      ticks.push(Math.round(v * 100) / 100);
     }
-  };
+    return ticks;
+  }, [maxMillions]);
 
-  if (!chartData) {
+  const yMax = yTicks[yTicks.length - 1] || 1;
+
+  // Chart area padding
+  const pad = { left: 75, right: 30, top: 45, bottom: 130 };
+  const cw = dims.w - pad.left - pad.right;
+  const ch = dims.h - pad.top - pad.bottom;
+
+  // Bar dimensions
+  const bars = useMemo(() => {
+    if (cw <= 0 || ch <= 0 || sortedData.length === 0) return [];
+    const n = sortedData.length;
+    const slotWidth = cw / n;
+    const barWidth = Math.min(slotWidth * 0.55, 65);
+
+    return sortedData.map((d, i) => {
+      const centerX = (i + 0.5) * slotWidth;
+      const heightPct = (d.valor / 1_000_000) / yMax;
+      const barHeight = heightPct * ch;
+      const c = BAR_COLORS[i % BAR_COLORS.length];
+      return { ...d, centerX, barWidth, barHeight, heightPct, color: c, index: i };
+    });
+  }, [sortedData, cw, ch, yMax]);
+
+  if (!data || data.length === 0) {
     return (
       <div className={`flex items-center justify-center h-full text-lg ${isLight ? "text-gray-500" : "text-gray-400"}`}>
         No hay datos disponibles
@@ -161,78 +114,221 @@ export function BarChart3D({ data, title = "Distribución por Tipo de Validació
   }
 
   return (
-    <div
-      className="relative w-full h-full"
-      style={{
-        transform: "perspective(1400px) rotateX(2deg) rotateY(-1.5deg)",
-        transformOrigin: "center center",
-      }}
-    >
-      <Plot
-        data={chartData}
-        onPlotClick={handlePlotClick}
-        layout={{
-          autosize: true,
-          paper_bgcolor: "transparent",
-          plot_bgcolor: "transparent",
-          font: {
-            color: textColor,
-            family: "'Inter', 'SF Pro Display', system-ui, sans-serif",
-            size: 13,
-          },
-          xaxis: {
-            tickangle: -45,
-            tickfont: { size: 11, color: textColor },
-            gridcolor: gridColor,
-            showgrid: false,
-            automargin: true,
-            zeroline: false,
-            linecolor: isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)",
-            linewidth: 1,
-          },
-          yaxis: {
-            title: {
-              text: "Valor (Millones $)",
-              font: { size: 13, color: textColor, family: "'Inter', system-ui" },
-              standoff: 12,
-            },
-            tickfont: { size: 11, color: textColor },
-            gridcolor: gridColor,
-            gridwidth: 1,
-            showgrid: true,
-            griddash: "dot",
-            tickformat: ",.1f",
-            ticksuffix: "M",
-            zeroline: false,
-            linecolor: isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)",
-            linewidth: 1,
-          },
-          margin: { l: 75, r: 50, t: 35, b: 180 },
-          shapes,
-          hoverlabel: {
-            bgcolor: isLight ? "rgba(255,255,255,0.65)" : "rgba(15,15,40,0.65)",
-            bordercolor: isLight ? "rgba(139,92,246,0.3)" : "rgba(139,92,246,0.45)",
-            borderwidth: 1,
-            font: {
-              color: isLight ? "#1e293b" : "#f1f5f9",
-              size: 13,
-              family: "'Inter', system-ui",
-            },
-          },
-        }}
-        config={{
-          displayModeBar: false,
-          responsive: true,
-          doubleClick: "reset",
-        }}
-        style={{
-          width: "100%",
-          height: "100%",
-          filter: isLight
-            ? "drop-shadow(0 10px 25px rgba(0,0,0,0.12))"
-            : "drop-shadow(0 10px 35px rgba(139,92,246,0.2)) drop-shadow(0 4px 12px rgba(0,0,0,0.25))",
-        }}
-      />
+    <div ref={containerRef} className="w-full h-full relative select-none" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+      {dims.w > 0 && dims.h > 0 && (
+        <>
+          {/* ── Y-axis labels ── */}
+          {yTicks.map((tick) => (
+            <div key={`yt-${tick}`} style={{ position: "absolute", left: 0, bottom: `${pad.bottom + (ch * tick) / yMax}px`, width: pad.left - 10, textAlign: "right", fontSize: "11px", color: subtleColor, transform: "translateY(50%)", lineHeight: 1 }}>
+              {tick.toFixed(1)}M
+            </div>
+          ))}
+
+          {/* ── Y-axis title ── */}
+          <div style={{ position: "absolute", left: 4, top: pad.top + ch / 2, transform: "rotate(-90deg) translateX(-50%)", transformOrigin: "0 0", fontSize: "12px", fontWeight: 500, color: subtleColor, whiteSpace: "nowrap" }}>
+            Valor (Millones $)
+          </div>
+
+          {/* ── Chart area ── */}
+          <div style={{ position: "absolute", left: pad.left, right: pad.right, top: pad.top, bottom: pad.bottom, overflow: "visible" }}>
+            {/* Grid lines */}
+            {yTicks.map((tick) => (
+              <div
+                key={`gl-${tick}`}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: `${(tick / yMax) * 100}%`,
+                  borderTop: `1px ${tick === 0 ? "solid" : "dotted"} ${tick === 0 ? (isLight ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.12)") : gridColor}`,
+                }}
+              />
+            ))}
+
+            {/* ── 3D Bars ── */}
+            {bars.map((b, i) => {
+              const isHovered = hoveredIdx === i;
+              const c = b.color;
+              const barLeft = b.centerX - b.barWidth / 2;
+
+              return (
+                <div
+                  key={`bar-group-${i}`}
+                  onMouseEnter={() => setHoveredIdx(i)}
+                  onMouseLeave={() => setHoveredIdx(null)}
+                  onClick={() => onItemClick?.(b.name)}
+                  style={{
+                    position: "absolute",
+                    left: barLeft,
+                    bottom: 0,
+                    width: b.barWidth,
+                    height: b.barHeight,
+                    cursor: "pointer",
+                    transform: isHovered ? "scaleX(1.15) scaleY(1.02)" : "scaleX(1) scaleY(1)",
+                    transformOrigin: "bottom center",
+                    transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease",
+                    zIndex: isHovered ? 20 : 10,
+                    filter: isHovered ? `drop-shadow(0 0 20px ${c.glow})` : "none",
+                  }}
+                >
+                  {/* Front face - main gradient bar */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: "3px 3px 0 0",
+                      background: `linear-gradient(180deg, ${c.light} 0%, ${c.mid} 25%, ${c.base} 55%, ${c.dark} 100%)`,
+                      border: `1px solid ${isLight ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.15)"}`,
+                      borderBottom: "none",
+                    }}
+                  />
+
+                  {/* Glossy highlight overlay */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: "10%",
+                      width: "40%",
+                      height: Math.min(b.barHeight * 0.4, 60),
+                      borderRadius: "0 0 50% 50%",
+                      background: "linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 100%)",
+                      pointerEvents: "none",
+                    }}
+                  />
+
+                  {/* Top face (3D parallelogram) */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: -DEPTH_Y,
+                      left: 0,
+                      width: b.barWidth,
+                      height: DEPTH_Y + 1,
+                      background: `linear-gradient(90deg, ${c.light}, ${c.mid})`,
+                      clipPath: `polygon(0% 100%, 100% 100%, calc(100% + ${DEPTH_X}px) 0%, ${DEPTH_X}px 0%)`,
+                      borderTop: `1px solid rgba(255,255,255,0.3)`,
+                      pointerEvents: "none",
+                    }}
+                  />
+
+                  {/* Right side face (3D parallelogram) */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: -DEPTH_Y,
+                      right: -DEPTH_X,
+                      width: DEPTH_X + 1,
+                      height: b.barHeight + DEPTH_Y,
+                      background: `linear-gradient(180deg, ${c.dark}, ${c.dark})`,
+                      clipPath: `polygon(0% ${DEPTH_Y}px, 100% 0%, 100% calc(100% - ${DEPTH_Y}px), 0% 100%)`,
+                      opacity: 0.7,
+                      pointerEvents: "none",
+                    }}
+                  />
+                </div>
+              );
+            })}
+
+            {/* ── Value labels above bars ── */}
+            {bars.map((b, i) => {
+              const isHovered = hoveredIdx === i;
+              return (
+                <div
+                  key={`val-${i}`}
+                  style={{
+                    position: "absolute",
+                    left: b.centerX,
+                    bottom: b.barHeight + DEPTH_Y + 6,
+                    transform: `translateX(-50%) ${isHovered ? "scale(1.1)" : "scale(1)"}`,
+                    transition: "transform 0.3s ease",
+                    textAlign: "center",
+                    pointerEvents: "none",
+                    zIndex: isHovered ? 21 : 11,
+                  }}
+                >
+                  <div style={{ fontSize: isHovered ? "12px" : "11px", fontWeight: 700, color: textColor, transition: "font-size 0.3s ease", whiteSpace: "nowrap" }}>
+                    {formatValue(b.valor)}
+                  </div>
+                  <div style={{ fontSize: "9px", color: subtleColor }}>
+                    ({b.cantidad.toLocaleString()})
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* ── Hover tooltip (glassmorphism) ── */}
+            {hoveredIdx !== null && bars[hoveredIdx] && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: bars[hoveredIdx].centerX,
+                  bottom: bars[hoveredIdx].barHeight + DEPTH_Y + 50,
+                  transform: "translateX(-50%)",
+                  padding: "10px 16px",
+                  background: isLight ? "rgba(255,255,255,0.7)" : "rgba(15,15,40,0.7)",
+                  backdropFilter: "blur(16px)",
+                  WebkitBackdropFilter: "blur(16px)",
+                  borderRadius: "12px",
+                  border: `1px solid ${isLight ? "rgba(139,92,246,0.2)" : "rgba(139,92,246,0.35)"}`,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+                  pointerEvents: "none",
+                  zIndex: 50,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <div style={{ fontSize: "13px", fontWeight: 700, color: textColor, marginBottom: 4, maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {bars[hoveredIdx].name}
+                </div>
+                <div style={{ display: "flex", gap: 16, fontSize: "11px", color: textColor, opacity: 0.85 }}>
+                  <div>
+                    <span style={{ opacity: 0.5 }}>Valor</span>
+                    <br />
+                    <b>{formatValue(bars[hoveredIdx].valor)}</b>
+                  </div>
+                  <div>
+                    <span style={{ opacity: 0.5 }}>Cantidad</span>
+                    <br />
+                    <b>{bars[hoveredIdx].cantidad.toLocaleString()}</b>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── X-axis labels ── */}
+          {bars.map((b, i) => {
+            const isHovered = hoveredIdx === i;
+            const label = b.name.length > 35 ? b.name.substring(0, 33) + "..." : b.name;
+            return (
+              <div
+                key={`xlabel-${i}`}
+                style={{
+                  position: "absolute",
+                  left: pad.left + b.centerX,
+                  top: dims.h - pad.bottom + 10,
+                  transform: "translateX(-50%) rotate(-45deg)",
+                  transformOrigin: "top center",
+                  fontSize: isHovered ? "11px" : "10px",
+                  fontWeight: isHovered ? 600 : 400,
+                  color: isHovered ? (isLight ? "#6d28d9" : "#a78bfa") : subtleColor,
+                  transition: "all 0.3s ease",
+                  whiteSpace: "nowrap",
+                  maxWidth: "140px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {label}
+              </div>
+            );
+          })}
+
+          {/* ── X-axis line ── */}
+          <div style={{ position: "absolute", left: pad.left, bottom: pad.bottom, width: cw, height: 1, background: isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)" }} />
+          <div style={{ position: "absolute", left: pad.left, bottom: pad.bottom, width: 1, height: ch, background: isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)" }} />
+        </>
+      )}
     </div>
   );
 }
