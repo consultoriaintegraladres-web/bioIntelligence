@@ -171,18 +171,25 @@ export async function GET(request: NextRequest) {
           LEFT JOIN facturas_reclamado fr ON h."Numero_factura" = fr."Numero_factura"
         `;
 
-        // Hallazgos críticos: facturas distintas en furips1_consolidado que tienen al menos un hallazgo
-        // Se usa furips1_consolidado como base para no contar facturas huérfanas en inconsistencias
+        // Hallazgos críticos: facturas distintas en inconsistencias cuyo origen es crítico
+        // Replica lógica de vista_consolidado_facturas_lote: solo 1 por factura
+        // Orígenes críticos: FURIPS 1, INFOPOL, Certificado de agotamiento, FURTRAN
+        const criticosFilters: string[] = [
+          "p.mostrar_reporte = 1",
+          `i.lote_de_carga IN (${lotesSubquery})`,
+          `TRIM(i.origen) IN ('FURIPS 1', 'INFOPOL', 'Certificado de agotamiento', 'FURTRAN')`,
+        ];
+        if (!canViewAllIPS) {
+          const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
+          if (userCodigo) {
+            criticosFilters.push(`i."Codigo_habilitacion_prestador_servicios_salud" LIKE '${userCodigo}%'`);
+          }
+        }
         const hallazgosCriticosQuery = `
-          SELECT COUNT(DISTINCT f."Numero_factura") as "hallazgosCriticos"
-          FROM furips1_consolidado f
-          WHERE f.numero_lote IN (${lotesSubqueryInt})
-            AND f."Numero_factura" IN (
-              SELECT DISTINCT i."Numero_factura"
-              FROM inconsistencias i
-              INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
-              WHERE ${incWhere}
-            )
+          SELECT COUNT(DISTINCT i."Numero_factura") as "hallazgosCriticos"
+          FROM inconsistencias i
+          INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
+          WHERE ${criticosFilters.join(" AND ")}
         `;
 
         console.log("[REPORTES] KPIs lotesQuery:", lotesQuery.substring(0, 200));
