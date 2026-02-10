@@ -182,7 +182,24 @@ async function createOrUpdateViews() {
   }
 }
 
+async function ensureFurips1Columns() {
+  console.log("\n🔧 Asegurando columnas nuevas en furips1...\n");
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado2103 BOOLEAN DEFAULT false`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS preauditoria BOOLEAN DEFAULT false`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado2108 BOOLEAN DEFAULT false`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado_soat BOOLEAN DEFAULT false`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado_infopol BOOLEAN DEFAULT false`);
+    console.log("✅ Columnas de furips1 verificadas/creadas");
+  } catch (error: any) {
+    console.error("⚠️ Error al crear columnas en furips1:", error.message);
+  }
+}
+
 async function main() {
+  // Ensure new columns exist in furips1
+  await ensureFurips1Columns();
+
   // Create/Update PostgreSQL views
   await createOrUpdateViews();
 

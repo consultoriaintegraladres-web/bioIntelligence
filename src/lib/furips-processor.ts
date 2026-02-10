@@ -536,85 +536,275 @@ export async function processFuripsData(
 
   try {
     console.log("🔄 Iniciando procesamiento de datos FURIPS...");
+    console.log(`📄 furips1Content length: ${furips1Content?.length || 0}`);
+    console.log(`📄 furips2Content length: ${furips2Content?.length || 0}`);
+    console.log(`📄 furtranContent length: ${furtranContent?.length || 0}`);
+    console.log(`🔢 numeroLote: ${numeroLote}`);
 
     // Truncar usuario a 20 caracteres (límite de la BD)
     const usuarioTruncado = usuario.substring(0, 20);
     console.log(`👤 Usuario: ${usuarioTruncado}`);
 
-    // ==================== ELIMINAR DATOS EXISTENTES ====================
-    // Borrar datos anteriores antes de insertar nuevos (sin backups por ahora)
-    console.log("🗑️  Limpiando tablas anteriores...");
-    
-    await prisma.$executeRaw`DELETE FROM "furips1"`;
+    // ==================== ASEGURAR COLUMNAS NUEVAS EXISTAN ====================
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado2103 BOOLEAN DEFAULT false`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS preauditoria BOOLEAN DEFAULT false`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado2108 BOOLEAN DEFAULT false`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado_soat BOOLEAN DEFAULT false`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado_infopol BOOLEAN DEFAULT false`);
+      console.log("✅ Columnas verificadas en furips1");
+    } catch (colErr: any) {
+      console.warn("⚠️ No se pudieron verificar columnas nuevas:", colErr.message);
+    }
+
+    // ==================== NO SE BORRA furips1 (acumulativo) ====================
+    // furips2 sí se limpia para reemplazar con nuevos datos del envío
+    console.log("🗑️  Limpiando furips2...");
     await prisma.$executeRaw`DELETE FROM "furips2"`;
     if (furtranContent && furtranContent.trim() !== "") {
       await prisma.$executeRaw`DELETE FROM "FURTRAN"`;
     }
-
-    console.log("✅ Tablas limpiadas - listas para nuevos datos");
+    console.log("✅ furips2 limpiada - lista para nuevos datos");
 
     // ==================== PROCESAR FURIPS1 (INSERT MASIVO) ====================
-    if (furips1Content) {
+    if (furips1Content && furips1Content.trim() !== "") {
       console.log("📊 Procesando FURIPS1...");
       const lines = furips1Content.trim().split("\n").filter(line => line.trim() !== "");
+      console.log(`📝 Líneas FURIPS1 encontradas: ${lines.length}`);
       
       // Preparar todos los registros
       const records = [];
+      let skippedLines = 0;
       for (let i = 0; i < lines.length; i++) {
         const fields = lines[i].split(",");
         const record = processFurips1Line(fields, numeroLote, usuarioTruncado);
         if (record) {
           records.push(record);
+        } else {
+          skippedLines++;
+          if (skippedLines <= 3) {
+            console.warn(`⚠️ Línea ${i + 1} omitida: ${fields.length} campos (se esperan 102). Preview: ${lines[i].substring(0, 80)}...`);
+          }
         }
       }
       
-      // INSERT MASIVO (una sola query)
+      if (skippedLines > 3) {
+        console.warn(`⚠️ ... y ${skippedLines - 3} líneas más omitidas`);
+      }
+      
+      console.log(`📊 Registros FURIPS1 válidos: ${records.length} de ${lines.length} líneas`);
+      
+      // INSERT MASIVO en furips1 (una sola query)
       if (records.length > 0) {
         try {
-          await prisma.furips1.createMany({
+          const createResult = await prisma.furips1.createMany({
             data: records,
             skipDuplicates: true,
           });
-          result.recordsProcessed.furips1 = records.length;
+          result.recordsProcessed.furips1 = createResult.count;
+          console.log(`✅ FURIPS1: ${createResult.count} registros insertados en furips1`);
         } catch (error: any) {
-          console.error("Error insertando FURIPS1:", error);
+          console.error("❌ Error insertando FURIPS1:", error.message);
+          console.error("❌ Error detalle:", JSON.stringify(error).substring(0, 500));
           throw error;
         }
+
+        // ==================== COPIAR A furips1_consolidado ====================
+        try {
+          console.log("📋 Copiando registros a furips1_consolidado...");
+          const consolidadoResult = await prisma.$executeRaw`
+            INSERT INTO furips1_consolidado (
+              id, "Numero_radicado_anterior", "RGO_Respuesta_a_Glosa_u_objecion",
+              "Numero_factura", "Numero_consecutivo_reclamacion",
+              "Codigo_habilitacion_prestador_servicios_salud",
+              "Primer_apellido_victima", "Segundo_apellido_victima",
+              "Primer_nombre_victima", "Segundo_nombre_victima",
+              "Tipo_documento_de_identidad_victima", "Numero_documento_de_identidad_victima",
+              "Fecha_nacimiento_victima", "Fecha_fallecimiento", "Sexo_victima",
+              "Direccion_residencia_victima", "Codigo_departamento_de_residencia_victima",
+              "Codigo_municipio_residencia_victima", "Telefono_victima",
+              "Condicion_victima", "Naturaleza_evento", "Descripcion_otro_evento",
+              "Direccion_ocurrencia_evento", "Fecha_ocurrencia_evento", "Hora_ocurrencia_evento",
+              "Codigo_departamento_ocurrencia_evento", "Codigo_municipio_ocurrencia_evento",
+              "Zona_ocurrencia_evento", "Estado_aseguramiento", "Marca", "Placa",
+              "Tipo_Vehiculo", "Codigo_aseguradora", "Numero_poliza_SOAT",
+              "Fecha_inicio_vigencia_de_poliza", "Fecha_final_vigencia_poliza",
+              "Numero_radicado_SIRAS", "Cobro_por_agotamiento_tope_Aseguradora",
+              "Codigo_CUPS_servicio_principal_hospitalizacion",
+              "Complejidad_procedimiento_quirurgico",
+              "Codigo_CUPS_procedimiento_quirurgico_principal",
+              "Codigo_CUPS_procedimiento_quirurgico_secundario",
+              "Se_presto_servicio_UCI", "Dias_UCI_reclamados",
+              "Tipo_documento_de_identidad_propietario",
+              "Numero_documento_identidad_propietario",
+              "Primer_apellido_propietario", "Segundo_apellido_propietario",
+              "Primer_nombre_propietario", "Segundo_nombre_propietario",
+              "Direccion_residencia_propietario", "Telefono_residencia_propietario",
+              "Codigo_departamento_residencia_propietario",
+              "Codigo_municipio_residencia_propietario",
+              "Primer_apellido_conductor", "Segundo_apellido_conductor",
+              "Primer_nombre_conductor", "Segundo_nombre_conductor",
+              "Tipo_documento_identidad_conductor", "Numero_documento_identidad_conductor",
+              "Direccion_residencia_conductor", "Codigo_departamento_residencia_conductor",
+              "Codigo_municipio_residencia_conductor", "Telefono_residencia_conductor",
+              "Tipo_referencia", "Fecha_remision", "Hora_salida",
+              "Codigo_habilitacion_prestador_servicios_de_salud_remitente",
+              "Profesional_que_remite", "Cargo_persona_que_remite",
+              "Fecha_ingreso", "Hora_ingreso",
+              "Codigo_habilitacion_prestador_servicios_salud_que_recibe",
+              "Profesional_que_recibe",
+              "Placa_ambulancia_que_realiza_el_traslado_interinstitucional",
+              "Placa_ambulancia_traslado_primario",
+              "Transporte_victima_desde_el_sitio_evento",
+              "Transporte_victima_hasta_el_fin_recorrido",
+              "Tipo_servicio_transporte", "Zona_donde_recoge_victima",
+              "Fecha_ingreso1", "Hora_ingreso1", "Fecha_egreso", "Hora_egreso",
+              "Codigo_diagnostico_principal_ingreso",
+              "Codigo_diagnostico_ingreso_asociado_1",
+              "Codigo_diagnostico_ingreso_asociado_2",
+              "Codigo_diagnostico_principal_egreso",
+              "Codigo_diagnostico_egreso_asociado_1",
+              "Codigo_diagnostico_egreso_asociado_2",
+              "Primer_apellido_medico", "Segundo_apellido_medico",
+              "Primer_nombre_medico", "Segundo_nombre_medico",
+              "Tipo_documento_identidad_medico",
+              "Numero_documento_de_identidad_medico",
+              "Numero_registro_medico",
+              "Total_facturado_por_amparo_gastos_medicos_quirurgicos",
+              "Total_reclamado_por_amparo_gastos_medicos_quirurgicos",
+              "Total_facturado_por_amparo_gastos_transporte",
+              "Total_reclamado_por_amparo_gastos_transporte",
+              "Manifestacion_servicios_habilitados", "Descripcion_evento",
+              numero_lote, usuario
+            )
+            SELECT 
+              id, "Numero_radicado_anterior", "RGO_Respuesta_a_Glosa_u_objecion",
+              "Numero_factura", "Numero_consecutivo_reclamacion",
+              "Codigo_habilitacion_prestador_servicios_salud",
+              "Primer_apellido_victima", "Segundo_apellido_victima",
+              "Primer_nombre_victima", "Segundo_nombre_victima",
+              "Tipo_documento_de_identidad_victima", "Numero_documento_de_identidad_victima",
+              "Fecha_nacimiento_victima", "Fecha_fallecimiento", "Sexo_victima",
+              "Direccion_residencia_victima", "Codigo_departamento_de_residencia_victima",
+              "Codigo_municipio_residencia_victima", "Telefono_victima",
+              "Condicion_victima", "Naturaleza_evento", "Descripcion_otro_evento",
+              "Direccion_ocurrencia_evento", "Fecha_ocurrencia_evento", "Hora_ocurrencia_evento",
+              "Codigo_departamento_ocurrencia_evento", "Codigo_municipio_ocurrencia_evento",
+              "Zona_ocurrencia_evento", "Estado_aseguramiento", "Marca", "Placa",
+              "Tipo_Vehiculo", "Codigo_aseguradora", "Numero_poliza_SOAT",
+              "Fecha_inicio_vigencia_de_poliza", "Fecha_final_vigencia_poliza",
+              "Numero_radicado_SIRAS", "Cobro_por_agotamiento_tope_Aseguradora",
+              "Codigo_CUPS_servicio_principal_hospitalizacion",
+              "Complejidad_procedimiento_quirurgico",
+              "Codigo_CUPS_procedimiento_quirurgico_principal",
+              "Codigo_CUPS_procedimiento_quirurgico_secundario",
+              "Se_presto_servicio_UCI", "Dias_UCI_reclamados",
+              "Tipo_documento_de_identidad_propietario",
+              "Numero_documento_identidad_propietario",
+              "Primer_apellido_propietario", "Segundo_apellido_propietario",
+              "Primer_nombre_propietario", "Segundo_nombre_propietario",
+              "Direccion_residencia_propietario", "Telefono_residencia_propietario",
+              "Codigo_departamento_residencia_propietario",
+              "Codigo_municipio_residencia_propietario",
+              "Primer_apellido_conductor", "Segundo_apellido_conductor",
+              "Primer_nombre_conductor", "Segundo_nombre_conductor",
+              "Tipo_documento_identidad_conductor", "Numero_documento_identidad_conductor",
+              "Direccion_residencia_conductor", "Codigo_departamento_residencia_conductor",
+              "Codigo_municipio_residencia_conductor", "Telefono_residencia_conductor",
+              "Tipo_referencia", "Fecha_remision", "Hora_salida",
+              "Codigo_habilitacion_prestador_servicios_de_salud_remitente",
+              "Profesional_que_remite", "Cargo_persona_que_remite",
+              "Fecha_ingreso", "Hora_ingreso",
+              "Codigo_habilitacion_prestador_servicios_salud_que_recibe",
+              "Profesional_que_recibe",
+              "Placa_ambulancia_que_realiza_el_traslado_interinstitucional",
+              "Placa_ambulancia_traslado_primario",
+              "Transporte_victima_desde_el_sitio_evento",
+              "Transporte_victima_hasta_el_fin_recorrido",
+              "Tipo_servicio_transporte", "Zona_donde_recoge_victima",
+              "Fecha_ingreso1", "Hora_ingreso1", "Fecha_egreso", "Hora_egreso",
+              "Codigo_diagnostico_principal_ingreso",
+              "Codigo_diagnostico_ingreso_asociado_1",
+              "Codigo_diagnostico_ingreso_asociado_2",
+              "Codigo_diagnostico_principal_egreso",
+              "Codigo_diagnostico_egreso_asociado_1",
+              "Codigo_diagnostico_egreso_asociado_2",
+              "Primer_apellido_medico", "Segundo_apellido_medico",
+              "Primer_nombre_medico", "Segundo_nombre_medico",
+              "Tipo_documento_identidad_medico",
+              "Numero_documento_de_identidad_medico",
+              "Numero_registro_medico",
+              "Total_facturado_por_amparo_gastos_medicos_quirurgicos",
+              "Total_reclamado_por_amparo_gastos_medicos_quirurgicos",
+              "Total_facturado_por_amparo_gastos_transporte",
+              "Total_reclamado_por_amparo_gastos_transporte",
+              "Manifestacion_servicios_habilitados", "Descripcion_evento",
+              numero_lote, usuario
+            FROM furips1
+            WHERE numero_lote = ${numeroLote}
+          `;
+          console.log(`✅ ${consolidadoResult} registros copiados a furips1_consolidado`);
+        } catch (consError: any) {
+          console.error("⚠️ Error copiando a furips1_consolidado:", consError.message);
+          // No lanzar error - el insert principal ya fue exitoso
+          warnings.push({
+            line: 0,
+            field: "furips1_consolidado",
+            issue: `Error al copiar a furips1_consolidado: ${consError.message}`,
+            originalValue: "",
+            adjustedValue: "NO COPIADO",
+          });
+        }
       }
-      
-      console.log(`✅ FURIPS1: ${result.recordsProcessed.furips1} registros insertados`);
+    } else {
+      console.warn("⚠️ FURIPS1: No hay contenido para procesar (vacío o nulo)");
     }
 
     // ==================== PROCESAR FURIPS2 (INSERT MASIVO) ====================
-    if (furips2Content) {
+    if (furips2Content && furips2Content.trim() !== "") {
       console.log("📊 Procesando FURIPS2...");
       const lines = furips2Content.trim().split("\n").filter(line => line.trim() !== "");
+      console.log(`📝 Líneas FURIPS2 encontradas: ${lines.length}`);
       
       // Preparar todos los registros
       const records = [];
+      let skippedLines = 0;
       for (let i = 0; i < lines.length; i++) {
         const fields = lines[i].split(",");
         const record = processFurips2Line(fields, numeroLote, usuarioTruncado);
         if (record) {
           records.push(record);
+        } else {
+          skippedLines++;
+          if (skippedLines <= 3) {
+            console.warn(`⚠️ Línea ${i + 1} FURIPS2 omitida: ${fields.length} campos (se esperan 9). Preview: ${lines[i].substring(0, 80)}...`);
+          }
         }
       }
+      
+      if (skippedLines > 3) {
+        console.warn(`⚠️ ... y ${skippedLines - 3} líneas FURIPS2 más omitidas`);
+      }
+      
+      console.log(`📊 Registros FURIPS2 válidos: ${records.length} de ${lines.length} líneas`);
       
       // INSERT MASIVO (una sola query)
       if (records.length > 0) {
         try {
-          await prisma.furips2.createMany({
+          const createResult = await prisma.furips2.createMany({
             data: records,
             skipDuplicates: true,
           });
-          result.recordsProcessed.furips2 = records.length;
+          result.recordsProcessed.furips2 = createResult.count;
+          console.log(`✅ FURIPS2: ${createResult.count} registros insertados`);
         } catch (error: any) {
-          console.error("Error insertando FURIPS2:", error);
+          console.error("❌ Error insertando FURIPS2:", error.message);
+          console.error("❌ Error detalle:", JSON.stringify(error).substring(0, 500));
           throw error;
         }
       }
-      
-      console.log(`✅ FURIPS2: ${result.recordsProcessed.furips2} registros insertados`);
+    } else {
+      console.warn("⚠️ FURIPS2: No hay contenido para procesar (vacío o nulo)");
     }
 
     // ==================== PROCESAR FURTRAN (SOLO SI EXISTE) ====================

@@ -1,6 +1,24 @@
 import { prisma } from "@/lib/prisma";
 
 /**
+ * Ensures the new boolean columns exist in the furips1 table.
+ * Uses ALTER TABLE ... ADD COLUMN IF NOT EXISTS to be idempotent.
+ */
+export async function ensureFurips1Columns(): Promise<void> {
+  try {
+    console.log("🔧 Asegurando que las columnas nuevas existan en furips1...");
+    await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado2103 BOOLEAN DEFAULT false`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS preauditoria BOOLEAN DEFAULT false`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado2108 BOOLEAN DEFAULT false`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado_soat BOOLEAN DEFAULT false`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE furips1 ADD COLUMN IF NOT EXISTS verificado_infopol BOOLEAN DEFAULT false`);
+    console.log("✅ Columnas de furips1 verificadas/creadas");
+  } catch (error: any) {
+    console.error("⚠️ Error al asegurar columnas de furips1:", error.message);
+  }
+}
+
+/**
  * Ensures the PostgreSQL views required by the application exist.
  * Uses CREATE OR REPLACE VIEW so it's safe to call multiple times.
  * These views were migrated from MySQL and adapted for PostgreSQL.
@@ -8,6 +26,9 @@ import { prisma } from "@/lib/prisma";
 export async function ensureViewsExist(): Promise<void> {
   try {
     console.log("🔧 Asegurando que las vistas estén actualizadas en PostgreSQL...");
+    
+    // Ensure new columns exist before recreating views
+    await ensureFurips1Columns();
     
     // Always recreate views to ensure they have the latest definition
     // CREATE OR REPLACE is safe and will update existing views

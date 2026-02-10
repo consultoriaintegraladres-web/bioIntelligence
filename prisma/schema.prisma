@@ -180,6 +180,11 @@ model Furips1 {
   Descripcion_evento                                          String?   @db.VarChar(1000)
   numero_lote                                                 Int?
   usuario                                                     String?   @db.VarChar(20)
+  verificado2103                                              Boolean?  @default(false)
+  preauditoria                                                Boolean?  @default(false)
+  verificado2108                                              Boolean?  @default(false)
+  verificado_soat                                             Boolean?  @default(false)
+  verificado_infopol                                          Boolean?  @default(false)
 
   @@map("furips1")
 }
