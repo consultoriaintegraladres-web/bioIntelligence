@@ -29,6 +29,7 @@ import { PieChart3D } from "@/components/charts/PieChart3D";
 import { SourceChart3D } from "@/components/charts/SourceChart3D";
 import { ResumenTable } from "@/components/tables/ResumenTable";
 import { HallazgosModal } from "@/components/HallazgosModal";
+import { EnviosModal } from "@/components/EnviosModal";
 import { useAppContext } from "@/contexts/app-context";
 
 interface KPIsData {
@@ -58,6 +59,7 @@ export default function ResumenPage() {
   const { data: session } = useSession();
   const { filters, setFilters, setSelectedIpsName, themeMode } = useAppContext();
   const [modalOpen, setModalOpen] = useState(false);
+  const [enviosModalOpen, setEnviosModalOpen] = useState(false);
   const [modalFilterType, setModalFilterType] = useState<"tipo_validacion" | "origen">("tipo_validacion");
   const [modalFilterValue, setModalFilterValue] = useState("");
 
@@ -146,10 +148,11 @@ export default function ResumenPage() {
 
   const kpiCards = [
     {
-      title: "Total Lotes",
+      title: "Envios Realizados",
       value: kpis.totalLotes || 0,
       icon: Package,
       gradient: "from-[#9333EA] to-[#7C3AED]",
+      onClick: () => setEnviosModalOpen(true),
     },
     {
       title: "Total Facturas",
@@ -233,7 +236,10 @@ export default function ResumenPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <Card className={`${cardBg} backdrop-blur-xl hover:border-[#9333EA]/30 transition-all duration-300 group`}>
+            <Card
+              className={`${cardBg} backdrop-blur-xl hover:border-[#9333EA]/30 transition-all duration-300 group ${(kpi as any).onClick ? "cursor-pointer" : ""}`}
+              onClick={(kpi as any).onClick}
+            >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -379,6 +385,14 @@ export default function ResumenPage() {
         onOpenChange={setModalOpen}
         filterType={modalFilterType}
         filterValue={modalFilterValue}
+        filters={filters}
+        themeMode={themeMode}
+      />
+
+      {/* Envios Modal */}
+      <EnviosModal
+        open={enviosModalOpen}
+        onOpenChange={setEnviosModalOpen}
         filters={filters}
         themeMode={themeMode}
       />

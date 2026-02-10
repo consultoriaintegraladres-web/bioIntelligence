@@ -388,6 +388,37 @@ export async function GET(request: NextRequest) {
         });
       }
 
+      case "envios_detalle": {
+        const query = `
+          SELECT
+            numero_lote,
+            nombre_envio,
+            tipo_envio,
+            fecha_creacion,
+            nombre_ips,
+            cantidad_facturas,
+            valor_reclamado
+          FROM control_lotes
+          WHERE ${lotesWhere}
+          ORDER BY fecha_creacion DESC, numero_lote DESC
+        `;
+
+        const result = await prisma.$queryRawUnsafe<any[]>(query);
+
+        return NextResponse.json({
+          success: true,
+          data: result.map((item) => ({
+            numero_lote: safeNumber(item.numero_lote),
+            nombre_envio: item.nombre_envio || "",
+            tipo_envio: item.tipo_envio || "",
+            fecha_creacion: item.fecha_creacion,
+            nombre_ips: item.nombre_ips || "",
+            cantidad_facturas: safeNumber(item.cantidad_facturas),
+            valor_reclamado: safeNumber(item.valor_reclamado),
+          })),
+        });
+      }
+
       default:
         return NextResponse.json({
           success: true,
