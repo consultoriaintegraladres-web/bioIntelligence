@@ -171,12 +171,18 @@ export async function GET(request: NextRequest) {
           LEFT JOIN facturas_reclamado fr ON h."Numero_factura" = fr."Numero_factura"
         `;
 
-        // Hallazgos críticos: facturas distintas con al menos un hallazgo (mostrar_reporte=1)
+        // Hallazgos críticos: facturas distintas en furips1_consolidado que tienen al menos un hallazgo
+        // Se usa furips1_consolidado como base para no contar facturas huérfanas en inconsistencias
         const hallazgosCriticosQuery = `
-          SELECT COUNT(DISTINCT i."Numero_factura") as "hallazgosCriticos"
-          FROM inconsistencias i
-          INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
-          WHERE ${incWhere}
+          SELECT COUNT(DISTINCT f."Numero_factura") as "hallazgosCriticos"
+          FROM furips1_consolidado f
+          WHERE f.numero_lote IN (${lotesSubqueryInt})
+            AND f."Numero_factura" IN (
+              SELECT DISTINCT i."Numero_factura"
+              FROM inconsistencias i
+              INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
+              WHERE ${incWhere}
+            )
         `;
 
         console.log("[REPORTES] KPIs lotesQuery:", lotesQuery.substring(0, 200));
