@@ -212,8 +212,8 @@ export async function POST(request: NextRequest) {
         furips1Content || "",
         furips2Content || "",
         furtranContent,
-        envio.id,
-        session.user?.email || "unknown",
+        envio.id, // Se ignora internamente - numero_lote se calcula desde control_lotes
+        "admin",  // Usuario fijo por ahora
         nombreIps,
         codigoHabilitacion,
         cantidadFacturas,
