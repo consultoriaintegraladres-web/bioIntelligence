@@ -26,7 +26,6 @@ function loadHighcharts(): Promise<any> {
   if (typeof window === "undefined") return Promise.reject("SSR");
 
   const win = window as any;
-  // Already fully loaded (base + 3d)?
   if (win.Highcharts && win.Highcharts._3dLoaded) {
     return Promise.resolve(win.Highcharts);
   }
@@ -66,11 +65,19 @@ function loadHighcharts(): Promise<any> {
 }
 
 // ──────────────────────────────────────────────
-// Colors
+// Gradient color pairs: [base, lighter] for 3D shine
 // ──────────────────────────────────────────────
-const PIE_COLORS = [
-  "#8B5CF6", "#06B6D4", "#F43F5E", "#10B981", "#F59E0B",
-  "#3B82F6", "#EC4899", "#14B8A6", "#6366F1", "#D946EF",
+const PIE_GRADIENTS: Array<{ base: string; light: string; hex: string }> = [
+  { hex: "#8B5CF6", base: "rgba(139,92,246,1)",  light: "rgba(192,168,255,1)" },
+  { hex: "#06B6D4", base: "rgba(6,182,212,1)",   light: "rgba(127,234,252,1)" },
+  { hex: "#F43F5E", base: "rgba(244,63,94,1)",   light: "rgba(255,153,170,1)" },
+  { hex: "#10B981", base: "rgba(16,185,129,1)",   light: "rgba(128,236,199,1)" },
+  { hex: "#F59E0B", base: "rgba(245,158,11,1)",   light: "rgba(253,212,112,1)" },
+  { hex: "#3B82F6", base: "rgba(59,130,246,1)",   light: "rgba(155,194,255,1)" },
+  { hex: "#EC4899", base: "rgba(236,72,153,1)",   light: "rgba(252,162,210,1)" },
+  { hex: "#14B8A6", base: "rgba(20,184,166,1)",   light: "rgba(118,232,218,1)" },
+  { hex: "#6366F1", base: "rgba(99,102,241,1)",   light: "rgba(176,178,255,1)" },
+  { hex: "#D946EF", base: "rgba(217,70,239,1)",   light: "rgba(242,168,255,1)" },
 ];
 
 // ──────────────────────────────────────────────
@@ -101,7 +108,7 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
     return `$${v.toFixed(0)}`;
   };
 
-  // Load Highcharts on mount
+  // Load Highcharts
   useEffect(() => {
     let alive = true;
     loadHighcharts()
@@ -117,28 +124,38 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
     const HC = (window as any).Highcharts;
     if (!HC) return;
 
-    // Destroy old chart
     if (chartRef.current) {
       try { chartRef.current.destroy(); } catch (_) {}
       chartRef.current = null;
     }
 
-    const series = sortedData.map((d, i) => ({
-      name: d.name.length > 55 ? d.name.substring(0, 52) + "..." : d.name,
-      fullName: d.name,
-      y: d.value,
-      color: PIE_COLORS[i % PIE_COLORS.length],
-      cantidad: d.cantidad || 0,
-      sliced: i === 0,   // pull out the largest slice
-      selected: i === 0,
-    }));
+    // Build radial gradient colors for each segment (gives 3D shine)
+    const seriesData = sortedData.map((d, i) => {
+      const g = PIE_GRADIENTS[i % PIE_GRADIENTS.length];
+      return {
+        name: d.name.length > 55 ? d.name.substring(0, 52) + "..." : d.name,
+        fullName: d.name,
+        y: d.value,
+        color: {
+          radialGradient: { cx: 0.4, cy: 0.35, r: 0.65 },
+          stops: [
+            [0, g.light],   // highlight center
+            [1, g.base],    // darker edge
+          ],
+        },
+        borderColor: g.light,
+        cantidad: d.cantidad || 0,
+        sliced: i === 0,
+        selected: i === 0,
+      };
+    });
 
     chartRef.current = HC.chart(containerRef.current, {
       chart: {
         type: "pie",
         options3d: {
           enabled: true,
-          alpha: 55,          // vertical tilt angle
+          alpha: 50,          // tilt angle - balanced for depth visibility
           beta: 0,
         },
         backgroundColor: "transparent",
@@ -172,23 +189,31 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
         navigation: { activeColor: "#8B5CF6", style: { color: textColor } },
       },
 
-      // ── Tooltip ────────────────────────────
+      // ── Tooltip (Glassmorphism) ────────────
       tooltip: {
         useHTML: true,
         formatter: function (): string {
           const p = this as any;
+          const bg = isLight
+            ? "rgba(255,255,255,0.65)"
+            : "rgba(15,15,40,0.65)";
           return (
-            `<div style="padding:4px 6px;font-family:'Inter',system-ui">` +
-            `<b style="font-size:13px">${p.point.fullName || p.point.name}</b><br/>` +
-            `Valor: <b>${fmt(p.y)}</b><br/>` +
-            `Cantidad: <b>${(p.point.cantidad || 0).toLocaleString()}</b><br/>` +
-            `Porcentaje: <b>${p.point.percentage.toFixed(1)}%</b></div>`
+            `<div style="padding:10px 14px;font-family:'Inter',system-ui;` +
+            `background:${bg};backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);` +
+            `border-radius:12px;border:1px solid rgba(139,92,246,0.3);` +
+            `box-shadow:0 8px 32px rgba(0,0,0,0.18)">` +
+            `<div style="font-size:14px;font-weight:700;margin-bottom:6px;color:${textColor}">${p.point.fullName || p.point.name}</div>` +
+            `<div style="display:flex;gap:16px;font-size:12px;color:${textColor};opacity:0.85">` +
+            `<div><span style="opacity:0.6">Valor</span><br/><b>${fmt(p.y)}</b></div>` +
+            `<div><span style="opacity:0.6">Cantidad</span><br/><b>${(p.point.cantidad || 0).toLocaleString()}</b></div>` +
+            `<div><span style="opacity:0.6">%</span><br/><b>${p.point.percentage.toFixed(1)}%</b></div>` +
+            `</div></div>`
           );
         },
-        backgroundColor: isLight ? "rgba(255,255,255,0.97)" : "rgba(15,15,40,0.97)",
-        borderColor: "rgba(139,92,246,0.6)",
-        borderWidth: 2,
-        shadow: { color: "rgba(0,0,0,0.15)", offsetX: 0, offsetY: 4, width: 12 },
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        shadow: false,
+        outside: true,
         style: { color: textColor, fontSize: "13px" },
       },
 
@@ -197,18 +222,20 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
         pie: {
           allowPointSelect: true,
           cursor: "pointer",
-          depth: 50,                // ← 3D THICKNESS
-          innerSize: "42%",         // donut hole
-          size: "72%",              // smaller to leave room for labels
-          slicedOffset: 28,         // how far the pulled slice sticks out
-          edgeColor: isLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.08)",
+          depth: 55,                // 3D thickness
+          innerSize: "42%",
+          size: "72%",
+          slicedOffset: 30,
+          edgeColor: isLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.06)",
           edgeWidth: 1,
+          borderWidth: 1.5,
+          borderColor: isLight ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.12)",
           dataLabels: {
             enabled: true,
             useHTML: true,
             distance: 35,
             connectorWidth: 2,
-            connectorColor: isLight ? "rgba(139,92,246,0.35)" : "rgba(139,92,246,0.5)",
+            connectorColor: isLight ? "rgba(139,92,246,0.3)" : "rgba(139,92,246,0.45)",
             connectorShape: "crookedLine",
             crookDistance: "70%",
             softConnector: true,
@@ -217,40 +244,45 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
               const pt = this as any;
               const pct = pt.point.percentage.toFixed(1);
               const name: string = pt.point.fullName || pt.point.name || "";
-              // Split name into max 2 lines (~30 chars per line)
               let line1 = name;
               let line2 = "";
-              if (name.length > 30) {
-                const mid = Math.min(30, Math.ceil(name.length / 2));
+              if (name.length > 28) {
+                const mid = Math.min(28, Math.ceil(name.length / 2));
                 const sp = name.lastIndexOf(" ", mid);
                 if (sp > 8) {
                   line1 = name.substring(0, sp);
                   line2 = name.substring(sp + 1);
-                  if (line2.length > 35) line2 = line2.substring(0, 32) + "...";
+                  if (line2.length > 32) line2 = line2.substring(0, 29) + "...";
                 } else {
-                  line1 = name.substring(0, 30);
-                  line2 = name.substring(30, 65);
-                  if (line2.length > 35) line2 = line2.substring(0, 32) + "...";
+                  line1 = name.substring(0, 28);
+                  line2 = name.substring(28, 60);
+                  if (line2.length > 32) line2 = line2.substring(0, 29) + "...";
                 }
               }
               const nameColor = isLight ? "#334155" : "#cbd5e1";
               const pctColor = isLight ? "#6d28d9" : "#a78bfa";
               return (
-                `<div style="text-align:center;line-height:1.3;font-family:'Inter',system-ui">` +
+                `<div style="text-align:center;line-height:1.35;font-family:'Inter',system-ui">` +
                 `<span style="font-size:13px;font-weight:700;color:${pctColor}">${pct}%</span><br/>` +
-                `<span style="font-size:10.5px;font-weight:500;color:${nameColor}">${line1}</span>` +
-                (line2 ? `<br/><span style="font-size:10.5px;font-weight:400;color:${nameColor};opacity:0.85">${line2}</span>` : "") +
+                `<span style="font-size:10px;font-weight:500;color:${nameColor}">${line1}</span>` +
+                (line2 ? `<br/><span style="font-size:10px;font-weight:400;color:${nameColor};opacity:0.8">${line2}</span>` : "") +
                 `</div>`
               );
             },
-            style: {
-              textOutline: "none",
-            },
+            style: { textOutline: "none" },
           },
+          // ── Hover: segments expand slightly ──
           states: {
             hover: {
-              brightness: 0.1,
-              halo: { size: 6, opacity: 0.2 },
+              brightness: 0.12,
+              halo: {
+                size: 10,
+                opacity: 0.15,
+                attributes: {
+                  fill: isLight ? "rgba(139,92,246,0.08)" : "rgba(139,92,246,0.12)",
+                  "stroke-width": 0,
+                },
+              },
             },
           },
           point: {
@@ -267,12 +299,27 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
                   onClickRef.current(original.name);
                 }
               },
+              // Expand segment slightly on hover
+              mouseOver: function () {
+                const pt = this as any;
+                if (!pt.sliced) {
+                  pt.slice(true);
+                }
+              },
+              mouseOut: function () {
+                const pt = this as any;
+                // Keep first slice (largest) always sliced, retract others
+                const idx = pt.index;
+                if (idx !== 0 && pt.sliced) {
+                  pt.slice(false);
+                }
+              },
             },
           },
         },
       },
 
-      series: [{ name: "Hallazgos", data: series }],
+      series: [{ name: "Hallazgos", data: seriesData }],
     });
 
     return () => {
@@ -307,10 +354,9 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
 
   return (
     <div className="relative w-full h-full">
-      {/* Highcharts container */}
       <div ref={containerRef} className="w-full h-full" />
 
-      {/* Center total overlay */}
+      {/* ── Glassmorphism center total ── */}
       {totalValue > 0 && (
         <div
           className="pointer-events-none"
@@ -325,20 +371,23 @@ export function PieChart3D({ data, themeMode = "dark", onItemClick }: PieChart3D
         >
           <div
             style={{
-              background: isLight ? "rgba(255,255,255,0.88)" : "rgba(20,20,50,0.88)",
-              borderRadius: "14px",
-              padding: "8px 16px",
-              border: `1.5px solid ${isLight ? "rgba(139,92,246,0.25)" : "rgba(139,92,246,0.35)"}`,
-              backdropFilter: "blur(8px)",
+              background: isLight
+                ? "rgba(255,255,255,0.45)"
+                : "rgba(20,20,55,0.45)",
+              borderRadius: "16px",
+              padding: "10px 18px",
+              border: `1px solid ${isLight ? "rgba(139,92,246,0.2)" : "rgba(139,92,246,0.3)"}`,
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
               boxShadow: isLight
-                ? "0 4px 16px rgba(0,0,0,0.08)"
-                : "0 4px 20px rgba(139,92,246,0.15)",
+                ? "0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5)"
+                : "0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
             }}
           >
-            <div style={{ fontSize: "11px", color: textColor, opacity: 0.6, fontFamily: "'Inter',system-ui" }}>
+            <div style={{ fontSize: "10px", color: textColor, opacity: 0.5, fontFamily: "'Inter',system-ui", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               Total
             </div>
-            <div style={{ fontSize: "20px", fontWeight: 700, color: textColor, fontFamily: "'Inter',system-ui" }}>
+            <div style={{ fontSize: "22px", fontWeight: 700, color: textColor, fontFamily: "'Inter',system-ui", lineHeight: 1.2 }}>
               {fmt(totalValue)}
             </div>
           </div>

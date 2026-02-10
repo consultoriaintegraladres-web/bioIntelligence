@@ -127,11 +127,14 @@ export function BarChart3D({ data, title = "Distribución por Tipo de Validació
           size: 11,
           family: "'Inter', 'SF Pro Display', system-ui, sans-serif",
         },
-        hovertemplate: sortedData.map((d, i) =>
-          `<b>${d.name}</b><br>` +
-          `Valor: ${formatValue(valores[i])}<br>` +
-          `Cantidad: ${cantidades[i].toLocaleString()}<extra></extra>`
-        ),
+        hovertemplate: sortedData.map((d, i) => {
+          const c = COLORS_3D[i % COLORS_3D.length];
+          return (
+            `<b style="font-size:14px">${d.name}</b><br>` +
+            `<span style="color:${c.top}">●</span> Valor: <b>${formatValue(valores[i])}</b><br>` +
+            `<span style="color:${c.top}">●</span> Cantidad: <b>${cantidades[i].toLocaleString()}</b><extra></extra>`
+          );
+        }),
         customdata: cantidades,
         width: halfWidth * 2,
       },
@@ -207,9 +210,9 @@ export function BarChart3D({ data, title = "Distribución por Tipo de Validació
           margin: { l: 75, r: 50, t: 35, b: 180 },
           shapes,
           hoverlabel: {
-            bgcolor: isLight ? "rgba(255,255,255,0.96)" : "rgba(15,15,40,0.96)",
-            bordercolor: isLight ? "rgba(139,92,246,0.5)" : "rgba(139,92,246,0.7)",
-            borderwidth: 2,
+            bgcolor: isLight ? "rgba(255,255,255,0.65)" : "rgba(15,15,40,0.65)",
+            bordercolor: isLight ? "rgba(139,92,246,0.3)" : "rgba(139,92,246,0.45)",
+            borderwidth: 1,
             font: {
               color: isLight ? "#1e293b" : "#f1f5f9",
               size: 13,

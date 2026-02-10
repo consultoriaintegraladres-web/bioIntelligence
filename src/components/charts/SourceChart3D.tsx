@@ -178,9 +178,9 @@ export function SourceChart3D({ data, title = "Análisis por Fuente/Origen", the
           },
           margin: { l: 80, r: 50, t: 50, b: 120 },
           hoverlabel: {
-            bgcolor: isLight ? "rgba(255,255,255,0.96)" : "rgba(15,15,40,0.96)",
-            bordercolor: isLight ? "rgba(139,92,246,0.5)" : "rgba(139,92,246,0.7)",
-            borderwidth: 2,
+            bgcolor: isLight ? "rgba(255,255,255,0.65)" : "rgba(15,15,40,0.65)",
+            bordercolor: isLight ? "rgba(139,92,246,0.3)" : "rgba(139,92,246,0.45)",
+            borderwidth: 1,
             font: {
               color: isLight ? "#1e293b" : "#f1f5f9",
               size: 13,
