@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
         const criticosFilters: string[] = [
           "p.mostrar_reporte = 1",
           `i.lote_de_carga IN (${lotesSubquery})`,
-          `TRIM(i.origen) IN ('FURIPS 1', 'INFOPOL', 'Certificado de agotamiento', 'FURTRAN')`,
+          `UPPER(TRIM(i.origen)) IN ('FURIPS 1', 'INFOPOL', 'CERTIFICADO DE AGOTAMIENTO', 'FURTRAN')`,
         ];
         if (!canViewAllIPS) {
           const userCodigo = session.user.codigoHabilitacion?.substring(0, 10) || "";
