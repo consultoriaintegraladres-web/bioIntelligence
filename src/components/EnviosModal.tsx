@@ -18,13 +18,13 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Package } from "lucide-react";
-import type { ThemeMode } from "@/contexts/app-context";
+import type { ThemeMode, FilterValues } from "@/contexts/app-context";
 import { SqlDebugger } from "@/components/SqlDebugger";
 
 interface EnviosModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  filters: Record<string, string>;
+  filters: FilterValues;
   themeMode?: ThemeMode;
   isAdmin?: boolean;
 }
