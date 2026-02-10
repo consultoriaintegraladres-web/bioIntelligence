@@ -85,7 +85,7 @@ export function BarChart3D({ data, themeMode = "dark", onItemClick }: BarChart3D
   const yMax = yTicks[yTicks.length - 1] || 1;
 
   // Chart area padding
-  const pad = { left: 75, right: 30, top: 45, bottom: 130 };
+  const pad = { left: 75, right: 30, top: 45, bottom: 160 };
   const cw = dims.w - pad.left - pad.right;
   const ch = dims.h - pad.top - pad.bottom;
 
@@ -296,30 +296,48 @@ export function BarChart3D({ data, themeMode = "dark", onItemClick }: BarChart3D
             )}
           </div>
 
-          {/* ── X-axis labels ── */}
+          {/* ── X-axis labels (2-line, centered) ── */}
           {bars.map((b, i) => {
             const isHovered = hoveredIdx === i;
-            const label = b.name.length > 35 ? b.name.substring(0, 33) + "..." : b.name;
+            // Split name into 2 lines
+            const name = b.name;
+            let line1 = name;
+            let line2 = "";
+            const maxLineLen = Math.max(18, Math.floor((b.barWidth * 2) / 6));
+            if (name.length > maxLineLen) {
+              const mid = Math.min(maxLineLen, Math.ceil(name.length / 2));
+              const sp = name.lastIndexOf(" ", mid);
+              if (sp > 5) {
+                line1 = name.substring(0, sp);
+                line2 = name.substring(sp + 1);
+                if (line2.length > maxLineLen + 5) line2 = line2.substring(0, maxLineLen + 2) + "...";
+              } else {
+                line1 = name.substring(0, maxLineLen);
+                line2 = name.substring(maxLineLen);
+                if (line2.length > maxLineLen + 5) line2 = line2.substring(0, maxLineLen + 2) + "...";
+              }
+            }
             return (
               <div
                 key={`xlabel-${i}`}
                 style={{
                   position: "absolute",
                   left: pad.left + b.centerX,
-                  top: dims.h - pad.bottom + 10,
-                  transform: "translateX(-50%) rotate(-45deg)",
+                  top: dims.h - pad.bottom + 8,
+                  transform: "translateX(-50%) rotate(-40deg)",
                   transformOrigin: "top center",
                   fontSize: isHovered ? "11px" : "10px",
                   fontWeight: isHovered ? 600 : 400,
                   color: isHovered ? (isLight ? "#6d28d9" : "#a78bfa") : subtleColor,
                   transition: "all 0.3s ease",
-                  whiteSpace: "nowrap",
-                  maxWidth: "140px",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
+                  lineHeight: 1.3,
+                  textAlign: "left",
+                  width: "max-content",
+                  maxWidth: "160px",
                 }}
               >
-                {label}
+                <div>{line1}</div>
+                {line2 && <div style={{ opacity: 0.75 }}>{line2}</div>}
               </div>
             );
           })}

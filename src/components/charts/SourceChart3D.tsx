@@ -268,17 +268,14 @@ export function SourceChart3D({ data, themeMode = "dark", onItemClick }: SourceC
                 style={{
                   position: "absolute",
                   left: pad.left + s.xPct * cw,
-                  top: dims.h - pad.bottom + 12,
-                  transform: "translateX(-50%) rotate(-30deg)",
+                  top: dims.h - pad.bottom + 8,
+                  transform: "translateX(-50%) rotate(-25deg)",
                   transformOrigin: "top center",
-                  fontSize: isHovered ? "12px" : "11px",
-                  fontWeight: isHovered ? 600 : 400,
-                  color: isHovered ? (isLight ? "#6d28d9" : "#a78bfa") : subtleColor,
+                  fontSize: isHovered ? "14px" : "13px",
+                  fontWeight: isHovered ? 700 : 500,
+                  color: isHovered ? (isLight ? "#6d28d9" : "#a78bfa") : (isLight ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)"),
                   transition: "all 0.3s ease",
                   whiteSpace: "nowrap",
-                  maxWidth: "120px",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
                 }}
               >
                 {s.origen || "Sin origen"}
@@ -287,7 +284,7 @@ export function SourceChart3D({ data, themeMode = "dark", onItemClick }: SourceC
           })}
 
           {/* ── X-axis title ── */}
-          <div style={{ position: "absolute", left: pad.left + cw / 2, bottom: 6, transform: "translateX(-50%)", fontSize: "12px", fontWeight: 500, color: subtleColor }}>
+          <div style={{ position: "absolute", left: pad.left + cw / 2, bottom: 4, transform: "translateX(-50%)", fontSize: "13px", fontWeight: 600, color: isLight ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }}>
             Origen / Fuente
           </div>
 
