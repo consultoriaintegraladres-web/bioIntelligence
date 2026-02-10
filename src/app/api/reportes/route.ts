@@ -119,49 +119,79 @@ export async function GET(request: NextRequest) {
 
     switch (tipo) {
       case "kpis": {
-        // KPIs de control_lotes - aliases con comillas dobles para preservar case
+        // Subconsulta de lotes (INTEGER, sin CAST) para joins con furips1_consolidado
+        const lotesSubqueryInt = `SELECT numero_lote FROM control_lotes WHERE ${lotesWhere}`;
+
+        // KPIs de control_lotes
         const lotesQuery = `
-          SELECT 
+          SELECT
             COUNT(*) as "totalLotes",
             COALESCE(SUM(cantidad_facturas), 0) as "totalFacturas",
             COALESCE(SUM(valor_reclamado), 0) as "valorTotalReclamado"
           FROM control_lotes
           WHERE ${lotesWhere}
         `;
-        
+
         // KPIs de inconsistencias - cantidad total
         const inconsistenciasCountQuery = `
-          SELECT 
+          SELECT
             COUNT(*) as "totalInconsistencias"
           FROM inconsistencias i
           INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
           WHERE ${incWhere}
         `;
 
-        // KPIs de inconsistencias - valor deduplicado
+        // KPIs de inconsistencias - valor CAPEADO por factura
+        // El valor de hallazgos de una factura NO debe superar su valor reclamado
         const inconsistenciasValorQuery = `
-          SELECT 
-            COALESCE(SUM(sub.valor_total), 0) as "valorTotalInconsistencias"
-          FROM (
-            SELECT i."Numero_factura", i.codigo_del_servicio, MAX(i.valor_total) as valor_total
-            FROM inconsistencias i
-            INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
-            WHERE ${incWhere}
-            GROUP BY i."Numero_factura", i.codigo_del_servicio
-          ) sub
+          WITH hallazgos_por_factura AS (
+            SELECT
+              sub."Numero_factura",
+              SUM(sub.valor_total) as total_hallazgos
+            FROM (
+              SELECT i."Numero_factura", i.codigo_del_servicio, MAX(i.valor_total) as valor_total
+              FROM inconsistencias i
+              INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
+              WHERE ${incWhere}
+              GROUP BY i."Numero_factura", i.codigo_del_servicio
+            ) sub
+            GROUP BY sub."Numero_factura"
+          ),
+          facturas_reclamado AS (
+            SELECT f."Numero_factura", MAX(f."Total_reclamado_por_amparo_gastos_medicos_quirurgicos") as valor_reclamado
+            FROM furips1_consolidado f
+            WHERE f.numero_lote IN (${lotesSubqueryInt})
+            GROUP BY f."Numero_factura"
+          )
+          SELECT
+            COALESCE(SUM(
+              LEAST(h.total_hallazgos, COALESCE(fr.valor_reclamado, h.total_hallazgos))
+            ), 0) as "valorTotalInconsistencias"
+          FROM hallazgos_por_factura h
+          LEFT JOIN facturas_reclamado fr ON h."Numero_factura" = fr."Numero_factura"
+        `;
+
+        // Hallazgos críticos: facturas distintas con al menos un hallazgo (mostrar_reporte=1)
+        const hallazgosCriticosQuery = `
+          SELECT COUNT(DISTINCT i."Numero_factura") as "hallazgosCriticos"
+          FROM inconsistencias i
+          INNER JOIN par_validaciones p ON i.tipo_validacion = p.tipo_validacion
+          WHERE ${incWhere}
         `;
 
         console.log("[REPORTES] KPIs lotesQuery:", lotesQuery.substring(0, 200));
 
-        const [lotesResult, inconsistenciasCountResult, inconsistenciasValorResult] = await Promise.all([
+        const [lotesResult, inconsistenciasCountResult, inconsistenciasValorResult, hallazgosCriticosResult] = await Promise.all([
           prisma.$queryRawUnsafe<any[]>(lotesQuery),
           prisma.$queryRawUnsafe<any[]>(inconsistenciasCountQuery),
           prisma.$queryRawUnsafe<any[]>(inconsistenciasValorQuery),
+          prisma.$queryRawUnsafe<any[]>(hallazgosCriticosQuery),
         ]);
 
         console.log("[REPORTES] KPIs lotesResult:", lotesResult[0]);
         console.log("[REPORTES] KPIs incCount:", inconsistenciasCountResult[0]);
         console.log("[REPORTES] KPIs incValor:", inconsistenciasValorResult[0]);
+        console.log("[REPORTES] KPIs criticos:", hallazgosCriticosResult[0]);
 
         return NextResponse.json({
           success: true,
@@ -171,6 +201,7 @@ export async function GET(request: NextRequest) {
             valorTotalReclamado: safeNumber(lotesResult[0]?.valorTotalReclamado),
             totalInconsistencias: safeNumber(inconsistenciasCountResult[0]?.totalInconsistencias),
             valorTotalInconsistencias: safeNumber(inconsistenciasValorResult[0]?.valorTotalInconsistencias),
+            hallazgosCriticos: safeNumber(hallazgosCriticosResult[0]?.hallazgosCriticos),
           },
         });
       }

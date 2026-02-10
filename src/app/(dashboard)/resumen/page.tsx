@@ -37,6 +37,7 @@ interface KPIsData {
   valorTotalReclamado: number;
   totalInconsistencias: number;
   valorTotalInconsistencias: number;
+  hallazgosCriticos: number;
 }
 
 interface ResumenValidacion {
@@ -108,6 +109,7 @@ export default function ResumenPage() {
     valorTotalReclamado: 0,
     totalInconsistencias: 0,
     valorTotalInconsistencias: 0,
+    hallazgosCriticos: 0,
   };
 
   const { data: validacionResponse, isLoading: loadingValidacion } = useQuery({
@@ -174,6 +176,9 @@ export default function ResumenPage() {
       icon: TrendingUp,
       gradient: "from-[#EC4899] to-[#DB2777]",
       isValue: true,
+      redSubtitle: kpis.hallazgosCriticos
+        ? `${kpis.hallazgosCriticos.toLocaleString()} fact. críticas`
+        : undefined,
     },
   ];
 
@@ -238,9 +243,16 @@ export default function ResumenPage() {
                     {loadingKPIs ? (
                       <Skeleton className={`h-9 w-28 mt-1 ${isLight ? "bg-gray-200" : "bg-[#1a1a2e]"}`} />
                     ) : (
-                      <p className={`text-2xl font-bold mt-1 ${kpi.isValue ? "font-mono" : ""} ${textColor}`}>
-                        {typeof kpi.value === "number" ? kpi.value.toLocaleString() : kpi.value}
-                      </p>
+                      <>
+                        <p className={`text-2xl font-bold mt-1 ${kpi.isValue ? "font-mono" : ""} ${textColor}`}>
+                          {typeof kpi.value === "number" ? kpi.value.toLocaleString() : kpi.value}
+                        </p>
+                        {(kpi as any).redSubtitle && (
+                          <p className="text-xs font-semibold mt-0.5 text-red-500">
+                            {(kpi as any).redSubtitle}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                   <div
